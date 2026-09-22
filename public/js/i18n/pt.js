@@ -151,3 +151,18 @@ MB.i18n.add('pt', {
   "l.everyDay": "Todos os dias", "l.everyDayHint": "Sem dias marcados, vale para todos os dias.", "l.checklist": "Lista",
   "l.items": ["item","itens"], "l.templatesSub": "Salvos pelo Hoje. Toque em um para editar.", "l.editTemplate": "Editar modelo"
 });
+
+/* edit in place, status colors */
+MB.i18n.add('pt', {
+  "t.onTarget": "Na meta", "t.toGo": "Faltam {n}", "t.overBy": "{n} acima",
+  "t.short": "{n} abaixo", "t.editTargets": "Editar metas diárias", "t.setTarget": "Defina uma meta",
+  "t.burnedLabel": "Queimadas", "t.checklists": "Listas", "t.now": "Agora",
+  "t.inTime": "em {t}", "t.notLogged": "Ainda não registrado", "t.missed": "Perdido",
+  "t.logSets": "Registrar séries", "t.nextItem": "Próximo: {name}", "t.addHabits": "Adicionar hábitos",
+  "t.addSlots": "Adicionar horários de refeição", "s.aim": "Alvo", "s.aim.min": "Pelo menos",
+  "s.aim.near": "Cerca de (±10%)", "s.aim.max": "No máximo", "s.targetsHelp": "Os totais de Hoje e Progresso ficam verdes quando atingem isto.",
+  "t.lastWeight": "Último: {w}", "p.noGoal": "Nenhuma meta ainda", "p.editGoal": "Editar meta",
+  "p.setGoalBtn": "Definir meta", "p.noBodyComp": "Registre medidas em Hoje ou adicione marcos.", "p.editMilestones": "Marcos",
+  "p.trackRank": "Acompanhar faixa ou graduação", "s.bandHelp": "A faixa em que sua média de 7 dias deve ficar.", "s.sub": "Perfil, app, sincronização e backups. O resto se edita onde aparece.",
+  "g.blankSub": "Configure tudo aos poucos, em cada página."
+});

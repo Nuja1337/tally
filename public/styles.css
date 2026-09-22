@@ -1,19 +1,22 @@
-/* Tally 2.2 */
+/* Tally 2.2.2 */
 :root{
   --bg:#F6F5F1;--surface:#FFFFFF;--surface2:#EFEEE9;--ink:#1A1B1F;--muted:#5F6470;--faint:#8A8F99;--line:#E4E2DB;--track:#E6E4DE;--track2:#CFCDC6;
   --accent:#D9622B;--accent2:#E9A27C;--accent-ink:#FFFFFF;--blue:#3B6E9C;--green:#2E8B5B;--amber:#D99A2B;--red:#C9413B;
+  --kc-blue:#3B6E9C;--kc-violet:#7457B0;--kc-teal:#23867F;--kc-orange:#D9622B;--kc-pink:#C04F86;--kc-gold:#B8891E;--kc-slate:#66707F;--kc-olive:#6E7D32;
   --radius:14px;--radius-sm:10px;--shadow:0 1px 2px rgba(20,20,30,.06),0 8px 24px -12px rgba(20,20,30,.18);
   --nav-h:60px;--top-h:52px;
   color-scheme:light;
 }
 :root[data-theme="dark"]{
   --bg:#15161A;--surface:#1E2026;--surface2:#262930;--ink:#ECEDEF;--muted:#A3A8B2;--faint:#7B818C;--line:#2C2F37;--track:#2F323A;--track2:#4A4E58;
-  --accent:#F07A3F;--accent2:#A85A34;--accent-ink:#15161A;--blue:#6FA3D6;--green:#4FBF83;--amber:#E8B04B;--red:#E06860;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -12px rgba(0,0,0,.6);
+  --accent:#F07A3F;--accent2:#A85A34;--accent-ink:#15161A;--blue:#6FA3D6;--green:#4FBF83;--amber:#E8B04B;--red:#E06860;
+  --kc-blue:#6FA3D6;--kc-violet:#A68BE3;--kc-teal:#4DB8AE;--kc-orange:#F08A4F;--kc-pink:#E07CAF;--kc-gold:#D8B04E;--kc-slate:#9AA5B4;--kc-olive:#AABD64;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -12px rgba(0,0,0,.6);
   color-scheme:dark;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#15161A;--surface:#1E2026;--surface2:#262930;--ink:#ECEDEF;--muted:#A3A8B2;--faint:#7B818C;--line:#2C2F37;--track:#2F323A;--track2:#4A4E58;
-  --accent:#F07A3F;--accent2:#A85A34;--accent-ink:#15161A;--blue:#6FA3D6;--green:#4FBF83;--amber:#E8B04B;--red:#E06860;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -12px rgba(0,0,0,.6);
+  --accent:#F07A3F;--accent2:#A85A34;--accent-ink:#15161A;--blue:#6FA3D6;--green:#4FBF83;--amber:#E8B04B;--red:#E06860;
+  --kc-blue:#6FA3D6;--kc-violet:#A68BE3;--kc-teal:#4DB8AE;--kc-orange:#F08A4F;--kc-pink:#E07CAF;--kc-gold:#D8B04E;--kc-slate:#9AA5B4;--kc-olive:#AABD64;--shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px -12px rgba(0,0,0,.6);
   color-scheme:dark;
 }}
 *{box-sizing:border-box}
@@ -222,9 +225,6 @@ table.foods{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
 .sched{display:flex;flex-direction:column;gap:8px}
 .sched-day{display:grid;grid-template-columns:44px 1fr;gap:8px;align-items:start}
 .sched-day b{padding-top:7px;font-size:13px}
-.savebar{position:fixed;left:0;right:0;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom));z-index:15;display:none;justify-content:space-between;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -6px 20px -12px rgba(0,0,0,.35);font-size:14px;font-weight:600}
-.savebar.show{display:flex}
-@media (min-width:900px){.savebar{left:200px;bottom:0}}
 .helpwrap{position:relative;display:inline-block;vertical-align:middle}
 .help{width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;padding:0;line-height:1}
 .tip{display:none;position:absolute;left:0;top:26px;z-index:5;background:var(--ink);color:var(--bg);font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;padding:8px 10px;border-radius:8px;width:240px;line-height:1.4}
@@ -384,3 +384,73 @@ table.plain td.n{text-align:right;font-variant-numeric:tabular-nums}
 /* library rows */
 .chev{color:var(--faint);font-size:22px;line-height:1;padding-left:4px}
 .chip.static{cursor:default}
+
+/* 2.2.2: status colors (green met, amber close or not logged yet, red missed or over) and the Today page */
+.st-met{--st:var(--green)}.st-close{--st:var(--amber)}.st-miss,.st-over{--st:var(--red)}.st-progress{--st:var(--accent)}.st-none{--st:var(--muted)}
+.tag{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;vertical-align:middle;color:var(--st);background:color-mix(in srgb,var(--st) 14%,transparent)}
+.notice.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 7%,var(--surface))}
+.actions.center{justify-content:center}
+.empty-add{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-head h2{display:flex;align-items:center;gap:9px;min-width:0}
+.hico{display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;width:26px;height:26px;border-radius:8px;background:color-mix(in srgb,var(--hc) 15%,transparent);color:var(--hc)}
+.hico svg{width:16px;height:16px}
+.hico-plan{--hc:var(--kc-slate)}.hico-meals{--hc:var(--kc-gold)}.hico-habits{--hc:var(--kc-violet)}.hico-checklists{--hc:var(--kc-teal)}.hico-training{--hc:var(--accent)}.hico-body{--hc:var(--kc-blue)}
+.head-r{display:flex;align-items:center;gap:4px;flex-wrap:wrap;justify-content:flex-end}
+.card-head .count{font-weight:700;color:var(--muted);font-variant-numeric:tabular-nums;margin-right:4px}
+.card-head .count.st-met{color:var(--green)}
+/* summary: rings, other macros, what is done */
+.card.summary{padding:14px}
+.summary .rings{display:flex;align-items:flex-start;gap:8px;padding:0;flex-wrap:wrap}
+.ringbox{display:flex;flex-direction:column;align-items:center;gap:1px;width:92px;padding:0;border:0;background:none;color:inherit;font:inherit;cursor:pointer;text-align:center}
+.ringbox .ring{width:86px;height:86px}
+.ringbox:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:12px}
+.ringlab{font-size:12px;font-weight:700;color:var(--muted);margin:0}
+.ringnote{font-size:11.5px;font-weight:700;line-height:1.25;color:var(--st,var(--muted))}
+.ringnote.st-progress{color:var(--muted)}
+.summary .ringmeta{flex:1 1 100px;min-width:100px;display:flex;flex-direction:column;gap:6px;padding-top:8px;font-size:13px}
+.macro{display:flex;justify-content:space-between;gap:8px;color:var(--muted);border-bottom:1px dashed var(--line);padding-bottom:5px}
+.macro:last-child{border-bottom:0}
+.macro b{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.macro b.st-met,.macro b.st-close,.macro b.st-miss,.macro b.st-over{color:var(--st)}
+.tallies{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.tally{display:flex;flex-direction:column;align-items:flex-start;padding:8px 10px;border:0;border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink);cursor:pointer;text-align:left;font:inherit}
+.tally b{font-size:18px;font-weight:800;line-height:1.2;font-variant-numeric:tabular-nums}
+.tally span{font-size:12px;font-weight:600;color:var(--muted)}
+.tally.st-met{background:color-mix(in srgb,var(--green) 13%,var(--surface))}
+.tally.st-met b,.tally.st-close b,.tally.st-miss b{color:var(--st)}
+@media (min-width:900px){.card.summary{display:grid;grid-template-columns:auto minmax(260px,1fr);gap:24px;align-items:center}.summary .rings{flex-wrap:nowrap}.summary .ringmeta{min-width:170px}.tallies{margin:0;padding:0 0 0 24px;border-top:0;border-left:1px solid var(--line)}}
+/* timeline on Today: color per block, now and next, done and missed */
+.tl-dot{background:var(--kc,var(--track2))}
+.tl-row.past .tl-time,.tl-row.past .tl-title{color:var(--faint)}
+.tl-row.now{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:10px;border-bottom-color:transparent;padding-left:8px;padding-right:8px}
+.tl-tag{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--muted);background:var(--surface2);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.tl-tag.now{background:var(--accent);color:var(--accent-ink)}
+.tl-row.miss .tl-check{color:var(--red)}
+.tl-row.late .tl-check{color:var(--amber)}
+/* checklists: one row per routine that opens in place */
+.cl{border-bottom:1px solid var(--line)}
+.cl:last-child{border-bottom:0}
+.cl-head{display:grid;grid-template-columns:18px 1fr auto;align-items:center;column-gap:8px;width:100%;padding:10px 2px;border:0;background:none;color:var(--ink);text-align:left;cursor:pointer;font:inherit}
+.cl-chev{grid-row:1/3;color:var(--faint);font-size:22px;line-height:1;transition:transform .15s}
+.cl.open .cl-chev{transform:rotate(90deg)}
+.cl-name{min-width:0;display:flex;flex-direction:column}
+.cl-name b{font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-next{color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cl-next:empty{display:none}
+.cl-count{font-weight:700;font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.cl-bar{grid-column:2/4;height:4px;margin-top:7px;border-radius:4px;background:var(--track);overflow:hidden}
+.cl-bar i{display:block;width:0;height:100%;border-radius:4px;background:var(--accent);transition:width .2s}
+.cl[data-status="met"] .cl-count{color:var(--green)}.cl[data-status="met"] .cl-bar i{background:var(--green)}
+.cl[data-status="close"] .cl-count{color:var(--amber)}.cl[data-status="close"] .cl-bar i{background:var(--amber)}
+.cl[data-status="miss"] .cl-count,.cl[data-status="over"] .cl-count{color:var(--red)}.cl[data-status="over"] .cl-bar i{background:var(--red)}
+.cl.alert .cl-bar i{background:var(--amber)}
+.cl-body{padding:0 0 6px 26px}
+/* habits: green when done, amber part way; dots show missed days in red */
+.habit.on{background:color-mix(in srgb,var(--green) 9%,var(--surface));border-color:color-mix(in srgb,var(--green) 55%,var(--line));color:var(--green)}
+.habit.part{border-color:color-mix(in srgb,var(--amber) 60%,var(--line));color:var(--amber)}
+.dots .dot.off{background:color-mix(in srgb,var(--red) 50%,var(--track))}
+/* training rows carry their kind's color */
+.sess{border-left:3px solid var(--kc,var(--track2));padding-left:10px}
+@media (prefers-reduced-motion:reduce){.cl-chev,.cl-bar i{transition:none}}
+.grid2.stack{grid-template-columns:minmax(0,1fr) auto}
+@media (max-width:520px){.grid2.stack{grid-template-columns:1fr}}

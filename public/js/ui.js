@@ -18,7 +18,7 @@ window.MB = window.MB || {};
     if (props) for (const [k, v] of Object.entries(props)) {
       if (v == null || v === false) continue;
       if (k === 'class') el.className = v;
-      else if (k === 'style' && typeof v === 'object') Object.assign(el.style, v);
+      else if (k === 'style' && typeof v === 'object') for (const [p, x] of Object.entries(v)) { if (p.startsWith('--')) el.style.setProperty(p, x); else el.style[p] = x; }
       else if (k.startsWith('on') && typeof v === 'function') el.addEventListener(k.slice(2), v);
       else if (k === 'html') el.innerHTML = v;
       else if (k === 'value' || k === 'checked' || k === 'disabled' || k === 'selected' || k === 'htmlFor') el[k] = v;
@@ -145,7 +145,7 @@ window.MB = window.MB || {};
   function ring(value, target, opts) {
     opts = opts || {};
     const r = 42, c = 2 * Math.PI * r, pct = target > 0 ? Math.min(1, value / target) : 0, over = target > 0 && value > target * 1.05;
-    const color = over ? 'var(--red)' : (opts.color || 'var(--accent)');
+    const color = opts.color || (over ? 'var(--red)' : 'var(--accent)');
     return `<svg class="ring" viewBox="0 0 100 100" role="img" aria-label="${opts.label || ''} ${fmt(value)} / ${fmt(target)}">
   <circle cx="50" cy="50" r="${r}" fill="none" stroke="var(--track)" stroke-width="9"/>
   <circle cx="50" cy="50" r="${r}" fill="none" stroke="${color}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(pct * c).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 50 50)"/>

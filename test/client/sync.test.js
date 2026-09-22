@@ -157,8 +157,7 @@ describe('changes', () => {
     await sync(A); await sync(B);
     await A.go('#settings');
     const unitSel = [...A.$$('#main select')].find(s => [...s.options].some(o => o.value === 'kg'));
-    unitSel.value = 'kg'; unitSel.dispatchEvent(new A.window.Event('change'));
-    A.$('.savebar .btn.primary').click();
+    unitSel.value = 'kg'; unitSel.dispatchEvent(new A.window.Event('change')); /* saves at once */
     await sync(A); await sync(B);
     expect(B.MB.store.get('settings/main').units.weight).toBe('kg');
     expect(B.MB.store.get('days/2026-09-01').weight).toBe(90.7);
@@ -235,15 +234,23 @@ describe('the open page', () => {
     expect(B.errors).toEqual([]);
   });
 
-  it('keeps unsaved Settings edits when settings change elsewhere', async () => {
-    const { A, B } = await linkedPair('#settings');
-    const name = B.$('#main .card input[type=text]');
-    name.value = 'Typed on B'; name.dispatchEvent(new B.window.Event('input')); name.blur();
-    A.MB.store.setDoc('settings/main', { ...A.MB.store.get('settings/main'), targets: { kcal: 3100, protein: 190, carbs: 0, fat: 0 }, updatedAt: undefined });
+  it('an edit sheet keeps what was typed, and saving it keeps settings that synced in while it was open', async () => {
+    const { A, B } = await linkedPair('#today');
+    B.$('#main .ringbox').click(); /* Daily targets */
+    const kcal = B.$$('.sheet input[type=number]')[0];
+    kcal.value = '3300'; kcal.dispatchEvent(new B.window.Event('input'));
+    A.MB.store.setDoc('settings/main', { ...A.MB.store.get('settings/main'), habits: [...A.MB.store.get('settings/main').habits, { id: 'floss', name: 'Floss', target: null, unit: '' }], updatedAt: undefined });
     await sync(A); await sync(B);
-    await waitFor(() => B.MB.store.get('settings/main').targets.kcal === 3100, { what: 'settings pulled' });
-    expect(B.$('.savebar').classList.contains('show')).toBe(true);
-    expect(B.$('#main .card input[type=text]').value).toBe('Typed on B');
+    await waitFor(() => B.MB.store.get('settings/main').habits.some(x => x.id === 'floss'), { what: 'settings pulled' });
+    expect(B.$('.sheet')).not.toBeNull();
+    expect(B.$$('.sheet input[type=number]')[0].value).toBe('3300');
+    B.button(B.t('c.save'), '.sheet').click();
+    const saved = B.MB.store.get('settings/main');
+    expect(saved.targets.kcal).toBe(3300);
+    expect(saved.habits.map(x => x.id)).toContain('floss');
+    await sync(B); await sync(A);
+    expect(A.MB.store.get('settings/main').targets.kcal).toBe(3300);
+    expect(B.errors).toEqual([]);
   });
 });
 

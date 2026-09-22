@@ -5,7 +5,7 @@
   const { $, h, svg, uid, clone, fmt, fmt1, num, byName, today, addDays, dow, DAYS, dayName, fmtLong, fmtShort, fmtDay, fmtTime, weekStart, thumb, isImageUrl,
     openSheet, closeSheet, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, trend, heat } = U;
 
-  const S = { route: 'today', date: today(), weekDate: today(), settings: SC.normalizeSettings(null), settingsDraft: null, settingsDirty: false,
+  const S = { route: 'today', date: today(), weekDate: today(), settings: SC.normalizeSettings(null),
     day: SC.emptyDay(today()), foods: [], templates: [], foodTab: 'All', foodQ: '', foodSort: { key: 'name', dir: 1 }, libTab: 'workouts', exQ: '', planDay: dow(today()), planEdit: false,
     refs: {}, openedOn: today(), pendingImport: null };
   const unit = () => S.settings.units.weight;
@@ -39,7 +39,6 @@
     S.settings = SC.normalizeSettings(store.get('settings/main'));
     S.foods = store.list('foods').sort(byName);
     S.templates = store.list('templates');
-    S.settingsDirty = false; S.settingsDraft = null;
     loadDay(S.date);
   }
   function loadDay(date) { const d = store.get('days/' + date); S.day = d ? SC.normalizeDay(d, date) : SC.emptyDay(date); }
@@ -58,74 +57,188 @@
   const waveLabel = w => w ? `${t('pl.week', { n: w.week, of: w.of })} · ${t('pl.' + w.phase)}` : '';
 
   /* ---------- Today ---------- */
+  /* A day's page: totals up top, then the day in time order, then everything you log. Each card edits its own setup in
+     a sheet (targets, habits, meal slots), so nothing here sends you to Settings. Counts and checks update in place. */
+  const finalDay = () => S.date < today();
+  const wideLayout = () => window.innerWidth >= 900;
+  function card(key, title, right, body) {
+    return h('section', { class: 'card', id: 'c-' + key }, h('div', { class: 'card-head' }, h('h2', null, h('span', { class: 'hico hico-' + key, html: ICONS['s_' + key] }), title), right), body);
+  }
+  const editBtn = (fn, label) => h('button', { class: 'btn ghost small', onclick: fn }, label || t('c.edit'));
+  const emptyAdd = (text, label, fn) => h('div', { class: 'empty-add' }, h('p', { class: 'empty' }, text), h('button', { class: 'btn small', onclick: fn }, label));
+  const scrollToCard = key => { const el = document.getElementById('c-' + key); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
   function viewToday() {
-    const st = S.settings, wrap = h('div', { class: 'page' }), isToday = S.date === today(), wave = SC.waveWeek(st.wave, S.date);
+    const st = S.settings, wrap = h('div', { class: 'page today' }), isToday = S.date === today(), wave = SC.waveWeek(st.wave, S.date);
     const sub = [isToday ? fmtLong(S.date) : null, wave ? waveLabel(wave) : null].filter(Boolean).join(' · ');
     wrap.append(h('div', { class: 'dayhead' },
-      h('button', { class: 'btn ghost icon', 'aria-label': t('t.prev'), onclick: () => setDate(addDays(S.date, -1)) }, '\u2039'),
+      h('button', { class: 'btn ghost icon', 'aria-label': t('t.prev'), onclick: () => setDate(addDays(S.date, -1)) }, '‹'),
       h('div', { class: 'daytitle' }, h('h1', null, isToday ? t('c.today') : fmtLong(S.date)),
         h('div', { class: 'sub' }, isToday ? sub : [h('button', { class: 'linkbtn', onclick: () => setDate(today()) }, t('t.backToToday')), wave ? ' · ' + waveLabel(wave) : null])),
-      h('button', { class: 'btn ghost icon', 'aria-label': t('t.next'), onclick: () => setDate(addDays(S.date, 1)) }, '\u203a')));
-    const day = S.day;
+      h('button', { class: 'btn ghost icon', 'aria-label': t('t.next'), onclick: () => setDate(addDays(S.date, 1)) }, '›')));
     S.refs = {};
     const empty = !st.habits.length && !st.routines.length && !st.sessionTypes.length && !st.mealSlots.length;
     if (empty) wrap.append(h('div', { class: 'notice' }, h('span', null, t('t.notSetUp')), h('a', { class: 'btn primary small', href: '#start' }, t('nav.start'))));
-    S.refs.rings = h('div', { class: 'rings' });
-    wrap.append(S.refs.rings); drawRings();
+    wrap.append(summaryCard());
     if (wave && wave.phase === 'deload') wrap.append(h('div', { class: 'notice soft' }, h('span', null, t('pl.deloadHint'))));
-    S.refs.alerts = h('div'); wrap.append(S.refs.alerts); drawAlerts();
+    S.refs.alerts = h('div'); wrap.append(S.refs.alerts);
     const nudge = backupNudge(); if (nudge) wrap.append(nudge);
-    const cols = h('div', { class: 'cols' }); const left = h('div'), right = h('div'); cols.append(left, right); wrap.append(cols);
-    const blocks = SC.blocksFor(st, dow(S.date));
-    if (blocks.length) { S.refs.timeline = h('div'); left.append(section(t('t.plan'), h('a', { class: 'btn ghost small', href: '#plan' }, t('nav.plan')), S.refs.timeline)); drawTimeline(); }
-    for (const r of routinesFor(S.date)) { const count = h('small'); S.refs['r_' + r.id] = count; left.append(section(r.name, count, r.items.length ? checklist(r, r.items) : h('p', { class: 'empty' }, t('t.noItems')))); }
-    S.refs.habCount = h('small');
-    left.append(section(t('t.habits'), S.refs.habCount, st.habits.length ? habitGrid() : h('p', { class: 'empty' }, t('t.noHabits'), ' ', h('a', { href: '#settings' }, t('t.inSettings')))));
-    left.append(section(t('t.training'), h('button', { class: 'btn small', onclick: addSessionSheet }, t('t.addSession')), trainingList()));
-    left.append(section(t('t.body'), null, bodyBlock()));
-    const prev = store.get('days/' + addDays(S.date, -1));
-    const canCopy = !day.meals.length && prev && Array.isArray(prev.meals) && prev.meals.length;
-    right.append(section(t('t.meals'), canCopy ? h('button', { class: 'btn small', onclick: copyYesterday }, t('t.copyYesterday')) : null,
-      st.mealSlots.length ? h('div', null, st.mealSlots.map(slotBlock)) : h('p', { class: 'empty' }, t('t.noSlots'), ' ', h('a', { href: '#settings' }, t('t.inSettings')))));
+    const c = { plan: planCard(), meals: mealsCard(), habits: habitsCard(), checklists: checklistsCard(), training: trainingCard(), body: bodyCard() };
+    S.refs.wide = wideLayout();
+    if (S.refs.wide) wrap.append(h('div', { class: 'cols' }, h('div', null, c.plan, c.checklists, c.training), h('div', null, c.meals, c.habits, c.body)));
+    else wrap.append(...[c.plan, c.meals, c.habits, c.checklists, c.training, c.body].filter(Boolean));
     updateCounts();
     return wrap;
   }
+
+  /* totals: rings for calories and protein (tap to edit targets), other macros, and how much of the day is done */
+  function summaryCard() {
+    S.refs.rings = h('div', { class: 'rings' }); S.refs.tallies = h('div', { class: 'tallies' });
+    drawRings();
+    return h('section', { class: 'card summary' }, S.refs.rings, S.refs.tallies);
+  }
+  const STATUS_COLOR = { met: 'var(--green)', close: 'var(--amber)', miss: 'var(--red)', over: 'var(--red)' };
+  function statusNote(value, target, status, u) {
+    if (!status) return '';
+    const gap = Math.abs(target - value), n = fmt(gap) + (u ? ' ' + u : '');
+    if (status === 'met') return '✓ ' + t('t.onTarget');
+    if (status === 'progress') return t('t.toGo', { n });
+    return value > target ? t('t.overBy', { n }) : t('t.short', { n });
+  }
   function drawRings() {
     const st = S.settings, x = totals(S.day), el = S.refs.rings; if (!el) return;
-    el.replaceChildren(
-      h('div', { class: 'ringbox', html: ring(x.kcal, st.targets.kcal, { label: t('c.kcal') }) + `<div class="ringlab">${t('c.kcal')}</div>` }),
-      h('div', { class: 'ringbox', html: ring(x.p, st.targets.protein, { label: t('c.protein'), color: 'var(--blue)', unit: 'g' }) + `<div class="ringlab">${t('c.protein')}</div>` }),
-      h('div', { class: 'ringmeta' }, h('div', null, t('t.macros', { c: fmt(x.c), f: fmt(x.f) })),
-        st.targets.carbs > 0 ? h('div', { class: 'mini' }, `${t('c.carbs')} ${fmt(x.c)} / ${fmt(st.targets.carbs)} g`) : null,
-        st.targets.fat > 0 ? h('div', { class: 'mini' }, `${t('c.fat')} ${fmt(x.f)} / ${fmt(st.targets.fat)} g`) : null,
-        x.burn ? h('div', null, t('t.burned', { n: fmt(x.burn) })) : null));
+    const fin = finalDay();
+    const one = (key, value, label, u, color) => {
+      const target = st.targets[key], status = SC.targetStatus(value, target, st.targets.aim[key], fin);
+      return h('button', { class: 'ringbox', type: 'button', 'aria-label': t('t.editTargets'), onclick: targetsSheet },
+        h('span', { class: 'ringsvg', html: ring(value, target, { label, unit: u, color: STATUS_COLOR[status] || color }) }),
+        h('span', { class: 'ringlab' }, label), h('span', { class: 'ringnote st-' + (status || 'none') }, target > 0 ? statusNote(value, target, status, u) : t('t.setTarget')));
+    };
+    const macro = (key, value, label) => {
+      const target = st.targets[key], status = SC.targetStatus(value, target, st.targets.aim[key], fin);
+      return h('div', { class: 'macro' }, h('span', null, label), h('b', { class: 'st-' + (status || 'none') }, fmt(value) + (target > 0 ? ` / ${fmt(target)}` : '') + ' g'));
+    };
+    el.replaceChildren(one('kcal', x.kcal, t('c.kcal'), '', 'var(--accent)'), one('protein', x.p, t('c.protein'), 'g', 'var(--blue)'),
+      h('div', { class: 'ringmeta' }, macro('carbs', x.c, t('c.carbs')), macro('fat', x.f, t('c.fat')),
+        x.burn ? h('div', { class: 'macro' }, h('span', null, t('t.burnedLabel')), h('b', null, fmt(x.burn) + ' kcal')) : null));
+    drawTallies();
+  }
+  /* habits, checklists and planned training done today; green when all done, red when a finished day fell short */
+  function drawTallies() {
+    const el = S.refs.tallies; if (!el) return;
+    const st = S.settings, d = S.day, fin = finalDay();
+    const lists = routinesFor(S.date).filter(r => !r.alertAt && r.items.length), planned = SC.plannedFor(st, dow(S.date));
+    const done = d.sessions.filter(s => s.done !== false);
+    const items = [
+      st.habits.length ? ['habits', t('t.habits'), habitsDone(d), st.habits.length] : null,
+      lists.length ? ['checklists', t('t.checklists'), lists.filter(r => routineDone(r, d)).length, lists.length] : null,
+      planned.length ? ['training', t('t.training'), planned.filter(p => done.some(s => s.typeId === p.type.id)).length, planned.length] : (done.length ? ['training', t('t.training'), done.length, 0] : null)
+    ].filter(Boolean);
+    el.classList.toggle('hidden', !items.length);
+    el.replaceChildren(...items.map(([key, label, a, b]) => {
+      const status = !b ? 'met' : a >= b ? 'met' : fin ? (a ? 'close' : 'miss') : 'progress';
+      return h('button', { class: 'tally st-' + status, type: 'button', onclick: () => scrollToCard(key) }, h('b', null, b ? `${a}/${b}` : String(a)), h('span', null, label));
+    }));
   }
   function drawAlerts() {
     const el = S.refs.alerts; if (!el) return;
-    el.replaceChildren(...routinesFor(S.date).filter(r => r.alertAt).map(r => { const n = r.items.filter(i => (S.day.checks[r.id] || {})[i.id]).length; return n >= r.alertAt ? h('div', { class: 'notice warn' }, h('b', null, r.name + ': '), r.alertText || t('t.alertDefault', { n })) : null; }).filter(Boolean));
+    el.replaceChildren(...routinesFor(S.date).filter(r => r.alertAt).map(r => { const n = r.items.filter(i => (S.day.checks[r.id] || {})[i.id]).length; return n >= r.alertAt ? h('div', { class: 'notice bad' }, h('span', null, h('b', null, r.name + ': '), r.alertText || t('t.alertDefault', { n }))) : null; }).filter(Boolean));
+  }
+
+  /* the day in time order: what is on now, what is next, what got done (green) or was missed (red). A tap acts on the block. */
+  const BLOCK_COLOR = { routine: 'var(--kc-teal)', meal: 'var(--kc-gold)', sleep: 'var(--kc-slate)', work: 'var(--track2)', rest: 'var(--kc-blue)', other: 'var(--track2)' };
+  const kindColor = id => { const c = SC.kindColors(S.settings.sessionKinds)[id]; return c ? `var(--kc-${c})` : 'var(--accent)'; };
+  const blockColor = b => b.kind === 'session' ? kindColor((S.settings.sessionTypes.find(x => x.id === b.typeId) || {}).kind) : BLOCK_COLOR[b.kind];
+  const nowMin = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); };
+  function blockDone(b, d) {
+    if (b.kind === 'session') return d.sessions.some(s => s.typeId === b.typeId && s.done !== false);
+    if (b.kind === 'routine') { const r = S.settings.routines.find(x => x.id === b.routineId); return r && r.items.length && !r.alertAt ? routineDone(r, d) : null; }
+    if (b.kind === 'meal') return d.meals.some(m => m.slot === b.slotId);
+    return null;
+  }
+  function planCard() {
+    if (!SC.blocksFor(S.settings, dow(S.date)).length) return null;
+    S.refs.timeline = h('div', { class: 'timeline' });
+    return card('plan', t('t.plan'), h('a', { class: 'btn ghost small', href: '#plan' }, t('nav.plan')), S.refs.timeline);
   }
   function drawTimeline() {
     const el = S.refs.timeline; if (!el) return;
     const st = S.settings, d = S.day, blocks = SC.blocksFor(st, dow(S.date));
-    el.replaceChildren(h('div', { class: 'timeline' }, blocks.map(b => {
-      const title = SC.blockTitle(b, st) || t('pl.' + b.kind);
-      let done = null;
-      if (b.kind === 'session') done = d.sessions.some(s => s.typeId === b.typeId && s.done !== false);
-      else if (b.kind === 'routine') { const r = st.routines.find(x => x.id === b.routineId); done = r ? routineDone(r, d) : null; }
-      else if (b.kind === 'meal') done = d.meals.some(m => m.slot === b.slotId);
-      const dur = SC.duration(b);
-      const row = h('button', { class: 'tl-row ' + KIND_CLASS[b.kind] + (done ? ' done' : ''), onclick: () => blockSheet(b) },
+    const isToday = S.date === today(), past = S.date < today(), now = nowMin();
+    const next = isToday ? blocks.findIndex(b => SC.hm(b.start) != null && SC.hm(b.start) > now) : -1;
+    el.replaceChildren(...blocks.map((b, i) => {
+      const a = SC.hm(b.start), end = a == null ? null : a + (SC.duration(b) || 0);
+      const current = isToday && a != null && a <= now && now < end, ended = past || (isToday && a != null && end <= now);
+      const done = blockDone(b, d), missed = done === false && ended, late = missed && !past;
+      const title = SC.blockTitle(b, st) || t('pl.' + b.kind), dur = SC.duration(b);
+      const tag = current ? h('span', { class: 'tl-tag now' }, t('t.now')) : i === next ? h('span', { class: 'tl-tag' }, t('t.inTime', { t: fmtDur(a - now) })) : null;
+      return h('button', { class: ['tl-row', current ? 'now' : '', ended ? 'past' : '', done ? 'done' : '', missed ? (late ? 'late' : 'miss') : ''].filter(Boolean).join(' '), style: { '--kc': blockColor(b) }, onclick: () => blockTap(b) },
         h('span', { class: 'tl-time' }, b.start ? fmtTime(b.start) : '·'), h('span', { class: 'tl-dot' }),
-        h('span', { class: 'tl-title' }, title, dur ? h('small', null, ' ' + fmtDur(dur)) : null),
-        done != null ? h('span', { class: 'tl-check' }, done ? '\u2713' : '') : null);
-      return row;
-    })));
+        h('span', { class: 'tl-title' }, title, dur ? h('small', null, ' ' + fmtDur(dur)) : null), tag,
+        done != null ? h('span', { class: 'tl-check', 'aria-label': done ? t('c.done') : missed ? (late ? t('t.notLogged') : t('t.missed')) : '' }, done ? '✓' : missed ? '✕' : '') : null);
+    }));
+  }
+  function blockTap(b) {
+    const st = S.settings;
+    if (b.kind === 'meal') { const w = st.mealSlots.find(x => x.id === b.slotId); if (w) { addMealSheet(w); return; } }
+    if (b.kind === 'routine' && routinesFor(S.date).some(r => r.id === b.routineId)) { openChecklist(b.routineId); return; }
+    if (b.kind === 'session') {
+      const logged = S.day.sessions.find(s => s.typeId === b.typeId && s.done !== false);
+      if (logged) { sessionSheet(logged, false); return; }
+      const p = SC.plannedFor(st, dow(S.date)).find(x => x.block.id === b.id);
+      if (p) { plannedSheet(p); return; }
+    }
+    blockSheet(b);
+  }
+  /* a planned session: log it with sets, mark it done, or look at the workout */
+  function plannedSheet(p) {
+    const b = p.block;
+    openSheet(p.type.name, h('div', null,
+      h('p', { class: 'muted small' }, [b.start ? `${fmtTime(b.start)}${b.end ? '–' + fmtTime(b.end) : ''}` : null, kindName(p.type.kind), t('t.planned', { min: p.minutes, kcal: fmt(p.kcal) })].filter(Boolean).join(' · ')),
+      b.note ? h('p', null, b.note) : null,
+      h('div', { class: 'actions' },
+        p.type.plan.length ? h('button', { class: 'btn primary', onclick: () => sessionSheet(newSession(p.type, p.minutes, p.kcal), true) }, t('t.logSets')) : null,
+        h('button', { class: p.type.plan.length ? 'btn' : 'btn primary', onclick: () => { closeSheet(); markDone(p.type, p.minutes, p.kcal); } }, t('t.markDone')),
+        p.type.plan.length ? h('button', { class: 'btn ghost', onclick: () => workoutSheet(p.type) }, t('pl.viewWorkout')) : null)));
   }
   function updateCounts() {
     const st = S.settings, d = S.day; if (!d) return;
-    for (const r of st.routines) { const el = S.refs['r_' + r.id]; if (el) { const done = r.items.filter(i => (d.checks[r.id] || {})[i.id]).length; el.textContent = r.items.length ? `${done}/${r.items.length}` : ''; } }
-    if (S.refs.habCount) S.refs.habCount.textContent = st.habits.length ? `${habitsDone(d)}/${st.habits.length}` : '';
-    drawAlerts(); drawTimeline();
+    for (const r of st.routines) { const el = S.refs['r_' + r.id]; if (el && el.paint) el.paint(); }
+    if (S.refs.habCount) { const n = habitsDone(d), m = st.habits.length; S.refs.habCount.textContent = m ? `${n}/${m}` : ''; S.refs.habCount.className = 'count' + (m && n >= m ? ' st-met' : ''); }
+    drawAlerts(); drawTimeline(); drawTallies();
+  }
+
+  /* checklists (routines): one row each, opened with a tap; the open ones are remembered on this device */
+  const OPEN_KEY = 'tally:open';
+  const openState = (() => { try { return JSON.parse(localStorage.getItem(OPEN_KEY) || '{}') || {}; } catch (e) { return {}; } })();
+  const isOpen = r => r.id in openState ? !!openState[r.id] : (r.items.length <= 6 && !routineDone(r, S.day));
+  function setOpen(id, open) { openState[id] = open; try { localStorage.setItem(OPEN_KEY, JSON.stringify(openState)); } catch (e) {} }
+  function checklistsCard() {
+    const rs = routinesFor(S.date); if (!rs.length) return null;
+    return card('checklists', t('t.checklists'), h('a', { class: 'btn ghost small', href: '#routines' }, t('c.edit')), h('div', { class: 'cls' }, rs.map(checklistRow)));
+  }
+  function checklistRow(r) {
+    const d = S.day, count = h('span', { class: 'cl-count' }), fill = h('i'), next = h('small', { class: 'cl-next' });
+    const body = h('div', { class: 'cl-body' + (isOpen(r) ? '' : ' hidden') }, r.items.length ? checklist(r, r.items) : h('p', { class: 'empty' }, t('t.noItems')));
+    const head = h('button', { class: 'cl-head', type: 'button', 'aria-expanded': String(isOpen(r)), onclick: () => toggle(body.classList.contains('hidden')) },
+      h('span', { class: 'cl-chev', 'aria-hidden': 'true' }, '›'), h('span', { class: 'cl-name' }, h('b', null, r.name), next), count, h('span', { class: 'cl-bar' }, fill));
+    const row = h('div', { class: 'cl' + (r.alertAt ? ' alert' : ''), id: 'cl-' + r.id }, head, body);
+    const toggle = open => { body.classList.toggle('hidden', !open); head.setAttribute('aria-expanded', String(open)); row.classList.toggle('open', open); setOpen(r.id, open); row.paint(); };
+    row.open = () => toggle(true);
+    row.paint = () => {
+      const map = d.checks[r.id] || {}, n = r.items.filter(i => map[i.id]).length, all = r.items.length;
+      const status = r.alertAt ? (n >= r.alertAt ? 'over' : 'none') : !all ? 'none' : n >= all ? 'met' : finalDay() ? (n ? 'close' : 'miss') : 'progress';
+      count.textContent = all ? `${n}/${all}` : ''; row.dataset.status = status;
+      fill.style.width = all ? Math.round(n / all * 100) + '%' : '0';
+      const first = r.items.find(i => !map[i.id]);
+      next.textContent = !r.alertAt && first && body.classList.contains('hidden') && n ? t('t.nextItem', { name: first.name }) : '';
+    };
+    row.classList.toggle('open', isOpen(r));
+    S.refs['r_' + r.id] = row;
+    return row;
+  }
+  function openChecklist(id) {
+    const row = S.refs['r_' + id]; if (!row) return;
+    row.open(); row.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function checklist(routine, items) {
     const d = S.day; d.checks[routine.id] = d.checks[routine.id] || {};
@@ -139,18 +252,27 @@
       return row;
     }));
   }
+
+  /* habits: tiles you tap; the dots are the last 7 days (green done, red missed on a day you logged) */
+  function habitsCard() {
+    const st = S.settings;
+    S.refs.habCount = h('small', { class: 'count' });
+    return card('habits', t('t.habits'), h('div', { class: 'head-r' }, S.refs.habCount, editBtn(habitsSheet)),
+      st.habits.length ? habitGrid() : emptyAdd(t('t.noHabits'), t('t.addHabits'), habitsSheet));
+  }
   function habitGrid() {
-    const d = S.day, days7 = [...Array(7)].map((_, i) => addDays(S.date, i - 6)), hist = {}; days7.forEach(x => { hist[x] = x === S.date ? d : (SC.normalizeDay(store.get('days/' + x) || null, x)); });
+    const d = S.day, days7 = [...Array(7)].map((_, i) => addDays(S.date, i - 6)), hist = {}, logged = {};
+    days7.forEach(x => { const raw = x === S.date ? d : store.get('days/' + x); logged[x] = !!raw; hist[x] = x === S.date ? d : SC.normalizeDay(raw || null, x); });
     return h('div', { class: 'habits' }, S.settings.habits.map(hb => {
       const tile = h('div', { class: 'habit', role: 'button', tabindex: '0' });
       const paint = () => {
         const v = d.habits[hb.id], done = SC.habitDone(hb, v), n = num(v);
         tile.classList.toggle('on', done); tile.classList.toggle('part', !done && !!v); tile.setAttribute('aria-pressed', done ? 'true' : 'false');
         const pct = hb.target ? Math.min(1, n / hb.target) : (done ? 1 : 0);
-        const dots = h('div', { class: 'dots' }, days7.map(x => h('span', { class: 'dot' + (SC.habitDone(hb, (hist[x].habits || {})[hb.id]) ? ' on' : '') + (x === S.date ? ' cur' : '') })));
+        const dots = h('div', { class: 'dots' }, days7.map(x => { const ok = SC.habitDone(hb, (hist[x].habits || {})[hb.id]); return h('span', { class: 'dot' + (ok ? ' on' : x < S.date && logged[x] ? ' off' : '') + (x === S.date ? ' cur' : '') }); }));
         tile.replaceChildren(
-          h('div', { class: 'habit-top' }, h('span', { class: 'habit-ring', html: `<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--track)" stroke-width="4"/><circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(pct * 94.2).toFixed(1)} 94.2" transform="rotate(-90 18 18)"/></svg>${done ? '<i>\u2713</i>' : ''}` }),
-            hb.target ? h('button', { class: 'habit-minus', 'aria-label': t('t.minusOne'), onclick: e => { e.stopPropagation(); if (n > 0) { d.habits[hb.id] = n - 1 > 0 ? n - 1 : undefined; if (!d.habits[hb.id]) delete d.habits[hb.id]; paint(); saveDay(); updateCounts(); } } }, '\u2212') : null),
+          h('div', { class: 'habit-top' }, h('span', { class: 'habit-ring', html: `<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" fill="none" stroke="var(--track)" stroke-width="4"/><circle cx="18" cy="18" r="15" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-dasharray="${(pct * 94.2).toFixed(1)} 94.2" transform="rotate(-90 18 18)"/></svg>${done ? '<i>✓</i>' : ''}` }),
+            hb.target ? h('button', { class: 'habit-minus', 'aria-label': t('t.minusOne'), onclick: e => { e.stopPropagation(); if (n > 0) { d.habits[hb.id] = n - 1 > 0 ? n - 1 : undefined; if (!d.habits[hb.id]) delete d.habits[hb.id]; paint(); saveDay(); updateCounts(); } } }, '−') : null),
           h('div', { class: 'habit-name' }, hb.name),
           h('div', { class: 'habit-sub' }, hb.target ? `${n} / ${hb.target}${hb.unit ? ' ' + hb.unit : ''}` : (done ? t('c.done') : t('t.tapToDo'))),
           dots);
@@ -170,6 +292,36 @@
     const since = meta && meta.exportedAt ? days.filter(d => (d.updatedAt || d.date) > meta.exportedAt).length : days.length;
     if (since < 7) return null;
     return h('div', { class: 'nudge' }, h('span', null, t('t.backupHint', { n: since })), h('button', { class: 'linkbtn', onclick: exportSheet }, t('t.exportNow')));
+  }
+  function mealsCard() {
+    const st = S.settings, prev = store.get('days/' + addDays(S.date, -1));
+    const canCopy = !S.day.meals.length && prev && Array.isArray(prev.meals) && prev.meals.length;
+    return card('meals', t('t.meals'), h('div', { class: 'head-r' }, canCopy ? h('button', { class: 'btn small', onclick: copyYesterday }, t('t.copyYesterday')) : null, editBtn(slotsSheet)),
+      st.mealSlots.length ? h('div', null, st.mealSlots.map(slotBlock)) : emptyAdd(t('t.noSlots'), t('t.addSlots'), slotsSheet));
+  }
+  const trainingCard = () => card('training', t('t.training'), h('button', { class: 'btn small', onclick: addSessionSheet }, t('t.addSession')), trainingList());
+  const bodyCard = () => card('body', t('t.body'), null, bodyBlock());
+
+  /* setup edited from Today; saves start from the stored settings, so changes synced in while a sheet was open are kept */
+  const latest = () => SC.normalizeSettings(store.get('settings/main'));
+  const saveRow = (onSave, extra) => h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: onSave }, t('c.save')), extra);
+  function targetsSheet() {
+    const d = clone(S.settings.targets), aims = SC.AIMS.map(a => ({ value: a, label: t('s.aim.' + a) }));
+    const line = (key, label) => h('div', { class: 'grid2' }, numField(label, d, key), selectField(t('s.aim'), d.aim, key, aims));
+    openSheet(t('s.targets'), h('div', null, h('p', { class: 'muted small' }, t('s.targetsHelp')),
+      line('kcal', t('s.calories')), line('protein', t('s.proteinG')), line('carbs', t('s.carbsG')), line('fat', t('s.fatG')),
+      saveRow(() => { const s = latest(); s.targets = { kcal: num(d.kcal), protein: num(d.protein), carbs: num(d.carbs), fat: num(d.fat), aim: d.aim }; saveAnd(s); })));
+  }
+  function habitsSheet() {
+    const list = clone(S.settings.habits);
+    openSheet(t('s.habits'), h('div', null, h('p', { class: 'muted small' }, t('s.habitsSub')),
+      listEditor(list, [{ key: 'name', label: t('s.habit') }, { key: 'target', label: t('s.target'), type: 'number', small: true }, { key: 'unit', label: t('s.habitUnit'), small: true }], () => {}, t('s.addHabit')),
+      saveRow(() => { const s = latest(); s.habits = list.filter(x => String(x.name || '').trim()); saveAnd(s); })));
+  }
+  function slotsSheet() {
+    const list = clone(S.settings.mealSlots);
+    openSheet(t('s.slots'), h('div', null, listEditor(list, [{ key: 'name', label: t('s.slotName') }], () => {}, t('s.addSlot')),
+      saveRow(() => { const s = latest(); s.mealSlots = list.filter(x => String(x.name || '').trim()); saveAnd(s); })));
   }
 
   /* meals */
@@ -259,19 +411,24 @@
 
   /* training */
   function trainingList() {
-    const st = S.settings, d = S.day;
+    const st = S.settings, d = S.day, isToday = S.date === today(), past = S.date < today(), now = nowMin();
     const planned = SC.plannedFor(st, dow(S.date));
     const loggedTypes = new Set(d.sessions.map(s => s.typeId));
     const rows = [];
-    planned.filter(p => !loggedTypes.has(p.type.id)).forEach(p => rows.push(h('div', { class: 'sess' },
-      h('div', { class: 'sess-main' }, h('div', { class: 'sess-name' }, p.type.name, p.block.start ? h('small', { class: 'muted' }, ' ' + fmtTime(p.block.start)) : null), h('div', { class: 'muted small' }, t('t.planned', { min: p.minutes, kcal: fmt(p.kcal) }))),
-      h('div', { class: 'sess-actions' }, p.type.plan.length ? h('button', { class: 'btn small primary', onclick: () => sessionSheet(newSession(p.type, p.minutes, p.kcal), true) }, t('t.log')) : null,
-        h('button', { class: 'btn small', onclick: () => markDone(p.type, p.minutes, p.kcal) }, t('t.markDone'))))));
-    d.sessions.forEach(s => rows.push(h('div', { class: 'sess done' },
+    planned.filter(p => !loggedTypes.has(p.type.id)).forEach(p => {
+      const a = SC.hm(p.block.start), late = !past && isToday && a != null && a + (SC.duration(p.block) || 0) <= now;
+      rows.push(h('div', { class: 'sess', style: { '--kc': kindColor(p.type.kind) } },
+        h('div', { class: 'sess-main' }, h('div', { class: 'sess-name' }, p.type.name, p.block.start ? h('small', { class: 'muted' }, ' ' + fmtTime(p.block.start)) : null,
+          past ? h('span', { class: 'tag st-miss' }, t('t.missed')) : late ? h('span', { class: 'tag st-close' }, t('t.notLogged')) : null),
+          h('div', { class: 'muted small' }, t('t.planned', { min: p.minutes, kcal: fmt(p.kcal) }))),
+        h('div', { class: 'sess-actions' }, p.type.plan.length ? h('button', { class: 'btn small primary', onclick: () => sessionSheet(newSession(p.type, p.minutes, p.kcal), true) }, t('t.log')) : null,
+          h('button', { class: 'btn small', onclick: () => markDone(p.type, p.minutes, p.kcal) }, t('t.markDone')))));
+    });
+    d.sessions.forEach(s => rows.push(h('div', { class: 'sess done', style: { '--kc': kindColor(s.kind) } },
       h('div', { class: 'sess-main' }, h('div', { class: 'sess-name' }, s.name),
         h('div', { class: 'muted small' }, `${kindName(s.kind)} · ${num(s.minutes)} ${t('c.min')} · ${fmt(s.kcal)} kcal` + (s.sets && s.sets.length ? ` · ${t('t.setsCount', { n: s.sets.length })}` : '') + (s.notes ? ` · ${s.notes}` : ''))),
       h('div', { class: 'sess-actions' }, h('button', { class: 'btn small', onclick: () => sessionSheet(s, false) }, t('t.details')),
-        h('button', { class: 'btn ghost icon', 'aria-label': t('c.remove'), onclick: () => removeSession(s.id) }, '\u00d7')))));
+        h('button', { class: 'btn ghost icon', 'aria-label': t('c.remove'), onclick: () => removeSession(s.id) }, '×')))));
     if (!rows.length) rows.push(h('p', { class: 'empty' }, t('t.nothingScheduled')));
     return h('div', { class: 'list' }, rows);
   }
@@ -361,7 +518,8 @@
   }
   function bodyBlock() {
     const d = S.day, u = unit();
-    const w = h('input', { type: 'number', step: '0.1', inputmode: 'decimal', placeholder: u, value: d.weight == null ? '' : d.weight, onchange: e => { d.weight = e.target.value === '' ? null : num(e.target.value); saveDay(); } });
+    const last = store.list('days').filter(x => (x.date || x.id) < S.date && x.weight != null).sort((a, b) => (a.date || a.id) < (b.date || b.id) ? 1 : -1)[0];
+    const w = h('input', { type: 'number', step: '0.1', inputmode: 'decimal', placeholder: last ? t('t.lastWeight', { w: fmt1(last.weight) + ' ' + u }) : u, value: d.weight == null ? '' : d.weight, onchange: e => { d.weight = e.target.value === '' ? null : num(e.target.value); saveDay(); } });
     const n = h('textarea', { placeholder: t('t.notesPh'), value: d.note || '', onchange: e => { d.note = e.target.value; saveDay(); } });
     const has = Object.keys(d.measures).length;
     const meas = h('details', { class: 'inline', open: has ? true : null }, h('summary', null, t('t.measures'), h('small', { class: 'muted' }, ' ' + t('t.measuresSub'))),
@@ -380,7 +538,7 @@
       if (st.wave.pattern.length) body.append(h('div', { class: 'wave' }, st.wave.pattern.map((ph, i) => h('div', { class: 'wave-cell' + (wave && wave.week === i + 1 ? ' on' : '') }, h('b', null, i + 1), h('span', null, t('pl.' + ph))))),
         h('p', { class: 'muted small' }, wave ? t('pl.cycle', { n: wave.cycle }) + ' · ' + waveLabel(wave) : t('pl.waveStarts', { d: st.wave.start ? fmtShort(st.wave.start) : '—' })));
       if (st.gates.length) body.append(h('div', { class: 'gates' }, st.gates.map(g => S.planEdit
-        ? h('label', { class: 'field' }, h('span', null, g.name), h('select', { onchange: e => { const s = clone(st); s.gates.find(x => x.id === g.id).current = +e.target.value; saveSettingsNow(s); render(); toast(t('c.saved')); } }, g.stages.map((sname, i) => h('option', { value: i + 1, selected: g.current === i + 1 }, sname))))
+        ? h('label', { class: 'field' }, h('span', null, g.name), h('select', { onchange: e => { const s = latest(), x = s.gates.find(y => y.id === g.id); if (!x) return; x.current = +e.target.value; saveSettingsNow(s); render(); toast(t('c.saved')); } }, g.stages.map((sname, i) => h('option', { value: i + 1, selected: g.current === i + 1 }, sname))))
         : h('span', { class: 'chip small on' }, `${g.name} · ${g.stages[g.current - 1] || g.current}`))));
       wrap.append(section(t('pl.wave'), st.gates.length ? t('pl.gatesSub') : null, body));
     }
@@ -430,7 +588,7 @@
       type ? h('div', null, h('p', { class: 'muted small' }, `${kindName(type.kind)} · ${num(type.minutes)} ${t('c.min')} · ${fmt(type.kcal)} kcal`), type.plan.length ? h('button', { class: 'btn small', onclick: () => workoutSheet(type) }, t('pl.viewWorkout')) : null) : null,
       routine ? h('div', { class: 'list' }, routine.items.map(it => { const ex = exFor(it); return h('div', { class: 'row pick' }, ex ? thumb(ex.image, 'thumb sm') : null, h('span', { class: 'row-name' }, ex ? h('button', { class: 'linkish', onclick: () => exerciseCard(ex) }, it.name) : it.name), it.target ? h('span', { class: 'row-target' }, it.target) : null); })) : null,
       S.planEdit ? h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: () => blockForm(b) }, t('c.edit')),
-        h('button', { class: 'btn ghost danger', onclick: () => { const s = clone(st); s.calendar = s.calendar.filter(x => x.id !== b.id); saveSettingsNow(s); closeSheet(); render(); } }, t('c.delete'))) : null);
+        h('button', { class: 'btn ghost danger', onclick: () => { const s = latest(); s.calendar = s.calendar.filter(x => x.id !== b.id); saveSettingsNow(s); closeSheet(); render(); } }, t('c.delete'))) : null);
     openSheet(SC.blockTitle(b, st) || t('pl.' + b.kind), body);
   }
   function blockForm(b) {
@@ -452,7 +610,7 @@
       textField(t('f.note'), d, 'note', null, t('c.optional')),
       h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => {
         if (!d.days.length) { toast(t('pl.needDay')); return; }
-        const s = clone(st); const i = s.calendar.findIndex(x => x.id === d.id); if (i >= 0) s.calendar[i] = d; else s.calendar.push(d);
+        const s = latest(); const i = s.calendar.findIndex(x => x.id === d.id); if (i >= 0) s.calendar[i] = d; else s.calendar.push(d);
         saveSettingsNow(s); closeSheet(); render(); toast(t('c.saved'));
       } }, t('c.save')))));
   }
@@ -536,17 +694,17 @@
       h('div', { class: 'actions' },
         h('button', { class: 'btn primary', onclick: () => {
           if (!String(d.name).trim()) { toast(t('t.needName')); return; }
-          const s = clone(S.settings), out = { ...d, minutes: num(d.minutes), kcal: num(d.kcal) }, i = type ? s.sessionTypes.findIndex(x => x.id === type.id) : -1;
+          const s = latest(), out = { ...d, minutes: num(d.minutes), kcal: num(d.kcal) }, i = type ? s.sessionTypes.findIndex(x => x.id === type.id) : -1;
           if (!out.id) out.id = U.slug(out.name);
           if (i >= 0) s.sessionTypes[i] = out; else s.sessionTypes.push(out);
           saveAnd(s);
         } }, t('c.save')),
-        type ? h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(type.name, t('l.deleteWorkout', { name: type.name }), () => { const s = clone(S.settings); s.sessionTypes = s.sessionTypes.filter(x => x.id !== type.id); saveAnd(s); }) }, t('c.delete')) : null)), { wide: true });
+        type ? h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(type.name, t('l.deleteWorkout', { name: type.name }), () => { const s = latest(); s.sessionTypes = s.sessionTypes.filter(x => x.id !== type.id); saveAnd(s); }) }, t('c.delete')) : null)), { wide: true });
   }
   function kindsSheet() {
     const kinds = clone(S.settings.sessionKinds);
     openSheet(t('s.kinds'), h('div', null, listEditor(kinds, [{ key: 'name', label: t('s.kind') }], () => {}, t('s.addKind')),
-      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => { const s = clone(S.settings); s.sessionKinds = kinds.filter(k => String(k.name || '').trim()); saveAnd(s); } }, t('c.save')))));
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => { const s = latest(); s.sessionKinds = kinds.filter(k => String(k.name || '').trim()); saveAnd(s); } }, t('c.save')))));
   }
   function waveSheet() {
     const w = { start: S.settings.wave.start || '', pattern: S.settings.wave.pattern.join(', ') };
@@ -555,7 +713,7 @@
         h('label', { class: 'field' }, h('span', null, t('s.waveStart')), h('input', { type: 'date', value: w.start, onchange: e => { w.start = e.target.value; } })),
         h('label', { class: 'field' }, h('span', null, t('s.wavePattern')), h('input', { type: 'text', value: w.pattern, placeholder: 'ramp, ramp, full, deload', oninput: e => { w.pattern = e.target.value; } }))),
       h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => {
-        const s = clone(S.settings);
+        const s = latest();
         s.wave = { start: w.start || null, pattern: w.pattern.split(',').map(x => x.trim().toLowerCase()).filter(x => SC.WAVE.includes(x)) };
         saveAnd(s);
       } }, t('c.save')))));
@@ -563,7 +721,7 @@
   function gatesSheet() {
     const draft = { gates: clone(S.settings.gates) };
     openSheet(t('s.gates'), h('div', null, h('p', { class: 'muted small' }, t('s.gatesSub')), gatesEditor(draft, () => {}),
-      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => { const s = clone(S.settings); s.gates = draft.gates.filter(g => String(g.name || '').trim()); saveAnd(s); } }, t('c.save')))));
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => { const s = latest(); s.gates = draft.gates.filter(g => String(g.name || '').trim()); saveAnd(s); } }, t('c.save')))));
   }
   function routinesTab() {
     const st = S.settings;
@@ -584,12 +742,12 @@
       h('div', { class: 'actions' },
         h('button', { class: 'btn primary', onclick: () => {
           if (!String(d.name).trim()) { toast(t('t.needName')); return; }
-          const s = clone(S.settings), i = r ? s.routines.findIndex(x => x.id === r.id) : -1;
+          const s = latest(), i = r ? s.routines.findIndex(x => x.id === r.id) : -1;
           if (!d.id) d.id = U.slug(d.name);
           if (i >= 0) s.routines[i] = d; else s.routines.push(d);
           saveAnd(s);
         } }, t('c.save')),
-        r ? h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(r.name, t('l.deleteRoutine', { name: r.name }), () => { const s = clone(S.settings); s.routines = s.routines.filter(x => x.id !== r.id); saveAnd(s); }) }, t('c.delete')) : null)), { wide: true });
+        r ? h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(r.name, t('l.deleteRoutine', { name: r.name }), () => { const s = latest(); s.routines = s.routines.filter(x => x.id !== r.id); saveAnd(s); }) }, t('c.delete')) : null)), { wide: true });
   }
   /* meal templates, saved from Today; shown above the foods only when there are some */
   function templatesBlock() {
@@ -646,11 +804,11 @@
         h('button', { class: 'btn primary', onclick: () => {
           if (!d.name.trim()) { toast(t('t.needName')); return; }
           d.gate = g.id ? { id: g.id, at: num(g.at) || 1 } : null;
-          const s = clone(st); if (!d.id) d.id = U.slug(d.name); const i = s.exercises.findIndex(x => x.id === d.id);
+          const s = latest(); if (!d.id) d.id = U.slug(d.name); const i = s.exercises.findIndex(x => x.id === d.id);
           if (i >= 0) s.exercises[i] = d; else s.exercises.push(d);
           saveSettingsNow(s); closeSheet(); render(); toast(t('c.saved'));
         } }, t('c.save')),
-        ex ? h('button', { class: 'btn ghost danger', onclick: () => { const s = clone(st); s.exercises = s.exercises.filter(x => x.id !== ex.id); saveSettingsNow(s); closeSheet(); render(); } }, t('c.delete')) : null)));
+        ex ? h('button', { class: 'btn ghost danger', onclick: () => { const s = latest(); s.exercises = s.exercises.filter(x => x.id !== ex.id); saveSettingsNow(s); closeSheet(); render(); } }, t('c.delete')) : null)));
   }
   function foodsBlock() {
     const box = h('div');
@@ -760,13 +918,14 @@
   function viewProgress() {
     const st = S.settings, wrap = h('div', { class: 'page' }), u = unit();
     wrap.append(weekReview());
-    const goalText = st.goal.weight ? t('p.toward', { w: st.goal.weight, u }) + (st.goal.bodyFat ? ' ' + t('p.atBf', { bf: st.goal.bodyFat }) : '') : t('p.setGoal');
-    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('p.title')), h('div', { class: 'sub' }, goalText + (st.goal.note ? ' · ' + st.goal.note : '')))));
+    const goalText = st.goal.weight ? t('p.toward', { w: st.goal.weight, u }) + (st.goal.bodyFat ? ' ' + t('p.atBf', { bf: st.goal.bodyFat }) : '') : t('p.noGoal');
+    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('p.title')), h('div', { class: 'sub' }, goalText + (st.goal.note ? ' · ' + st.goal.note : ''))),
+      editBtn(goalSheet, st.goal.weight ? t('p.editGoal') : t('p.setGoalBtn'))));
     const r = st.rank;
     if (r.enabled) {
       const phase = phaseFor(r.sublevel, r.phases), next = r.phases.find(p => p.minSublevel > r.sublevel);
       const sub = r.maxSublevel > 0 ? ` · ${r.sublevel} ${r.sublevelName}` : '';
-      wrap.append(section(r.system || t('p.rank'), null, h('div', null, svg(rankSVG(r)),
+      wrap.append(section(r.system || t('p.rank'), h('div', { class: 'head-r' }, h('button', { class: 'btn small', onclick: promote }, t('s.promoted')), editBtn(rankSheet)), h('div', null, svg(rankSVG(r)),
         h('p', null, `${r.level || t('p.unranked')}${sub}` + (phase ? ` · ${phase.name}` : '') + (next ? ` · ${t('p.phaseAt', { phase: next.name, n: next.minSublevel, sub: r.sublevelName })}` : '')),
         r.history.length ? h('p', { class: 'muted small' }, t('p.history') + ': ' + r.history.slice().sort((a, b) => a.date < b.date ? -1 : 1).map(x => `${x.level}${x.sublevel != null ? ' ' + x.sublevel : ''} · ${fmtShort(x.date)}`).join(', ')) : null)));
     }
@@ -804,8 +963,9 @@
     }
     wrap.append(section(t('p.bodyweight'), t('p.last90'), box));
     const measured = allDays().filter(d => Object.keys(d.measures).length);
-    if (measured.length || st.goal.milestones.length) {
+    {
       const mbox = h('div');
+      if (!measured.length && !st.goal.milestones.length) mbox.append(h('p', { class: 'empty' }, t('p.noBodyComp')));
       if (measured.length) {
         const latest = measured[measured.length - 1], first = measured[0];
         mbox.append(h('div', { class: 'stats' }, SC.MEASURES.filter(k => latest.measures[k] != null).map(k => { const f = measured.find(d => d.measures[k] != null); const dlt = f && f !== latest ? latest.measures[k] - f.measures[k] : null; return statCard(fmt1(latest.measures[k]), t('m.' + k), dlt == null ? fmtShort(latest.date) : `${dlt >= 0 ? '+' : ''}${fmt1(dlt)} · ${fmtShort(f.date)}`); })));
@@ -813,7 +973,7 @@
         if (waist.length > 1) mbox.append(h('div', { class: 'subhead' }, t('m.waist')), svg(trend(waist, { label: t('m.waist') })));
       }
       if (st.goal.milestones.length) mbox.append(h('div', { class: 'subhead' }, t('p.milestones')), h('table', { class: 'plain' }, h('tbody', null, st.goal.milestones.map(m => h('tr', null, h('td', null, m.label), h('td', { class: 'n' }, m.bodyFat != null ? `${m.bodyFat}%` : ''), h('td', { class: 'n muted' }, m.weight != null ? `${m.weight} ${u}` : ''), h('td', { class: 'n muted' }, m.lean != null ? `${m.lean} / ${m.fat != null ? m.fat : '–'}` : ''))))));
-      wrap.append(section(t('p.bodyComp'), t('p.bodyCompSub'), mbox));
+      wrap.append(section(t('p.bodyComp'), editBtn(milestonesSheet, t('p.editMilestones')), mbox));
     }
     const weeks = [...Array(8)].map((_, i) => weekStart(addDays(today(), -7 * (7 - i))));
     const tw = weeks.map(ws => { const we = addDays(ws, 6); const mins = all.filter(d => d.date >= ws && d.date <= we).flatMap(d => d.sessions.filter(s => s.done !== false)).reduce((a, s) => a + num(s.minutes), 0); return { label: fmtShort(ws), value: mins, color: 'var(--blue)' }; });
@@ -822,29 +982,44 @@
       const map = {}; all.forEach(d => { if (Object.keys(d.habits).length || d.meals.length || d.sessions.length) map[d.date] = habitsDone(d) / habTot; });
       wrap.append(section(t('p.habitsHeat'), null, svg(heat(map, 12, today()))));
     }
+    if (!r.enabled) wrap.append(h('div', { class: 'actions center' }, h('button', { class: 'btn ghost small', onclick: () => rankSheet(true) }, t('p.trackRank'))));
     return wrap;
+  }
+  function goalSheet() {
+    const g = clone(S.settings.goal), u = unit(), band = { lo: g.band ? g.band[0] : null, hi: g.band ? g.band[1] : null };
+    openSheet(t('s.goal'), h('div', null,
+      h('div', { class: 'grid2' }, numField(t('s.goalWeight', { u }), g, 'weight'), numField(t('s.goalBf'), g, 'bodyFat')),
+      h('div', { class: 'grid2' }, numField(t('s.bandLo', { u }), band, 'lo'), numField(t('s.bandHi', { u }), band, 'hi')),
+      h('p', { class: 'muted small' }, t('s.bandHelp')),
+      textField(t('s.goalNote'), g, 'note'),
+      saveRow(() => { const s = latest(); s.goal = { ...s.goal, weight: g.weight, bodyFat: g.bodyFat, note: g.note, band: band.lo != null && band.hi != null ? [band.lo, band.hi] : null }; saveAnd(s); })));
+  }
+  function milestonesSheet() {
+    const ms = clone(S.settings.goal.milestones), u = unit();
+    openSheet(t('p.milestones'), h('div', null, h('p', { class: 'muted small' }, t('s.milestonesSub')),
+      listEditor(ms, [{ key: 'label', label: t('s.milestone') }, { key: 'bodyFat', label: '% ' + t('c.fat'), type: 'number', small: true }, { key: 'weight', label: u, type: 'number', small: true }], () => {}, t('s.addMilestone')),
+      saveRow(() => { const s = latest(); s.goal.milestones = ms.filter(m => String(m.label || '').trim() || m.bodyFat != null || m.weight != null); saveAnd(s); })));
+  }
+  function rankSheet(turnOn) {
+    const draft = { rank: clone(S.settings.rank) };
+    if (turnOn === true) draft.rank.enabled = true;
+    openSheet(t('s.rank'), h('div', null, h('p', { class: 'muted small' }, t('s.rankSub')), rankEditor(draft, () => {}),
+      saveRow(() => { const s = latest(); s.rank = draft.rank; saveAnd(s); })), { wide: true });
+  }
+  /* one more stripe (or whatever the sub-level is called), dated today; undo puts the rank back */
+  function promote() {
+    const s = latest(), before = clone(s.rank), r = s.rank;
+    r.sublevel = num(r.sublevel) + 1; r.history.push({ id: uid(), date: today(), level: r.level, sublevel: r.sublevel });
+    saveSettingsNow(s); render();
+    toast(t('s.recorded', { level: r.level, n: r.sublevel }), { action: t('c.undo'), onAction: () => { const b = latest(); b.rank = before; saveSettingsNow(b); render(); } });
   }
 
   /* ---------- Settings ---------- */
+  /* Only what applies to the whole profile or app. Everything else is edited on the page that shows it. Saves at once. */
   function viewSettings() {
-    const draft = (S.settingsDirty && S.settingsDraft) ? S.settingsDraft : clone(S.settings);
-    S.settingsDraft = draft;
     const wrap = h('div', { class: 'page settings' });
-    const saveBar = h('div', { class: 'savebar' + (S.settingsDirty ? ' show' : '') }, h('span', null, t('s.unsaved')), h('button', { class: 'btn primary', onclick: saveSettings }, t('c.save')));
-    const dirty = () => { S.settingsDirty = true; saveBar.classList.add('show'); };
-    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('s.title')), h('div', { class: 'sub' }, t('s.inLibrary')))));
-    wrap.append(section(t('s.profile'), null, h('div', { class: 'grid2' }, textField(t('c.name'), draft, 'name', dirty, t('c.optional')), selectField(t('s.unit'), draft.units, 'weight', [{ value: 'lb', label: t('s.lb') }, { value: 'kg', label: t('s.kg') }], dirty))));
-    wrap.append(section(t('s.targets'), null, h('div', { class: 'grid2' }, numField(t('s.calories'), draft.targets, 'kcal', dirty), numField(t('s.proteinG'), draft.targets, 'protein', dirty), numField(t('s.carbsG'), draft.targets, 'carbs', dirty), numField(t('s.fatG'), draft.targets, 'fat', dirty))));
-    const band = { lo: draft.goal.band ? draft.goal.band[0] : null, hi: draft.goal.band ? draft.goal.band[1] : null };
-    const bandUpd = () => { draft.goal.band = band.lo != null && band.hi != null ? [band.lo, band.hi] : null; dirty(); };
-    wrap.append(section(t('s.goal'), null, h('div', null, h('div', { class: 'grid2' }, numField(t('s.goalWeight', { u: draft.units.weight }), draft.goal, 'weight', dirty), numField(t('s.goalBf'), draft.goal, 'bodyFat', dirty)),
-      h('div', { class: 'grid2' }, numField(t('s.bandLo', { u: draft.units.weight }), band, 'lo', bandUpd), numField(t('s.bandHi', { u: draft.units.weight }), band, 'hi', bandUpd)),
-      textField(t('s.goalNote'), draft.goal, 'note', dirty),
-      h('div', { class: 'subhead' }, t('p.milestones'), ' ', helpTip(t('s.milestonesSub'))),
-      listEditor(draft.goal.milestones, [{ key: 'label', label: t('s.milestone') }, { key: 'bodyFat', label: '% ' + t('c.fat'), type: 'number', small: true }, { key: 'weight', label: draft.units.weight, type: 'number', small: true }], dirty, t('s.addMilestone')))));
-    wrap.append(section(t('s.slots'), null, listEditor(draft.mealSlots, [{ key: 'name', label: t('s.slotName') }], dirty, t('s.addSlot'))));
-    wrap.append(section(t('s.habits'), t('s.habitsSub'), listEditor(draft.habits, [{ key: 'name', label: t('s.habit') }, { key: 'target', label: t('s.target'), type: 'number', small: true }, { key: 'unit', label: t('s.habitUnit'), small: true }], dirty, t('s.addHabit'))));
-    wrap.append(section(t('s.rank'), t('s.rankSub'), rankEditor(draft, dirty)));
+    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('s.title')), h('div', { class: 'sub' }, t('s.sub')))));
+    wrap.append(section(t('s.profile'), null, profileBlock()));
     wrap.append(section(t('s.app'), null, appBlock()));
     wrap.append(syncCard());
     wrap.append(section(t('s.data'), h('small', { class: 'storedin' }, storedInText()), h('div', { class: 'actions' },
@@ -852,8 +1027,37 @@
       h('button', { class: 'btn', onclick: () => openSheet(t('i.title'), importPanel(() => { closeSheet(); render(); }), { wide: true }) }, t('s.import')),
       h('a', { class: 'btn', href: '#start' }, t('nav.start')),
       h('button', { class: 'btn danger', onclick: () => confirmSheet(t('s.erase'), t('s.eraseConfirm') + cloudNote(), t('s.eraseBtn'), async () => { await store.eraseProfile(); hydrate(); location.hash = '#start'; render(); updateSyncUI(); toast(t('s.erased')); }, t('c.cancel')) }, t('s.erase')))));
-    wrap.append(saveBar);
     return wrap;
+  }
+  /* this profile's name and weight unit, then the other profiles on this device */
+  function profileBlock() {
+    const prof = store.currentProfile(), list = h('div', { class: 'list' });
+    const name = h('input', { type: 'text', value: prof.name || '', placeholder: t('c.optional'), onchange: e => { store.renameProfile(prof.id, e.target.value.trim()); refreshProfileButton(); drawList(); flashSaved(); } });
+    const unitSel = h('select', { onchange: e => changeUnit(e.target.value) }, [['lb', t('s.lb')], ['kg', t('s.kg')]].map(([v, l]) => h('option', { value: v, selected: v === unit() }, l)));
+    const drawList = () => {
+      const profs = store.profiles(), cur = store.currentProfile().id;
+      list.replaceChildren(...profs.map(p => h('div', { class: 'row pick' },
+        h('div', { class: 'row-name' }, p.name || t('s.profile'), p.id === cur ? h('span', { class: 'badge' }, t('s.current')) : null),
+        p.id !== cur ? h('button', { class: 'btn small', onclick: () => switchProfile(p.id) }, t('s.switch')) : null,
+        profs.length > 1 ? h('button', { class: 'btn ghost icon', 'aria-label': t('s.deleteProfile'), onclick: () => confirmSheet(t('s.deleteProfile'), t('s.deleteProfileConfirm', { name: p.name || t('s.profile') }) + cloudNote(p.id), t('c.delete'), async () => { const was = store.currentProfile().id; await store.deleteProfile(p.id); hydrate(); rerenderAll(); if (store.currentProfile().id !== was) MB.sync.profileChanged(); }, t('c.cancel')) }, '×') : null)));
+    };
+    drawList();
+    return h('div', null,
+      h('div', { class: 'grid2' }, h('label', { class: 'field' }, h('span', null, t('s.profileName')), name), h('label', { class: 'field' }, h('span', null, t('s.unit')), unitSel)),
+      h('div', { class: 'subhead' }, t('s.profiles')), h('p', { class: 'muted small' }, t('s.profilesSub')), list,
+      h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => newProfileSheet() }, t('s.addProfile'))));
+  }
+  /* switching units converts the goal and every logged weight, so the numbers keep meaning the same */
+  function changeUnit(to) {
+    const from = unit(); if (to === from) return;
+    const s = latest(); s.units.weight = to;
+    if (s.goal.weight != null) s.goal.weight = SC.convertWeight(s.goal.weight, from, to);
+    if (s.goal.band) s.goal.band = s.goal.band.map(v => SC.convertWeight(v, from, to));
+    s.goal.milestones = s.goal.milestones.map(m => ({ ...m, weight: SC.convertWeight(m.weight, from, to) }));
+    const ups = store.list('days').filter(d => d.weight != null).map(d => { const { id, ...rest } = d; return ['days/' + (d.date || id), { ...rest, weight: SC.convertWeight(num(d.weight), from, to), updatedAt: store.stamp() }]; });
+    if (ups.length) store.bulk({ upserts: ups });
+    saveSettingsNow(s); loadDay(S.date);
+    toast(ups.length ? t('s.converted', { n: ups.length, u: to }) : t('c.saved'));
   }
   function gatesEditor(draft, dirty) {
     const box = h('div', { class: 'editor' });
@@ -869,16 +1073,7 @@
   function appBlock() {
     const langSel = h('select', { onchange: e => { I.set(e.target.value); rerenderAll(); } }, Object.entries(I.LANGS).map(([c, n]) => h('option', { value: c, selected: c === I.lang }, n)));
     const themeSeg = segmented([{ value: 'auto', label: t('s.followDevice') }, { value: 'light', label: t('s.light') }, { value: 'dark', label: t('s.dark') }], themePref(), applyTheme);
-    const profs = store.profiles(), cur = store.currentProfile().id;
-    const list = h('div', { class: 'list' }, profs.map(p => h('div', { class: 'row pick' },
-      h('div', { class: 'row-name' }, p.name || t('s.profile'), p.id === cur ? h('span', { class: 'badge' }, t('s.current')) : null),
-      h('button', { class: 'btn small', onclick: () => { const d = { name: p.name }; openSheet(t('s.rename'), h('div', null, textField(t('s.profileName'), d, 'name'), h('button', { class: 'btn primary', onclick: () => { store.renameProfile(p.id, d.name); closeSheet(); rerenderAll(); } }, t('c.save')))); } }, t('s.rename')),
-      p.id !== cur ? h('button', { class: 'btn small', onclick: () => switchProfile(p.id) }, t('s.switch')) : null,
-      profs.length > 1 ? h('button', { class: 'btn ghost icon', 'aria-label': t('s.deleteProfile'), onclick: () => confirmSheet(t('s.deleteProfile'), t('s.deleteProfileConfirm', { name: p.name || t('s.profile') }) + cloudNote(p.id), t('c.delete'), async () => { const was = store.currentProfile().id; await store.deleteProfile(p.id); hydrate(); rerenderAll(); if (store.currentProfile().id !== was) MB.sync.profileChanged(); }, t('c.cancel')) }, '\u00d7') : null)));
-    return h('div', null,
-      h('div', { class: 'grid2' }, h('label', { class: 'field' }, h('span', null, t('s.language')), langSel), h('div', { class: 'field' }, h('span', null, t('s.theme')), themeSeg)),
-      h('div', { class: 'subhead' }, t('s.profiles')), h('p', { class: 'muted small' }, t('s.profilesSub')), list,
-      h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => newProfileSheet() }, t('s.addProfile'))));
+    return h('div', { class: 'grid2 stack' }, h('label', { class: 'field' }, h('span', null, t('s.language')), langSel), h('div', { class: 'field' }, h('span', null, t('s.theme')), themeSeg));
   }
   function newProfileSheet(onCreated) {
     const d = { name: '' };
@@ -904,30 +1099,10 @@
       h('div', { class: 'subhead' }, t('s.phases'), ' ', helpTip(t('s.phasesSub'))),
       listEditor(r.phases, [{ key: 'name', label: t('s.phaseName') }, { key: 'minSublevel', label: t('s.from'), type: 'number', small: true }], dirty, t('s.addPhase')),
       h('div', { class: 'subhead' }, t('s.history')),
-      listEditor(r.history, [{ key: 'date', label: 'Date', type: 'date' }, { key: 'level', label: t('s.currentLevel') }, { key: 'sublevel', label: '#', type: 'number', small: true }], dirty, t('s.addPromotion')),
-      h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => { r.sublevel = num(r.sublevel) + 1; r.history.push({ id: uid(), date: today(), level: r.level, sublevel: r.sublevel }); dirty(); render(); toast(t('s.recorded', { level: r.level, n: r.sublevel })); } }, t('s.promoted'))));
+      listEditor(r.history, [{ key: 'date', label: 'Date', type: 'date' }, { key: 'level', label: t('s.currentLevel') }, { key: 'sublevel', label: '#', type: 'number', small: true }], dirty, t('s.addPromotion')));
     box.append(h('label', { class: 'row noline' }, h('input', { type: 'checkbox', checked: !!r.enabled, onchange: e => { r.enabled = e.target.checked; body.style.display = r.enabled ? 'block' : 'none'; dirty(); } }), h('span', { class: 'row-name' }, t('s.showRank'))), body);
     return box;
   }
-  /* Settings owns only these fields; everything else (workouts, routines, exercises...) is saved from Library, so a
-     draft opened earlier never overwrites those */
-  const SETTINGS_FIELDS = ['name', 'units', 'targets', 'goal', 'mealSlots', 'habits', 'rank'];
-  function saveSettings() {
-    const prevUnit = S.settings.units.weight, next = clone(S.settings);
-    SETTINGS_FIELDS.forEach(k => { next[k] = clone(S.settingsDraft[k]); });
-    const merged = SC.normalizeSettings(next);
-    merged.updatedAt = store.stamp();
-    if (merged.units.weight !== prevUnit) {
-      const from = prevUnit, to = merged.units.weight;
-      if (merged.goal.weight != null) merged.goal.weight = SC.convertWeight(merged.goal.weight, from, to);
-      if (merged.goal.band) merged.goal.band = merged.goal.band.map(v => SC.convertWeight(v, from, to));
-      const ups = store.list('days').filter(d => d.weight != null).map(d => { const { id, ...rest } = d; return ['days/' + (d.date || id), { ...rest, weight: SC.convertWeight(num(d.weight), from, to), updatedAt: store.stamp() }]; });
-      if (ups.length) { store.bulk({ upserts: ups }); toast(t('s.converted', { n: ups.length, u: to })); }
-    }
-    S.settings = merged; S.settingsDirty = false; S.settingsDraft = null;
-    store.setDoc('settings/main', merged); flashSaved(); loadDay(S.date); render(); toast(t('c.saved'));
-  }
-
   /* ---------- Sync: status dot, Settings card, changes from other devices and tabs ---------- */
   const syncStateText = st => st.state === 'pending' ? t('sy.st.pending', { n: st.pending }) : t('sy.st.' + st.state);
   function syncErrorText(e) {
@@ -1073,7 +1248,7 @@
     wrap.append(h('div', { class: 'tiles' },
       h('button', { class: 'tile', onclick: () => hasData ? confirmSheet(t('g.example'), t('g.replaceExample'), t('g.example'), loadExample, t('c.cancel')) : loadExample() }, h('b', null, t('g.example')), h('span', null, t('g.exampleSub'))),
       h('button', { class: 'tile', onclick: () => { const p = $('#importpanel'); if (p) p.scrollIntoView({ behavior: 'smooth' }); } }, h('b', null, t('g.import')), h('span', null, t('i.helpMerge'))),
-      h('a', { class: 'tile', href: '#settings' }, h('b', null, t('g.blank')), h('span', null, t('s.title')))));
+      h('a', { class: 'tile', href: '#today' }, h('b', null, t('g.blank')), h('span', null, t('g.blankSub')))));
     wrap.append(section(t('g.install'), null, h('div', null, h('p', { class: 'muted' }, t('g.installSub')), h('ul', { class: 'plain' }, h('li', null, t('g.installIos')), h('li', null, t('g.installAndroid')), h('li', null, t('g.installDesktop'))))));
     const panel = importPanel(() => render()); panel.id = 'importpanel';
     wrap.append(section(t('i.title'), null, panel));
@@ -1200,7 +1375,14 @@
     sun: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>',
     moon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg>',
     user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>',
-    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>',
+    /* card icons */
+    s_plan: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
+    s_meals: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v6a2 2 0 0 0 4 0V3M8 11v10M17 21V3c-2.2 1.2-3 3.6-3 7v3h3"/></svg>',
+    s_habits: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></svg>',
+    s_checklists: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6.5h10M10 12h10M10 17.5h10M4 6.5l1.2 1.2L7.5 5.3M4 12l1.2 1.2 2.3-2.4M4 17.5l1.2 1.2 2.3-2.4"/></svg>',
+    s_training: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg>',
+    s_body: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 10.5a5 5 0 0 1 7 0M12 10.5l1.5-2"/></svg>'
   };
   const NAV = ['today', 'plan', 'progress', 'library', 'settings'], ROUTES = [...NAV, 'start'], ALIAS = { week: 'progress' };
   function shell() {
@@ -1268,7 +1450,11 @@
     setStatus(storageLabel(), '');
     render();
     window.addEventListener('hashchange', () => { const r = routeFromHash(); if (r !== S.route || r === 'library') { if (r !== 'plan') S.planEdit = false; S.route = r; closeSheet(); render(); window.scrollTo(0, 0); } });
-    let resizeTimer = null; window.addEventListener('resize', () => { if (S.route !== 'plan') return; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => { const cal = $('.calwrap'); if (cal) drawCalendar(cal); }, 150); });
+    let resizeTimer = null; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
+      if (S.route === 'plan') { const cal = $('.calwrap'); if (cal) drawCalendar(cal); }
+      if (S.route === 'today' && S.refs.wide !== wideLayout() && !U.sheetOpen() && !editing()) render();
+    }, 150); });
+    let minute = nowMin(); setInterval(() => { const m = nowMin(); if (m === minute) return; minute = m; if (S.route === 'today' && S.date === today()) drawTimeline(); }, 15000);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSheet(); });
     document.addEventListener('visibilitychange', () => { if (!document.hidden && S.openedOn !== today()) { const stale = S.date === S.openedOn; S.openedOn = today(); if (stale) { S.date = today(); loadDay(S.date); if (S.route === 'today') render(); } } });
     if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(themePref()));

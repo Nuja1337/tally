@@ -151,3 +151,18 @@ MB.i18n.add('ja', {
   "l.everyDay": "毎日", "l.everyDayHint": "曜日を選ばない場合は毎日です。", "l.checklist": "チェックリスト",
   "l.items": ["項目","項目"], "l.templatesSub": "今日の画面から保存したものです。タップして編集できます。", "l.editTemplate": "テンプレートを編集"
 });
+
+/* edit in place, status colors */
+MB.i18n.add('ja', {
+  "t.onTarget": "目標達成", "t.toGo": "あと{n}", "t.overBy": "{n}オーバー",
+  "t.short": "{n}不足", "t.editTargets": "1日の目標を編集", "t.setTarget": "目標を設定",
+  "t.burnedLabel": "消費", "t.checklists": "チェックリスト", "t.now": "今",
+  "t.inTime": "{t}後", "t.notLogged": "まだ記録なし", "t.missed": "未実施",
+  "t.logSets": "セットを記録", "t.nextItem": "次：{name}", "t.addHabits": "習慣を追加",
+  "t.addSlots": "食事の枠を追加", "s.aim": "基準", "s.aim.min": "以上",
+  "s.aim.near": "だいたい (±10%)", "s.aim.max": "以下", "s.targetsHelp": "今日と進捗の合計は、これを満たすと緑になります。",
+  "t.lastWeight": "前回：{w}", "p.noGoal": "目標はまだありません", "p.editGoal": "目標を編集",
+  "p.setGoalBtn": "目標を設定", "p.noBodyComp": "今日の画面で採寸を記録するか、マイルストーンを追加してください。", "p.editMilestones": "マイルストーン",
+  "p.trackRank": "帯や段位を記録する", "s.bandHelp": "7日平均を収めたい範囲です。", "s.sub": "プロフィール、アプリ、同期、バックアップ。それ以外は表示されている場所で編集します。",
+  "g.blankSub": "各ページで少しずつ設定できます。"
+});

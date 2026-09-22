@@ -3,7 +3,8 @@
 A local-first training and nutrition log: meals, habits, routines, workouts with per-side logging, an ideal-week calendar, an exercise library with images and video, bodyweight, tape measurements and rank. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
 
 - Works offline once opened, installs to the home screen like an app
-- Five pages: Today, Plan (the ideal week), Progress, Library (workouts, routines, exercises, foods and meal templates), Settings (profile, targets, goal, habits, meal slots, rank, sync, data)
+- Five pages: Today, Plan (the ideal week), Progress, Library (workouts, routines, exercises, foods and meal templates), Settings (profile, language and theme, sync, data). Targets, habits and meal slots are edited on Today; goal, milestones and rank on Progress.
+- Totals turn green when a target is met, amber when close or not logged yet, red when a finished day fell short or went over
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
 - Light and dark themes
 - Several profiles on one device
@@ -120,7 +121,7 @@ One JSON object with optional sections. Paste just the part you are changing.
   "settings": {
     "name": "Sam",
     "units": { "weight": "lb" },
-    "targets": { "kcal": 2600, "protein": 170, "carbs": 0, "fat": 0 },
+    "targets": { "kcal": 2600, "protein": 170, "carbs": 0, "fat": 0, "aim": { "kcal": "near", "protein": "min", "carbs": "near", "fat": "near" } },
     "goal": { "weight": 180, "bodyFat": 12, "note": "", "band": [178, 182],
               "milestones": [{ "label": "Month 4", "bodyFat": 13.5, "weight": 181, "lean": 157, "fat": 24 }] },
     "mealSlots": ["Breakfast", "Lunch", "Dinner", "Snacks"],
@@ -130,7 +131,7 @@ One JSON object with optional sections. Paste just the part you are changing.
                     "gate": { "id": "wrist", "at": 3 } }],
     "routines": [{ "id": "morning", "name": "Morning mobility", "days": ["mon", "wed", "fri"], "alertAt": null, "alertText": "",
                    "items": [{ "name": "Cat-cow", "target": "10", "exerciseId": "cat-cow" }] }],
-    "sessionKinds": ["Strength", "Cardio"],
+    "sessionKinds": [{ "name": "Strength", "color": "blue" }, "Cardio"],
     "sessionTypes": [{ "id": "upper", "name": "Upper body", "kind": "strength", "minutes": 45, "kcal": 300,
                        "plan": [{ "label": "A", "items": [{ "exerciseId": "push-up", "sets": 4, "reps": "8-12", "rir": "1", "rest": "60 s" },
                                                           { "exerciseId": "one-arm-row", "sets": 4, "reps": "10-12", "perSide": true }] }] }],
@@ -157,6 +158,8 @@ One JSON object with optional sections. Paste just the part you are changing.
 Notes:
 
 - Ids are optional; they are derived from names (`Water` → `water`). Keep them stable if you edit files by hand.
+- `targets.aim` says how each total counts as met: `min` (at least the target), `near` (within 10%) or `max` (at most). Missing aims default to `near` for calories, carbs and fat and `min` for protein.
+- `sessionKinds[].color` is one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.
 - A habit with a `target` counts up (tap adds one); without one it is a checkbox. `day.habits` holds `true` or the count.
 - `routines[].days` limits a routine to those weekdays; empty or missing means every day. `alertAt` turns a routine into a check-in: when that many items are ticked, Today shows `alertText`.
 - `exercises[].image` can be a direct image or GIF link (shown inline) or any page (opened in a tab). `video` is a link. `perSide` logs left and right reps and flags a gap over 10%. `gate` hides nothing but marks the exercise locked until that gate reaches the stage `at`.

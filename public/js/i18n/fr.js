@@ -151,3 +151,18 @@ MB.i18n.add('fr', {
   "l.everyDay": "Tous les jours", "l.everyDayHint": "Aucun jour coché : tous les jours.", "l.checklist": "Liste",
   "l.items": ["élément","éléments"], "l.templatesSub": "Enregistrés depuis Aujourd'hui. Touchez-en un pour le modifier.", "l.editTemplate": "Modifier le modèle"
 });
+
+/* edit in place, status colors */
+MB.i18n.add('fr', {
+  "t.onTarget": "Objectif atteint", "t.toGo": "Encore {n}", "t.overBy": "{n} de trop",
+  "t.short": "{n} en dessous", "t.editTargets": "Modifier les objectifs quotidiens", "t.setTarget": "Fixer un objectif",
+  "t.burnedLabel": "Brûlées", "t.checklists": "Listes", "t.now": "Maintenant",
+  "t.inTime": "dans {t}", "t.notLogged": "Pas encore noté", "t.missed": "Manqué",
+  "t.logSets": "Noter les séries", "t.nextItem": "Suivant : {name}", "t.addHabits": "Ajouter des habitudes",
+  "t.addSlots": "Ajouter des créneaux de repas", "s.aim": "Cible", "s.aim.min": "Au moins",
+  "s.aim.near": "Environ (±10 %)", "s.aim.max": "Au plus", "s.targetsHelp": "Les totaux d’Aujourd’hui et de Progrès passent au vert quand ils les atteignent.",
+  "t.lastWeight": "Dernier : {w}", "p.noGoal": "Pas encore d’objectif", "p.editGoal": "Modifier l’objectif",
+  "p.setGoalBtn": "Fixer un objectif", "p.noBodyComp": "Notez vos mensurations dans Aujourd’hui, ou ajoutez des jalons.", "p.editMilestones": "Jalons",
+  "p.trackRank": "Suivre une ceinture ou un grade", "s.bandHelp": "La fourchette où doit rester votre moyenne sur 7 jours.", "s.sub": "Profil, app, synchro et sauvegardes. Le reste se modifie là où il s’affiche.",
+  "g.blankSub": "Configurez au fur et à mesure, sur chaque page."
+});

@@ -1,4 +1,4 @@
-// Library holds workouts, routines, exercises and foods; Settings keeps only profile-level setup.
+// Library holds workouts, routines, exercises and foods.
 import { describe, it, expect, afterEach } from 'vitest';
 import { openTab, waitFor } from './harness.js';
 
@@ -16,32 +16,6 @@ const headings = tab => tab.$$('#main .card-head h2').map(h => h.textContent);
 const typeIn = (tab, input, value) => { input.value = value; input.dispatchEvent(new tab.window.Event('input')); };
 const field = (tab, label, root = '.sheet') => { const f = tab.$$(`${root} .field`).find(x => x.querySelector('span') && x.querySelector('span').textContent === label); return f && f.querySelector('input, select'); };
 const rowNamed = (tab, name) => tab.$$('#main button.row.pick').find(b => b.querySelector('.row-name div').textContent === name);
-
-describe('Settings', () => {
-  it('keeps profile-level setup only; workouts and routines moved to Library', async () => {
-    const tab = await withExample('#settings');
-    const t = tab.t, h = headings(tab);
-    for (const k of ['s.profile', 's.targets', 's.goal', 's.slots', 's.habits', 's.rank', 's.app', 'sy.title', 's.data']) expect(h, k).toContain(t(k));
-    for (const k of ['s.routines', 's.kinds', 's.types', 's.gates', 's.wave']) expect(h, k).not.toContain(t(k));
-    expect(tab.text('#main .dayhead .sub')).toBe(t('s.inLibrary'));
-    expect(tab.errors).toEqual([]);
-  });
-
-  it('saving Settings never overwrites a workout edited in Library meanwhile', async () => {
-    const tab = await withExample('#settings');
-    typeIn(tab, tab.$('#main .card input[type=text]'), 'Sam'); /* unsaved draft */
-    expect(tab.$('.savebar').classList.contains('show')).toBe(true);
-    await tab.go('#workouts');
-    rowNamed(tab, 'Upper body').click();
-    typeIn(tab, field(tab, tab.t('t.minutes')), '50');
-    tab.button(tab.t('c.save'), '.sheet').click();
-    expect(settings(tab).sessionTypes.find(x => x.id === 'upper').minutes).toBe(50);
-    await tab.go('#settings');
-    tab.$('.savebar .btn.primary').click();
-    expect(settings(tab).name).toBe('Sam');
-    expect(settings(tab).sessionTypes.find(x => x.id === 'upper').minutes).toBe(50);
-  });
-});
 
 describe('Library', () => {
   it('has Workouts, Routines, Exercises and Foods tabs, reachable by link', async () => {

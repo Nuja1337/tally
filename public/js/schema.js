@@ -2,7 +2,7 @@
 window.MB = window.MB || {};
 (() => {
   'use strict';
-  MB.APP = { id: 'tally', name: 'Tally', version: '2.2.1' };
+  MB.APP = { id: 'tally', name: 'Tally', version: '2.2.2' };
   const { uid, clone, num, slug, isDate } = MB.ui;
   const VERSION = 4;
   const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -11,11 +11,16 @@ window.MB = window.MB || {};
   const UNITS = ['reps', 'sec', 'm'];
   const CAT_KEYS = ['proteins', 'dairy', 'grains', 'fruit', 'veg', 'fats', 'drinks', 'supp'];
   const MEASURES = ['waist', 'chest', 'arm', 'thigh', 'calf', 'neck', 'bodyFat'];
+  /* how a daily target counts as met: at least it, about it (within 10%), or at most it */
+  const AIMS = ['min', 'near', 'max'];
+  const DEFAULT_AIM = { kcal: 'near', protein: 'min', carbs: 'near', fat: 'near' };
+  /* colors a session kind can take; kinds without one get the next unused color in this order */
+  const KIND_COLORS = ['blue', 'violet', 'teal', 'orange', 'pink', 'gold', 'slate', 'olive'];
   const BELT_COLORS = { white: '#F4F2EA', yellow: '#E8C547', orange: '#E07A2F', green: '#2E8B57', blue: '#2A56A6', purple: '#6B3FA0', brown: '#6E4A2B', black: '#141414', red: '#B4423C', coral: '#E8735A' };
 
   const DEFAULT_SETTINGS = {
     name: '', units: { weight: 'lb' },
-    targets: { kcal: 2000, protein: 150, carbs: 0, fat: 0 },
+    targets: { kcal: 2000, protein: 150, carbs: 0, fat: 0, aim: { ...DEFAULT_AIM } },
     goal: { weight: null, bodyFat: null, note: '', band: null, milestones: [] },
     mealSlots: [], habits: [], routines: [],
     sessionKinds: [], sessionTypes: [],
@@ -72,7 +77,10 @@ window.MB = window.MB || {};
     const s = clone(DEFAULT_SETTINGS);
     if (typeof d.name === 'string') s.name = d.name;
     if (isObj(d.units) && (d.units.weight === 'kg' || d.units.weight === 'lb')) s.units.weight = d.units.weight;
-    if (isObj(d.targets)) for (const k of ['kcal', 'protein', 'carbs', 'fat']) if (d.targets[k] != null) s.targets[k] = num(d.targets[k]);
+    if (isObj(d.targets)) {
+      for (const k of ['kcal', 'protein', 'carbs', 'fat']) if (d.targets[k] != null) s.targets[k] = num(d.targets[k]);
+      if (isObj(d.targets.aim)) for (const k of Object.keys(DEFAULT_AIM)) if (AIMS.includes(d.targets.aim[k])) s.targets.aim[k] = d.targets.aim[k];
+    }
     if (isObj(d.goal)) {
       s.goal.weight = optNum(d.goal.weight); s.goal.bodyFat = optNum(d.goal.bodyFat);
       if (typeof d.goal.note === 'string') s.goal.note = d.goal.note;
@@ -87,13 +95,13 @@ window.MB = window.MB || {};
     if (Array.isArray(d.routines)) s.routines = ensureIds(named(d.routines)).map(r => ({ id: r.id, name: r.name,
       items: ensureIds(named(r.items)).map(it => { const ex = resolveExercise(it.exerciseId || it.exercise, s.exercises); return { id: it.id, name: it.name, target: it.target == null ? '' : String(it.target), exerciseId: ex ? ex.id : '' }; }),
       days: dayList(r.days), alertAt: r.alertAt == null || r.alertAt === '' ? null : Math.max(1, Math.round(num(r.alertAt))), alertText: String(r.alertText || '') }));
-    if (Array.isArray(d.sessionKinds)) s.sessionKinds = ensureIds(named(d.sessionKinds)).map(k => ({ id: k.id, name: k.name }));
+    if (Array.isArray(d.sessionKinds)) s.sessionKinds = ensureIds(named(d.sessionKinds)).map(k => ({ id: k.id, name: k.name, color: KIND_COLORS.includes(k.color) ? k.color : '' }));
     if (Array.isArray(d.sessionTypes)) s.sessionTypes = ensureIds(named(d.sessionTypes)).map(t => ({ id: t.id, name: t.name,
       kind: t.kind ? String(t.kind) : (s.sessionKinds[0] ? s.sessionKinds[0].id : ''), minutes: num(t.minutes), kcal: num(t.kcal), note: String(t.note || ''),
       plan: Array.isArray(t.plan) ? ensureIds(t.plan.filter(isObj).map(b => ({ ...b, name: b.label || b.name || 'block' })), 'name').map(b => ({ id: b.id, label: String(b.label || b.name || ''), note: String(b.note || ''),
         items: ensureIds((Array.isArray(b.items) ? b.items : []).filter(isObj).map(it => { const ex = resolveExercise(it.exerciseId || it.exercise, s.exercises); const name = String(it.name || (ex ? ex.name : it.exercise || '')).trim(); return { ...it, name }; }).filter(it => it.name), 'name')
           .map(it => { const ex = resolveExercise(it.exerciseId || it.exercise, s.exercises); return { id: it.id, exerciseId: ex ? ex.id : '', name: it.name, sets: Math.max(0, Math.round(num(it.sets))), reps: String(it.reps == null ? '' : it.reps), perSide: it.perSide == null ? !!(ex && ex.perSide) : !!it.perSide, rir: String(it.rir == null ? '' : it.rir), rest: String(it.rest || ''), note: String(it.note || '') }; }) })) : [] }));
-    for (const t of s.sessionTypes) if (t.kind && !s.sessionKinds.some(k => k.id === t.kind)) s.sessionKinds.push({ id: t.kind, name: t.kind.charAt(0).toUpperCase() + t.kind.slice(1) });
+    for (const t of s.sessionTypes) if (t.kind && !s.sessionKinds.some(k => k.id === t.kind)) s.sessionKinds.push({ id: t.kind, name: t.kind.charAt(0).toUpperCase() + t.kind.slice(1), color: '' });
     let cal = Array.isArray(d.calendar) ? d.calendar : [];
     if (!cal.length && isObj(d.schedule)) for (const day of DAYS) if (Array.isArray(d.schedule[day])) for (const id of d.schedule[day]) cal.push({ days: [day], kind: 'session', typeId: String(id) });
     s.calendar = ensureIds(cal.filter(isObj).map(b => ({ ...b, name: b.title || b.typeId || b.routineId || b.slotId || b.kind || 'block' })), 'name').map(b => {
@@ -121,6 +129,25 @@ window.MB = window.MB || {};
     const days = Math.round((new Date(date.replace(/-/g, '/')) - new Date(wave.start.replace(/-/g, '/'))) / 86400000);
     const n = Math.floor(days / 7), i = n % wave.pattern.length;
     return { week: i + 1, of: wave.pattern.length, phase: wave.pattern[i], cycle: Math.floor(n / wave.pattern.length) + 1 };
+  }
+  /* a kind's color: its own, else the next palette color no other kind has taken */
+  function kindColors(kinds) {
+    const taken = new Set(kinds.map(k => k.color).filter(Boolean)), free = KIND_COLORS.filter(c => !taken.has(c)), out = {};
+    let i = 0;
+    for (const k of kinds) out[k.id] = k.color || free[i++ % Math.max(1, free.length)] || KIND_COLORS[0];
+    return out;
+  }
+  /* How a day's total compares with its target. final: the day is over, so falling short counts.
+     met | close (a little short or over) | miss (well short once the day is over) | over (well past a max or "about") |
+     progress (short, but the day is not over) | null (no target) */
+  function targetStatus(value, target, aim, final) {
+    if (!(target > 0)) return null;
+    const r = num(value) / target;
+    if (aim === 'max') return r <= 1 ? (final ? 'met' : 'progress') : r <= 1.1 ? 'close' : 'over';
+    if (aim === 'near') { if (r > 1.2) return 'over'; if (r > 1.1) return 'close'; if (r >= 0.9) return 'met'; }
+    else if (r >= 1) return 'met';
+    if (!final) return 'progress';
+    return r >= (aim === 'near' ? 0.8 : 0.9) ? 'close' : 'miss';
   }
   const gateOpen = (s, gate) => !gate || !gate.id || ((s.gates.find(g => g.id === gate.id) || { current: 1 }).current >= gate.at);
 
@@ -395,10 +422,10 @@ window.MB = window.MB || {};
 
   /* Field reference shown on Get started (English; the README has the same) */
   const DOCS = [
-    { key: 'settings', fields: ['name', 'units.weight', 'targets', 'goal', 'mealSlots', 'habits', 'exercises', 'routines', 'sessionKinds', 'sessionTypes', 'calendar', 'gates', 'wave', 'rank'],
-      sample: { units: { weight: 'kg' }, targets: { kcal: 2600, protein: 170 }, goal: { weight: 78, band: [77, 79], milestones: [{ label: 'Month 4', bodyFat: 13.5 }] }, mealSlots: ['Breakfast', 'Lunch', 'Dinner'], habits: [{ name: 'Water', target: 8, unit: 'glasses' }, 'Steps'],
+    { key: 'settings', fields: ['name', 'units.weight', 'targets', 'targets.aim', 'goal', 'mealSlots', 'habits', 'exercises', 'routines', 'sessionKinds', 'sessionTypes', 'calendar', 'gates', 'wave', 'rank'],
+      sample: { units: { weight: 'kg' }, targets: { kcal: 2600, protein: 170, aim: { kcal: 'near', protein: 'min' } }, goal: { weight: 78, band: [77, 79], milestones: [{ label: 'Month 4', bodyFat: 13.5 }] }, mealSlots: ['Breakfast', 'Lunch', 'Dinner'], habits: [{ name: 'Water', target: 8, unit: 'glasses' }, 'Steps'],
         exercises: [{ id: 'push-up', name: 'Push-up', image: 'https://example.com/push-up.gif', video: 'https://youtube.com/...', cues: 'Elbows 45°', perSide: false, gate: { id: 'wrist', at: 3 } }],
-        routines: [{ id: 'morning', name: 'Morning mobility', days: ['mon', 'wed', 'fri'], items: [{ name: 'Cat-cow', target: '10' }] }], sessionKinds: ['Strength', 'Cardio'],
+        routines: [{ id: 'morning', name: 'Morning mobility', days: ['mon', 'wed', 'fri'], items: [{ name: 'Cat-cow', target: '10' }] }], sessionKinds: [{ name: 'Strength', color: 'blue' }, 'Cardio'],
         sessionTypes: [{ id: 'upper', name: 'Upper body', kind: 'strength', minutes: 45, kcal: 300, plan: [{ label: 'A', items: [{ exerciseId: 'push-up', sets: 4, reps: '8-12', rir: '1', rest: '60 s' }] }] }],
         calendar: [{ days: ['mon'], start: '07:15', end: '08:00', kind: 'session', typeId: 'upper' }, { days: ['mon', 'tue'], start: '23:00', end: '07:00', kind: 'sleep', title: 'Sleep' }],
         gates: [{ id: 'wrist', name: 'Wrist', stages: ['Phase 1', 'Phase 2', 'Phase 3'], current: 1 }], wave: { start: '2026-09-21', pattern: ['ramp', 'ramp', 'full', 'deload'] }, rank: { enabled: false } } },
@@ -409,6 +436,6 @@ window.MB = window.MB || {};
   ];
   const REMOVE_SAMPLE = { foods: ['banana'], days: ['2026-09-01'], settings: { habits: ['water'], exercises: ['plank'], routineItems: { morning: ['cat-cow'] } } };
 
-  MB.schema = { VERSION, DAYS, KINDS, WAVE, UNITS, MEASURES, CAT_KEYS, BELT_COLORS, DEFAULT_SETTINGS, normalizeSettings, normalizeRank, emptyDay, normalizeDay, normalizeFood, normalizeTemplate, habitDone,
+  MB.schema = { VERSION, DAYS, KINDS, AIMS, DEFAULT_AIM, KIND_COLORS, kindColors, targetStatus, WAVE, UNITS, MEASURES, CAT_KEYS, BELT_COLORS, DEFAULT_SETTINGS, normalizeSettings, normalizeRank, emptyDay, normalizeDay, normalizeFood, normalizeTemplate, habitDone,
     isLegacy, migrateLegacy, planImport, exportProfile, convertWeight, TARGETS, DOCS, REMOVE_SAMPLE, starterProfile, FOODS, isObj, blockTitle, hm, duration, blocksFor, plannedFor, waveWeek, gateOpen, resolveExercise, demoImage, demoVideo };
 })();

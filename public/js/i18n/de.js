@@ -151,3 +151,18 @@ MB.i18n.add('de', {
   "l.everyDay": "Jeden Tag", "l.everyDayHint": "Ohne ausgewählte Tage gilt sie jeden Tag.", "l.checklist": "Checkliste",
   "l.items": ["Eintrag","Einträge"], "l.templatesSub": "Unter Heute gespeichert. Tippe eine an, um sie zu bearbeiten.", "l.editTemplate": "Vorlage bearbeiten"
 });
+
+/* edit in place, status colors */
+MB.i18n.add('de', {
+  "t.onTarget": "Ziel erreicht", "t.toGo": "Noch {n}", "t.overBy": "{n} drüber",
+  "t.short": "{n} drunter", "t.editTargets": "Tagesziele bearbeiten", "t.setTarget": "Ziel festlegen",
+  "t.burnedLabel": "Verbrannt", "t.checklists": "Checklisten", "t.now": "Jetzt",
+  "t.inTime": "in {t}", "t.notLogged": "Noch nicht eingetragen", "t.missed": "Verpasst",
+  "t.logSets": "Sätze eintragen", "t.nextItem": "Als Nächstes: {name}", "t.addHabits": "Gewohnheiten hinzufügen",
+  "t.addSlots": "Mahlzeiten hinzufügen", "s.aim": "Richtung", "s.aim.min": "Mindestens",
+  "s.aim.near": "Ungefähr (±10 %)", "s.aim.max": "Höchstens", "s.targetsHelp": "Summen unter Heute und Fortschritt werden grün, wenn sie das erreichen.",
+  "t.lastWeight": "Zuletzt: {w}", "p.noGoal": "Noch kein Ziel", "p.editGoal": "Ziel bearbeiten",
+  "p.setGoalBtn": "Ziel festlegen", "p.noBodyComp": "Trag Maße unter Heute ein oder leg Meilensteine an.", "p.editMilestones": "Meilensteine",
+  "p.trackRank": "Gürtel oder Grad verfolgen", "s.bandHelp": "Der Bereich, in dem dein 7-Tage-Schnitt bleiben soll.", "s.sub": "Profil, App, Sync und Backups. Alles andere bearbeitest du dort, wo es steht.",
+  "g.blankSub": "Richte alles nach und nach auf der jeweiligen Seite ein."
+});

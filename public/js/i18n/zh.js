@@ -151,3 +151,18 @@ MB.i18n.add('zh', {
   "l.everyDay": "每天", "l.everyDayHint": "不选星期则为每天。", "l.checklist": "清单",
   "l.items": ["项","项"], "l.templatesSub": "从今天页面保存。点按一项即可编辑。", "l.editTemplate": "编辑模板"
 });
+
+/* edit in place, status colors */
+MB.i18n.add('zh', {
+  "t.onTarget": "达标", "t.toGo": "还差 {n}", "t.overBy": "超出 {n}",
+  "t.short": "差 {n}", "t.editTargets": "编辑每日目标", "t.setTarget": "设定目标",
+  "t.burnedLabel": "消耗", "t.checklists": "清单", "t.now": "现在",
+  "t.inTime": "{t}后", "t.notLogged": "尚未记录", "t.missed": "未完成",
+  "t.logSets": "记录训练组", "t.nextItem": "下一项：{name}", "t.addHabits": "添加习惯",
+  "t.addSlots": "添加餐次", "s.aim": "标准", "s.aim.min": "至少",
+  "s.aim.near": "大约 (±10%)", "s.aim.max": "至多", "s.targetsHelp": "今日和进度页面的合计达到这些目标时会变绿。",
+  "t.lastWeight": "上次：{w}", "p.noGoal": "尚未设定目标", "p.editGoal": "编辑目标",
+  "p.setGoalBtn": "设定目标", "p.noBodyComp": "在今日页面记录围度，或添加里程碑。", "p.editMilestones": "里程碑",
+  "p.trackRank": "记录腰带或段位", "s.bandHelp": "7 日平均体重应保持的区间。", "s.sub": "档案、应用、同步和备份。其他内容都在显示的地方直接编辑。",
+  "g.blankSub": "在各个页面边用边设置。"
+});

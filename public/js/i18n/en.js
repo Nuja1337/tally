@@ -151,3 +151,18 @@ MB.i18n.add('en', {
   "l.everyDay": "Every day", "l.everyDayHint": "No days selected means every day.", "l.checklist": "Checklist",
   "l.items": ["item","items"], "l.templatesSub": "Saved from Today. Tap one to edit it.", "l.editTemplate": "Edit template"
 });
+
+/* edit in place, status colors */
+MB.i18n.add('en', {
+  "t.onTarget": "On target", "t.toGo": "{n} to go", "t.overBy": "{n} over",
+  "t.short": "{n} short", "t.editTargets": "Edit daily targets", "t.setTarget": "Set a target",
+  "t.burnedLabel": "Burned", "t.checklists": "Checklists", "t.now": "Now",
+  "t.inTime": "in {t}", "t.notLogged": "Not logged yet", "t.missed": "Missed",
+  "t.logSets": "Log sets", "t.nextItem": "Next: {name}", "t.addHabits": "Add habits",
+  "t.addSlots": "Add meal slots", "s.aim": "Aim", "s.aim.min": "At least",
+  "s.aim.near": "About (±10%)", "s.aim.max": "At most", "s.targetsHelp": "Totals on Today and Progress turn green when they meet these.",
+  "t.lastWeight": "Last: {w}", "p.noGoal": "No goal set yet", "p.editGoal": "Edit goal",
+  "p.setGoalBtn": "Set goal", "p.noBodyComp": "Log tape measurements on Today, or add milestones.", "p.editMilestones": "Milestones",
+  "p.trackRank": "Track a belt or rank", "s.bandHelp": "The range your 7-day average should stay in.", "s.sub": "Profile, app, sync and backups. Everything else is edited where it shows.",
+  "g.blankSub": "Set things up as you go, on each page."
+});

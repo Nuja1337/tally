@@ -151,3 +151,18 @@ MB.i18n.add('ko', {
   "l.everyDay": "매일", "l.everyDayHint": "요일을 고르지 않으면 매일입니다.", "l.checklist": "체크리스트",
   "l.items": ["항목","항목"], "l.templatesSub": "오늘 화면에서 저장한 것입니다. 탭해서 편집하세요.", "l.editTemplate": "템플릿 편집"
 });
+
+/* edit in place, status colors */
+MB.i18n.add('ko', {
+  "t.onTarget": "목표 달성", "t.toGo": "{n} 남음", "t.overBy": "{n} 초과",
+  "t.short": "{n} 부족", "t.editTargets": "일일 목표 편집", "t.setTarget": "목표 설정",
+  "t.burnedLabel": "소모", "t.checklists": "체크리스트", "t.now": "지금",
+  "t.inTime": "{t} 후", "t.notLogged": "아직 기록 안 함", "t.missed": "놓침",
+  "t.logSets": "세트 기록", "t.nextItem": "다음: {name}", "t.addHabits": "습관 추가",
+  "t.addSlots": "식사 구분 추가", "s.aim": "기준", "s.aim.min": "이상",
+  "s.aim.near": "대략 (±10%)", "s.aim.max": "이하", "s.targetsHelp": "오늘과 진행 화면의 합계가 이를 채우면 초록색이 됩니다.",
+  "t.lastWeight": "지난 기록: {w}", "p.noGoal": "아직 목표가 없습니다", "p.editGoal": "목표 편집",
+  "p.setGoalBtn": "목표 설정", "p.noBodyComp": "오늘 화면에서 치수를 기록하거나 마일스톤을 추가하세요.", "p.editMilestones": "마일스톤",
+  "p.trackRank": "벨트나 등급 기록하기", "s.bandHelp": "7일 평균이 머물러야 할 범위입니다.", "s.sub": "프로필, 앱, 동기화, 백업. 나머지는 표시되는 곳에서 바로 편집합니다.",
+  "g.blankSub": "각 화면에서 하나씩 설정하세요."
+});
