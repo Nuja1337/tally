@@ -63,7 +63,7 @@ input:focus,select:focus,textarea:focus,button:focus-visible,.tile:focus-visible
   .nav a.active{background:var(--surface2)}
   .topbar{grid-column:2;grid-row:1;padding:0 28px}
   .main{grid-column:2;padding:24px 28px 60px;width:100%}
-  .brand{display:none}
+  .brand-name,.brand .status{display:none}
   .topbar{justify-content:flex-end}
 }
 @media (min-width:900px){.nav::before{content:"Tally";font-weight:800;font-size:18px;letter-spacing:-.02em;padding:6px 12px 14px;color:var(--ink)}}
@@ -362,3 +362,21 @@ table.plain td{padding:6px 4px;border-bottom:1px solid var(--line)}
 table.plain tr:last-child td{border-bottom:0}
 table.plain td.n{text-align:right;font-variant-numeric:tabular-nums}
 .tools.row2{margin-bottom:8px}
+
+/* sync: status dot in the top bar, Settings card, key display */
+.syncdot{display:inline-flex;align-items:center;gap:5px;align-self:center;min-height:30px;padding:4px 8px;margin:-4px 0;border:0;border-radius:999px;background:transparent;cursor:pointer;font-size:12px;font-weight:700;color:var(--muted)}
+.syncdot:hover{background:var(--surface2)}
+.syncdot i,.syncdot-i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--faint);flex:0 0 auto}
+.syncdot-n:empty{display:none}
+.syncdot[data-state="synced"] i,.syncdot-i[data-state="synced"]{background:var(--green)}
+.syncdot[data-state="pending"] i,.syncdot-i[data-state="pending"]{background:var(--amber)}
+.syncdot[data-state="syncing"] i,.syncdot-i[data-state="syncing"]{background:var(--blue);animation:syncpulse 1s ease-in-out infinite}
+.syncdot[data-state="offline"] i,.syncdot-i[data-state="offline"]{background:var(--faint)}
+.syncdot[data-state="error"] i,.syncdot-i[data-state="error"]{background:var(--red)}
+@keyframes syncpulse{50%{opacity:.35}}
+@media (prefers-reduced-motion:reduce){.syncdot i,.syncdot-i{animation:none!important}}
+.syncline{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;font-weight:700;margin-bottom:4px}
+.syncline .err-line{flex-basis:100%;margin:0}
+.err-line{color:var(--red);font-size:14px;margin:8px 0 0}
+.err-line:empty{display:none}
+.synckey{font:700 19px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.03em;text-align:center;overflow-wrap:anywhere;background:var(--surface2);border-radius:var(--radius-sm);padding:16px 12px;margin:4px 0 12px;user-select:all;-webkit-user-select:all}

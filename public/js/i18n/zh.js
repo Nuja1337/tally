@@ -121,3 +121,23 @@ MB.i18n.add('zh', {
   "ex.catcow": "猫牛式", "ex.hips": "髋关节绕环", "ex.squats": "徒手深蹲", "ex.pushups": "俯卧撑", "ex.row": "单臂划船", "ex.press": "哑铃推举", "ex.lateral": "侧平举",
   "ex.goblet": "高脚杯深蹲", "ex.rdl": "罗马尼亚硬拉", "ex.split": "分腿蹲", "ex.calf": "提踵", "ex.plank": "平板支撑"
 });
+
+/* sync */
+MB.i18n.add('zh', {
+  "sy.title": "同步", "sy.sub": "在你的所有设备上使用此档案", "sy.intro": "可选。无论如何，你的数据都会保留在此设备上。使用云端保险库后，此档案会同步到你的其他设备，离线时的更改会在恢复联网后上传。",
+  "sy.create": "创建云端保险库", "sy.link": "关联此设备", "sy.createHelp": "输入此服务器的邀请码。你会得到一个同步密钥，用来关联其他设备。",
+  "sy.invite": "邀请码", "sy.needInvite": "请输入邀请码。", "sy.createBtn": "创建保险库",
+  "sy.working": "处理中…", "sy.keyTitle": "你的同步密钥", "sy.keyWarn": "请把它保存在密码管理器中。这是关联其他设备的唯一方式，任何拿到它的人都能查看和修改此档案。",
+  "sy.linkHelp": "粘贴其他设备上的同步密钥。空格、连字符和大小写都不影响。此设备和云端的数据会合并，每一项保留较新的版本。", "sy.key": "同步密钥", "sy.iphone": "iPhone：主屏幕上的应用与 Safari 分开保存数据。请在已安装的应用中关联。",
+  "sy.linkBtn": "关联", "sy.badKey": "这看起来不像同步密钥。", "sy.linked": "已关联并同步",
+  "sy.linkedOffline": "已关联。联网后会自动同步。", "sy.lastSync": "上次同步：{when}", "sy.never": "尚未同步",
+  "sy.syncNow": "立即同步", "sy.showKey": "显示同步密钥", "sy.download": "下载云端备份",
+  "sy.downloaded": "云端备份已保存", "sy.unlink": "取消关联此设备", "sy.unlinkConfirm": "要在此设备上停止同步此档案吗？你的数据会保留在此设备和云端。",
+  "sy.unlinkPending": "尚未上传的更改：{n}。它们只会保留在此设备上。", "sy.unlinkBtn": "取消关联", "sy.unlinked": "已取消关联",
+  "sy.deleteCloud": "删除云端副本", "sy.deleteConfirm": "要删除此档案的云端副本吗？其他已关联的设备将停止同步。此设备上的数据会保留。", "sy.deleteBtn": "删除云端副本",
+  "sy.deleted": "云端副本已删除", "sy.storedIn": "保存在此浏览器中（{kind}），并与你的云端保险库同步。", "sy.cloudKept": "云端副本不受影响。", "sy.dot": "同步：{state}",
+  "sy.st.synced": "已同步", "sy.st.pending": "等待上传：{n}", "sy.st.syncing": "同步中…",
+  "sy.st.offline": "离线。恢复联网后会上传更改。", "sy.st.error": "同步出现问题", "sy.err.key": "无法识别此同步密钥。云端副本可能已被删除。",
+  "sy.err.invite": "邀请码不正确。", "sy.err.offline": "无法连接服务器。请检查网络连接。", "sy.err.timeout": "服务器响应时间过长。",
+  "sy.err.server": "服务器出现问题（{status}）。请稍后再试。", "sy.err.tooLarge": "{path} 太大，无法同步。", "sy.err.local": "此设备上出了点问题。请重试。"
+});

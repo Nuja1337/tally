@@ -121,3 +121,23 @@ MB.i18n.add('ko', {
   "ex.catcow": "캣카우", "ex.hips": "고관절 돌리기", "ex.squats": "맨몸 스쿼트", "ex.pushups": "푸시업", "ex.row": "원암 로우", "ex.press": "덤벨 프레스", "ex.lateral": "사이드 레터럴 레이즈",
   "ex.goblet": "고블릿 스쿼트", "ex.rdl": "루마니안 데드리프트", "ex.split": "스플릿 스쿼트", "ex.calf": "카프 레이즈", "ex.plank": "플랭크"
 });
+
+/* sync */
+MB.i18n.add('ko', {
+  "sy.title": "동기화", "sy.sub": "모든 기기에서 이 프로필을", "sy.intro": "선택 사항입니다. 데이터는 어느 경우든 이 기기에 남습니다. 클라우드 보관함을 사용하면 이 프로필이 다른 기기와 동기화되고, 오프라인에서 바꾼 내용은 다시 온라인이 되면 업로드됩니다.",
+  "sy.create": "클라우드 보관함 만들기", "sy.link": "이 기기 연결", "sy.createHelp": "이 서버의 초대 코드를 입력하세요. 다른 기기를 연결할 동기화 키를 받게 됩니다.",
+  "sy.invite": "초대 코드", "sy.needInvite": "초대 코드를 입력하세요.", "sy.createBtn": "보관함 만들기",
+  "sy.working": "처리 중…", "sy.keyTitle": "동기화 키", "sy.keyWarn": "비밀번호 관리자에 저장하세요. 다른 기기를 연결하는 유일한 방법이며, 이 키가 있는 사람은 누구나 이 프로필을 읽고 바꿀 수 있습니다.",
+  "sy.linkHelp": "다른 기기의 동기화 키를 붙여 넣으세요. 공백, 하이픈, 대소문자는 상관없습니다. 이 기기와 클라우드의 데이터가 합쳐지며, 항목마다 더 최근 것이 남습니다.", "sy.key": "동기화 키", "sy.iphone": "iPhone: 홈 화면 앱은 Safari와 별도로 데이터를 보관합니다. 설치한 앱 안에서 연결하세요.",
+  "sy.linkBtn": "연결", "sy.badKey": "동기화 키 형식이 아닌 것 같습니다.", "sy.linked": "연결 및 동기화 완료",
+  "sy.linkedOffline": "연결했습니다. 온라인이 되면 동기화합니다.", "sy.lastSync": "마지막 동기화: {when}", "sy.never": "아직 동기화하지 않음",
+  "sy.syncNow": "지금 동기화", "sy.showKey": "동기화 키 보기", "sy.download": "클라우드 백업 다운로드",
+  "sy.downloaded": "클라우드 백업을 저장했습니다", "sy.unlink": "이 기기 연결 해제", "sy.unlinkConfirm": "이 기기에서 이 프로필 동기화를 멈출까요? 데이터는 이 기기와 클라우드에 남습니다.",
+  "sy.unlinkPending": "업로드되지 않은 변경: {n}개. 이 기기에만 남습니다.", "sy.unlinkBtn": "연결 해제", "sy.unlinked": "연결을 해제했습니다",
+  "sy.deleteCloud": "클라우드 사본 삭제", "sy.deleteConfirm": "이 프로필의 클라우드 사본을 삭제할까요? 연결된 다른 기기는 동기화를 멈춥니다. 이 기기의 데이터는 남습니다.", "sy.deleteBtn": "클라우드 사본 삭제",
+  "sy.deleted": "클라우드 사본을 삭제했습니다", "sy.storedIn": "이 브라우저에 저장되고 ({kind}) 클라우드 보관함과 동기화됩니다.", "sy.cloudKept": "클라우드 사본에는 영향이 없습니다.", "sy.dot": "동기화: {state}",
+  "sy.st.synced": "동기화됨", "sy.st.pending": "업로드 대기: {n}", "sy.st.syncing": "동기화 중…",
+  "sy.st.offline": "오프라인입니다. 다시 온라인이 되면 변경 내용이 업로드됩니다.", "sy.st.error": "동기화 문제", "sy.err.key": "이 동기화 키를 인식할 수 없습니다. 클라우드 사본이 삭제되었을 수 있습니다.",
+  "sy.err.invite": "초대 코드가 틀렸습니다.", "sy.err.offline": "서버에 연결할 수 없습니다. 연결을 확인하세요.", "sy.err.timeout": "서버 응답이 너무 오래 걸렸습니다.",
+  "sy.err.server": "서버에 문제가 있습니다({status}). 나중에 다시 시도하세요.", "sy.err.tooLarge": "{path}은(는) 너무 커서 동기화할 수 없습니다.", "sy.err.local": "이 기기에서 문제가 생겼습니다. 다시 시도하세요."
+});

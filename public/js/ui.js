@@ -60,13 +60,17 @@ window.MB = window.MB || {};
     closeSheet();
     const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) closeSheet(); } },
       h('div', { class: 'sheet' + (opts && opts.wide ? ' wide' : ''), role: 'dialog', 'aria-label': title },
-        h('div', { class: 'sheet-head' }, h('h3', null, title), h('button', { class: 'btn ghost icon', 'aria-label': 'Close', onclick: closeSheet }, '\u00d7')),
+        h('div', { class: 'sheet-head' }, h('h3', null, title), h('button', { class: 'btn ghost icon', 'aria-label': MB.i18n ? MB.i18n.t('c.close') : 'Close', onclick: closeSheet }, '\u00d7')),
         h('div', { class: 'sheet-body' }, body)));
     document.body.append(ov);
     sheetEl = ov;
     return ov;
   }
-  function closeSheet() { if (sheetEl) { sheetEl.remove(); sheetEl = null; } }
+  /* onSheetClosed handlers run after a sheet really closes, not when one sheet replaces another */
+  const closedHandlers = [];
+  function closeSheet() { if (sheetEl) { sheetEl.remove(); sheetEl = null; setTimeout(() => { if (!sheetEl) closedHandlers.forEach(fn => fn()); }, 0); } }
+  const sheetOpen = () => !!sheetEl;
+  const onSheetClosed = fn => { closedHandlers.push(fn); };
   let toastTimer = null;
   function toast(msg, opts = {}) {
     const old = $('.toast'); if (old) old.remove();
@@ -202,5 +206,5 @@ window.MB = window.MB || {};
   }
 
   MB.ui = { $, uid, clone, deepEq, fmt, fmt1, num, byName, slug, h, svg, today, isDate, parseD, addDays, diffDays, DOW, DAYS, dow, dayName, fmtLong, fmtShort, fmtDay, fmtMonth, weekStart, fmtTime, isImageUrl, thumb,
-    openSheet, closeSheet, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, trend, heat };
+    openSheet, closeSheet, sheetOpen, onSheetClosed, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, trend, heat };
 })();

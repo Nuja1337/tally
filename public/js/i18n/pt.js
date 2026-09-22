@@ -121,3 +121,23 @@ MB.i18n.add('pt', {
   "ex.catcow": "Gato-vaca", "ex.hips": "Círculos de quadril", "ex.squats": "Agachamento livre", "ex.pushups": "Flexão", "ex.row": "Remada unilateral", "ex.press": "Desenvolvimento com halteres", "ex.lateral": "Elevação lateral",
   "ex.goblet": "Agachamento goblet", "ex.rdl": "Levantamento terra romeno", "ex.split": "Agachamento afastado", "ex.calf": "Elevação de panturrilha", "ex.plank": "Prancha"
 });
+
+/* sync */
+MB.i18n.add('pt', {
+  "sy.title": "Sincronização", "sy.sub": "Este perfil em todos os seus dispositivos", "sy.intro": "Opcional. Seus dados continuam neste dispositivo de qualquer forma. Com um cofre na nuvem, este perfil é sincronizado com seus outros dispositivos, e as alterações feitas offline são enviadas quando você volta a ficar online.",
+  "sy.create": "Criar cofre na nuvem", "sy.link": "Vincular este dispositivo", "sy.createHelp": "Digite o código de convite deste servidor. Você receberá uma chave de sincronização para vincular seus outros dispositivos.",
+  "sy.invite": "Código de convite", "sy.needInvite": "Digite o código de convite.", "sy.createBtn": "Criar cofre",
+  "sy.working": "Aguarde…", "sy.keyTitle": "Sua chave de sincronização", "sy.keyWarn": "Guarde-a no seu gerenciador de senhas. É a única forma de vincular outros dispositivos, e qualquer pessoa com ela pode ler e alterar este perfil.",
+  "sy.linkHelp": "Cole a chave de sincronização do seu outro dispositivo. Espaços, hifens e maiúsculas não importam. Os dados daqui e da nuvem são combinados; em cada item, vale a cópia mais recente.", "sy.key": "Chave de sincronização", "sy.iphone": "iPhone: o app da tela de início guarda os próprios dados, separados do Safari. Vincule dentro do app instalado.",
+  "sy.linkBtn": "Vincular", "sy.badKey": "Isso não parece uma chave de sincronização.", "sy.linked": "Vinculado e sincronizado",
+  "sy.linkedOffline": "Vinculado. A sincronização acontece quando você estiver online.", "sy.lastSync": "Última sincronização: {when}", "sy.never": "Ainda não sincronizado",
+  "sy.syncNow": "Sincronizar agora", "sy.showKey": "Mostrar chave", "sy.download": "Baixar backup da nuvem",
+  "sy.downloaded": "Backup da nuvem salvo", "sy.unlink": "Desvincular este dispositivo", "sy.unlinkConfirm": "Parar de sincronizar este perfil aqui? Seus dados continuam neste dispositivo e na nuvem.",
+  "sy.unlinkPending": "Alterações não enviadas: {n}. Elas ficarão só neste dispositivo.", "sy.unlinkBtn": "Desvincular", "sy.unlinked": "Desvinculado",
+  "sy.deleteCloud": "Excluir cópia da nuvem", "sy.deleteConfirm": "Excluir a cópia deste perfil na nuvem? Os outros dispositivos vinculados param de sincronizar. Os dados deste dispositivo ficam.", "sy.deleteBtn": "Excluir cópia da nuvem",
+  "sy.deleted": "Cópia da nuvem excluída", "sy.storedIn": "Guardados neste navegador ({kind}) e sincronizados com seu cofre na nuvem.", "sy.cloudKept": "A cópia na nuvem não é afetada.", "sy.dot": "Sincronização: {state}",
+  "sy.st.synced": "Sincronizado", "sy.st.pending": "Aguardando envio: {n}", "sy.st.syncing": "Sincronizando…",
+  "sy.st.offline": "Offline. As alterações serão enviadas quando você voltar a ficar online.", "sy.st.error": "Problema na sincronização", "sy.err.key": "Esta chave não foi reconhecida. A cópia na nuvem pode ter sido excluída.",
+  "sy.err.invite": "Código de convite incorreto.", "sy.err.offline": "Não foi possível acessar o servidor. Verifique sua conexão.", "sy.err.timeout": "O servidor demorou demais para responder.",
+  "sy.err.server": "O servidor teve um problema ({status}). Tente mais tarde.", "sy.err.tooLarge": "{path} é grande demais para sincronizar.", "sy.err.local": "Algo deu errado neste dispositivo. Tente de novo."
+});

@@ -121,3 +121,23 @@ MB.i18n.add('de', {
   "ex.catcow": "Katze-Kuh", "ex.hips": "Hüftkreisen", "ex.squats": "Kniebeuge", "ex.pushups": "Liegestütz", "ex.row": "Einarmiges Rudern", "ex.press": "Kurzhanteldrücken", "ex.lateral": "Seitheben",
   "ex.goblet": "Goblet Squat", "ex.rdl": "Rumänisches Kreuzheben", "ex.split": "Ausfallschritt statisch", "ex.calf": "Wadenheben", "ex.plank": "Plank"
 });
+
+/* sync */
+MB.i18n.add('de', {
+  "sy.title": "Synchronisierung", "sy.sub": "Dieses Profil auf all deinen Geräten", "sy.intro": "Optional. Deine Daten bleiben so oder so auf diesem Gerät. Mit einem Cloud-Tresor wird dieses Profil mit deinen anderen Geräten synchronisiert, und offline gemachte Änderungen werden hochgeladen, sobald du wieder online bist.",
+  "sy.create": "Cloud-Tresor erstellen", "sy.link": "Dieses Gerät verknüpfen", "sy.createHelp": "Gib den Einladungscode für diesen Server ein. Du bekommst einen Sync-Schlüssel, mit dem du deine anderen Geräte verknüpfst.",
+  "sy.invite": "Einladungscode", "sy.needInvite": "Gib den Einladungscode ein.", "sy.createBtn": "Tresor erstellen",
+  "sy.working": "Einen Moment…", "sy.keyTitle": "Dein Sync-Schlüssel", "sy.keyWarn": "Speichere ihn in deinem Passwortmanager. Nur mit ihm kannst du weitere Geräte verknüpfen, und wer ihn hat, kann dieses Profil lesen und ändern.",
+  "sy.linkHelp": "Füge den Sync-Schlüssel von deinem anderen Gerät ein. Leerzeichen, Bindestriche und Groß-/Kleinschreibung spielen keine Rolle. Daten von hier und aus der Cloud werden zusammengeführt; pro Eintrag gewinnt die neuere Fassung.", "sy.key": "Sync-Schlüssel", "sy.iphone": "iPhone: Die App auf dem Home-Bildschirm hat eigene Daten, getrennt von Safari. Verknüpfe in der installierten App.",
+  "sy.linkBtn": "Verknüpfen", "sy.badKey": "Das sieht nicht wie ein Sync-Schlüssel aus.", "sy.linked": "Verknüpft und synchronisiert",
+  "sy.linkedOffline": "Verknüpft. Die Synchronisierung startet, sobald du online bist.", "sy.lastSync": "Zuletzt synchronisiert: {when}", "sy.never": "Noch nicht synchronisiert",
+  "sy.syncNow": "Jetzt synchronisieren", "sy.showKey": "Sync-Schlüssel anzeigen", "sy.download": "Cloud-Backup herunterladen",
+  "sy.downloaded": "Cloud-Backup gespeichert", "sy.unlink": "Verknüpfung aufheben", "sy.unlinkConfirm": "Dieses Profil hier nicht mehr synchronisieren? Deine Daten bleiben auf diesem Gerät und in der Cloud.",
+  "sy.unlinkPending": "Noch nicht hochgeladene Änderungen: {n}. Sie bleiben nur auf diesem Gerät.", "sy.unlinkBtn": "Aufheben", "sy.unlinked": "Verknüpfung aufgehoben",
+  "sy.deleteCloud": "Cloud-Kopie löschen", "sy.deleteConfirm": "Die Cloud-Kopie dieses Profils löschen? Andere verknüpfte Geräte synchronisieren dann nicht mehr. Die Daten auf diesem Gerät bleiben erhalten.", "sy.deleteBtn": "Cloud-Kopie löschen",
+  "sy.deleted": "Cloud-Kopie gelöscht", "sy.storedIn": "In diesem Browser gespeichert ({kind}) und mit deinem Cloud-Tresor synchronisiert.", "sy.cloudKept": "Die Cloud-Kopie ist davon nicht betroffen.", "sy.dot": "Synchronisierung: {state}",
+  "sy.st.synced": "Synchronisiert", "sy.st.pending": "Warten auf Upload: {n}", "sy.st.syncing": "Synchronisiere…",
+  "sy.st.offline": "Offline. Änderungen werden hochgeladen, sobald du wieder online bist.", "sy.st.error": "Synchronisierungsproblem", "sy.err.key": "Dieser Sync-Schlüssel ist unbekannt. Die Cloud-Kopie wurde vielleicht gelöscht.",
+  "sy.err.invite": "Falscher Einladungscode.", "sy.err.offline": "Server nicht erreichbar. Prüfe deine Verbindung.", "sy.err.timeout": "Der Server hat zu lange nicht geantwortet.",
+  "sy.err.server": "Der Server hatte ein Problem ({status}). Versuche es später erneut.", "sy.err.tooLarge": "{path} ist zu groß zum Synchronisieren.", "sy.err.local": "Auf diesem Gerät ist etwas schiefgelaufen. Versuche es erneut."
+});

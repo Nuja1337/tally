@@ -121,3 +121,23 @@ MB.i18n.add('fr', {
   "ex.catcow": "Chat-vache", "ex.hips": "Cercles de hanches", "ex.squats": "Squat au poids du corps", "ex.pushups": "Pompe", "ex.row": "Rowing à un bras", "ex.press": "Développé haltères", "ex.lateral": "Élévation latérale",
   "ex.goblet": "Goblet squat", "ex.rdl": "Soulevé de terre roumain", "ex.split": "Fente statique", "ex.calf": "Élévation de mollets", "ex.plank": "Planche"
 });
+
+/* sync */
+MB.i18n.add('fr', {
+  "sy.title": "Synchronisation", "sy.sub": "Ce profil sur tous vos appareils", "sy.intro": "Facultatif. Vos données restent sur cet appareil dans tous les cas. Avec un coffre dans le cloud, ce profil se synchronise avec vos autres appareils, et les modifications faites hors ligne sont envoyées dès que vous êtes de nouveau en ligne.",
+  "sy.create": "Créer un coffre dans le cloud", "sy.link": "Associer cet appareil", "sy.createHelp": "Saisissez le code d'invitation de ce serveur. Vous recevrez une clé de synchronisation pour associer vos autres appareils.",
+  "sy.invite": "Code d'invitation", "sy.needInvite": "Saisissez le code d'invitation.", "sy.createBtn": "Créer le coffre",
+  "sy.working": "Un instant…", "sy.keyTitle": "Votre clé de synchronisation", "sy.keyWarn": "Enregistrez-la dans votre gestionnaire de mots de passe. C'est le seul moyen d'associer d'autres appareils, et toute personne qui la possède peut lire et modifier ce profil.",
+  "sy.linkHelp": "Collez la clé de synchronisation de votre autre appareil. Les espaces, tirets et majuscules n'ont pas d'importance. Les données d'ici et du cloud sont combinées ; pour chaque élément, la copie la plus récente l'emporte.", "sy.key": "Clé de synchronisation", "sy.iphone": "iPhone : l'app de l'écran d'accueil a ses propres données, séparées de Safari. Associez l'appareil dans l'app installée.",
+  "sy.linkBtn": "Associer", "sy.badKey": "Cela ne ressemble pas à une clé de synchronisation.", "sy.linked": "Associé et synchronisé",
+  "sy.linkedOffline": "Associé. La synchronisation se fera dès que vous serez en ligne.", "sy.lastSync": "Dernière synchronisation : {when}", "sy.never": "Pas encore synchronisé",
+  "sy.syncNow": "Synchroniser", "sy.showKey": "Afficher la clé", "sy.download": "Télécharger la sauvegarde cloud",
+  "sy.downloaded": "Sauvegarde cloud enregistrée", "sy.unlink": "Dissocier cet appareil", "sy.unlinkConfirm": "Arrêter de synchroniser ce profil ici ? Vos données restent sur cet appareil et dans le cloud.",
+  "sy.unlinkPending": "Modifications non envoyées : {n}. Elles resteront uniquement sur cet appareil.", "sy.unlinkBtn": "Dissocier", "sy.unlinked": "Dissocié",
+  "sy.deleteCloud": "Supprimer la copie cloud", "sy.deleteConfirm": "Supprimer la copie cloud de ce profil ? Les autres appareils associés arrêteront de se synchroniser. Les données de cet appareil sont conservées.", "sy.deleteBtn": "Supprimer la copie cloud",
+  "sy.deleted": "Copie cloud supprimée", "sy.storedIn": "Stockées dans ce navigateur ({kind}) et synchronisées avec votre coffre dans le cloud.", "sy.cloudKept": "La copie cloud n'est pas touchée.", "sy.dot": "Synchronisation : {state}",
+  "sy.st.synced": "Synchronisé", "sy.st.pending": "En attente d'envoi : {n}", "sy.st.syncing": "Synchronisation…",
+  "sy.st.offline": "Hors ligne. Les modifications seront envoyées au retour de la connexion.", "sy.st.error": "Problème de synchronisation", "sy.err.key": "Cette clé n'est pas reconnue. La copie cloud a peut-être été supprimée.",
+  "sy.err.invite": "Code d'invitation incorrect.", "sy.err.offline": "Impossible de joindre le serveur. Vérifiez votre connexion.", "sy.err.timeout": "Le serveur a mis trop de temps à répondre.",
+  "sy.err.server": "Le serveur a rencontré un problème ({status}). Réessayez plus tard.", "sy.err.tooLarge": "{path} est trop volumineux pour être synchronisé.", "sy.err.local": "Un problème est survenu sur cet appareil. Réessayez."
+});

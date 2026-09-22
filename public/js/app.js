@@ -43,8 +43,8 @@
     loadDay(S.date);
   }
   function loadDay(date) { const d = store.get('days/' + date); S.day = d ? SC.normalizeDay(d, date) : SC.emptyDay(date); }
-  function saveDay() { S.day.date = S.date; S.day.updatedAt = new Date().toISOString(); store.setDoc('days/' + S.date, S.day); flashSaved(); }
-  function saveSettingsNow(next) { S.settings = SC.normalizeSettings(next); S.settings.updatedAt = new Date().toISOString(); store.setDoc('settings/main', S.settings); flashSaved(); }
+  function saveDay() { S.day.date = S.date; S.day.updatedAt = store.stamp(); store.setDoc('days/' + S.date, S.day); flashSaved(); }
+  function saveSettingsNow(next) { S.settings = SC.normalizeSettings(next); S.settings.updatedAt = store.stamp(); store.setDoc('settings/main', S.settings); flashSaved(); }
   function setDate(d) { S.date = d; loadDay(d); render(); window.scrollTo(0, 0); }
   function totals(day) {
     const x = { kcal: 0, p: 0, c: 0, f: 0, burn: 0 };
@@ -254,7 +254,7 @@
   function saveAsTemplate(w, sub) {
     const tp = { name: w.name, ...sub };
     openSheet(t('t.saveTemplate'), h('div', null, textField(t('t.templateName'), tp, 'name'), h('p', { class: 'muted small' }, `${fmt(tp.kcal)} kcal · ${fmt(tp.p)}P ${fmt(tp.c)}C ${fmt(tp.f)}F`),
-      h('button', { class: 'btn primary', onclick: () => { store.setDoc('templates/' + uid(), { name: tp.name, kcal: tp.kcal, p: tp.p, c: tp.c, f: tp.f, slot: w.id, updatedAt: new Date().toISOString() }); S.templates = store.list('templates'); closeSheet(); toast(t('t.templateSaved')); } }, t('c.save'))));
+      h('button', { class: 'btn primary', onclick: () => { store.setDoc('templates/' + uid(), { name: tp.name, kcal: tp.kcal, p: tp.p, c: tp.c, f: tp.f, slot: w.id, updatedAt: store.stamp() }); S.templates = store.list('templates'); closeSheet(); toast(t('t.templateSaved')); } }, t('c.save'))));
   }
 
   /* training */
@@ -594,7 +594,7 @@
         h('button', { class: 'btn primary', onclick: () => {
           if (!d.name.trim()) { toast(t('t.needName')); return; }
           const row = SC.normalizeFood({ ...d, id: f ? f.id : undefined }); const { id, ...rest } = row;
-          store.setDoc('foods/' + id, { ...rest, updatedAt: new Date().toISOString() }); S.foods = store.list('foods').sort(byName);
+          store.setDoc('foods/' + id, { ...rest, updatedAt: store.stamp() }); S.foods = store.list('foods').sort(byName);
           closeSheet(); render(); toast(f ? t('f.updated', { name: d.name }) : t('f.added', { name: d.name }));
         } }, t('c.save')),
         f ? h('button', { class: 'btn ghost danger', onclick: () => { store.deleteDoc('foods/' + f.id); S.foods = store.list('foods').sort(byName); closeSheet(); render(); toast(t('f.deleted', { name: f.name })); } }, t('c.delete')) : null)));
@@ -749,11 +749,12 @@
       h('label', { class: 'field' }, h('span', null, t('s.wavePattern')), h('input', { type: 'text', value: waveObj.pattern, placeholder: 'ramp, ramp, full, deload', oninput: e => { draft.wave.pattern = e.target.value.split(',').map(s => s.trim().toLowerCase()).filter(s => SC.WAVE.includes(s)); dirty(); } })))));
     wrap.append(section(t('s.rank'), t('s.rankSub'), rankEditor(draft, dirty)));
     wrap.append(section(t('s.app'), null, appBlock()));
-    wrap.append(section(t('s.data'), t('s.storedIn', { kind: store.kind() }), h('div', { class: 'actions' },
+    wrap.append(syncCard());
+    wrap.append(section(t('s.data'), h('small', { class: 'storedin' }, storedInText()), h('div', { class: 'actions' },
       h('button', { class: 'btn primary', onclick: exportSheet }, t('s.export')),
       h('button', { class: 'btn', onclick: () => openSheet(t('i.title'), importPanel(() => { closeSheet(); render(); }), { wide: true }) }, t('s.import')),
       h('a', { class: 'btn', href: '#start' }, t('nav.start')),
-      h('button', { class: 'btn danger', onclick: () => confirmSheet(t('s.erase'), t('s.eraseConfirm'), t('s.eraseBtn'), async () => { await store.eraseProfile(); hydrate(); location.hash = '#start'; render(); toast(t('s.erased')); }, t('c.cancel')) }, t('s.erase')))));
+      h('button', { class: 'btn danger', onclick: () => confirmSheet(t('s.erase'), t('s.eraseConfirm') + cloudNote(), t('s.eraseBtn'), async () => { await store.eraseProfile(); hydrate(); location.hash = '#start'; render(); updateSyncUI(); toast(t('s.erased')); }, t('c.cancel')) }, t('s.erase')))));
     wrap.append(saveBar);
     return wrap;
   }
@@ -776,7 +777,7 @@
       h('div', { class: 'row-name' }, p.name || t('s.profile'), p.id === cur ? h('span', { class: 'badge' }, t('s.current')) : null),
       h('button', { class: 'btn small', onclick: () => { const d = { name: p.name }; openSheet(t('s.rename'), h('div', null, textField(t('s.profileName'), d, 'name'), h('button', { class: 'btn primary', onclick: () => { store.renameProfile(p.id, d.name); closeSheet(); rerenderAll(); } }, t('c.save')))); } }, t('s.rename')),
       p.id !== cur ? h('button', { class: 'btn small', onclick: () => switchProfile(p.id) }, t('s.switch')) : null,
-      profs.length > 1 ? h('button', { class: 'btn ghost icon', 'aria-label': t('s.deleteProfile'), onclick: () => confirmSheet(t('s.deleteProfile'), t('s.deleteProfileConfirm', { name: p.name || t('s.profile') }), t('c.delete'), async () => { await store.deleteProfile(p.id); hydrate(); rerenderAll(); }, t('c.cancel')) }, '\u00d7') : null)));
+      profs.length > 1 ? h('button', { class: 'btn ghost icon', 'aria-label': t('s.deleteProfile'), onclick: () => confirmSheet(t('s.deleteProfile'), t('s.deleteProfileConfirm', { name: p.name || t('s.profile') }) + cloudNote(p.id), t('c.delete'), async () => { const was = store.currentProfile().id; await store.deleteProfile(p.id); hydrate(); rerenderAll(); if (store.currentProfile().id !== was) MB.sync.profileChanged(); }, t('c.cancel')) }, '\u00d7') : null)));
     return h('div', null,
       h('div', { class: 'grid2' }, h('label', { class: 'field' }, h('span', null, t('s.language')), langSel), h('div', { class: 'field' }, h('span', null, t('s.theme')), themeSeg)),
       h('div', { class: 'subhead' }, t('s.profiles')), h('p', { class: 'muted small' }, t('s.profilesSub')), list,
@@ -786,7 +787,7 @@
     const d = { name: '' };
     openSheet(t('pf.new'), h('div', null, textField(t('s.profileName'), d, 'name'), h('button', { class: 'btn primary', onclick: () => { const id = store.addProfile(d.name); closeSheet(); if (onCreated) onCreated(id); else switchProfile(id); } }, t('c.add'))));
   }
-  function switchProfile(id) { if (!store.setProfile(id)) return; hydrate(); S.foodTab = t('f.all'); rerenderAll(); if (!store.get('settings/main') && !store.count()) location.hash = '#start'; }
+  function switchProfile(id) { if (!store.setProfile(id)) return; pendingPaths.clear(); hydrate(); S.foodTab = t('f.all'); rerenderAll(); MB.sync.profileChanged(); if (!store.get('settings/main') && !store.count()) location.hash = '#start'; }
   function profileSheet() {
     const profs = store.profiles(), cur = store.currentProfile().id;
     openSheet(t('pf.switch'), h('div', null, h('div', { class: 'list' }, profs.map(p => h('button', { class: 'row pick' + (p.id === cur ? ' on' : ''), onclick: () => { closeSheet(); if (p.id !== cur) switchProfile(p.id); } },
@@ -826,16 +827,152 @@
   function saveSettings() {
     const prevUnit = S.settings.units.weight;
     const merged = SC.normalizeSettings(S.settingsDraft);
-    merged.updatedAt = new Date().toISOString();
+    merged.updatedAt = store.stamp();
     if (merged.units.weight !== prevUnit) {
       const from = prevUnit, to = merged.units.weight;
       if (merged.goal.weight != null) merged.goal.weight = SC.convertWeight(merged.goal.weight, from, to);
       if (merged.goal.band) merged.goal.band = merged.goal.band.map(v => SC.convertWeight(v, from, to));
-      const ups = store.list('days').filter(d => d.weight != null).map(d => { const { id, ...rest } = d; return ['days/' + (d.date || id), { ...rest, weight: SC.convertWeight(num(d.weight), from, to) }]; });
+      const ups = store.list('days').filter(d => d.weight != null).map(d => { const { id, ...rest } = d; return ['days/' + (d.date || id), { ...rest, weight: SC.convertWeight(num(d.weight), from, to), updatedAt: store.stamp() }]; });
       if (ups.length) { store.bulk({ upserts: ups }); toast(t('s.converted', { n: ups.length, u: to })); }
     }
     S.settings = merged; S.settingsDirty = false; S.settingsDraft = null;
     store.setDoc('settings/main', merged); flashSaved(); loadDay(S.date); render(); toast(t('c.saved'));
+  }
+
+  /* ---------- Sync: status dot, Settings card, changes from other devices and tabs ---------- */
+  const syncStateText = st => st.state === 'pending' ? t('sy.st.pending', { n: st.pending }) : t('sy.st.' + st.state);
+  function syncErrorText(e) {
+    const code = e && e.code;
+    if (code === 'server') return t('sy.err.server', { status: e.status || '?' });
+    if (code === 'tooLarge') return t('sy.err.tooLarge', { path: e.path || '' });
+    if (code === 'badKey') return t('sy.badKey');
+    return t(['key', 'invite', 'offline', 'timeout'].includes(code) ? 'sy.err.' + code : 'sy.err.local');
+  }
+  const storedInText = () => t(MB.sync.status().linked ? 'sy.storedIn' : 's.storedIn', { kind: store.kind() });
+  const cloudNote = id => { const m = store.syncMeta(id); return m && m.key ? ' ' + t('sy.cloudKept') : ''; };
+  function fmtWhen(t0) {
+    const d = new Date(t0);
+    return d.toDateString() === new Date().toDateString() ? d.toLocaleTimeString(I.locale(), { hour: 'numeric', minute: '2-digit' })
+      : d.toLocaleString(I.locale(), { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+  }
+  /* dot and card update in place; the card is rebuilt only when linking changes its layout */
+  function updateSyncUI(st) {
+    st = st || MB.sync.status();
+    document.querySelectorAll('.syncdot').forEach(el => {
+      el.classList.toggle('hidden', !st.linked);
+      if (!st.linked) return;
+      el.dataset.state = st.state;
+      el.querySelector('.syncdot-n').textContent = (st.state === 'pending' || st.state === 'offline') && st.pending ? String(st.pending) : '';
+      const label = t('sy.dot', { state: syncStateText(st) });
+      el.setAttribute('aria-label', label); el.title = label;
+    });
+    const stored = $('.storedin'); if (stored) stored.textContent = storedInText();
+    const card = $('.synccard');
+    if (card) { if (card.dataset.linked !== String(st.linked)) card.replaceWith(syncCard()); else if (card.update) card.update(st); }
+  }
+  function syncDotTap() {
+    const st = MB.sync.status();
+    if (st.state === 'error') toast(syncErrorText(st.error), { action: t('sy.syncNow'), onAction: () => MB.sync.syncNow() });
+    else { if (st.state === 'offline') toast(t('sy.st.offline')); MB.sync.syncNow(); }
+  }
+  function syncCard() {
+    const st = MB.sync.status(), body = h('div'), card = section(t('sy.title'), t('sy.sub'), body, 'synccard');
+    card.dataset.linked = String(st.linked);
+    if (!st.linked) {
+      body.append(h('p', { class: 'muted' }, t('sy.intro')), h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', onclick: createVaultSheet }, t('sy.create')),
+        h('button', { class: 'btn', onclick: linkSheet }, t('sy.link'))));
+      return card;
+    }
+    const line = h('div', { class: 'syncline' }), when = h('p', { class: 'muted small' });
+    card.update = s => {
+      line.replaceChildren(...[h('i', { class: 'syncdot-i', 'data-state': s.state, 'aria-hidden': 'true' }), h('span', null, syncStateText(s)),
+        s.state !== 'pending' && s.pending ? h('span', { class: 'muted' }, ' · ' + t('sy.st.pending', { n: s.pending })) : null,
+        s.state === 'error' ? h('span', { class: 'err-line' }, syncErrorText(s.error)) : null].filter(Boolean));
+      when.textContent = s.lastSync ? t('sy.lastSync', { when: fmtWhen(s.lastSync) }) : t('sy.never');
+    };
+    card.update(st);
+    body.append(line, when,
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', onclick: () => MB.sync.syncNow() }, t('sy.syncNow')),
+        h('button', { class: 'btn', onclick: () => keySheet(MB.sync.status().key) }, t('sy.showKey')),
+        h('button', { class: 'btn', onclick: downloadCloud }, t('sy.download'))),
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn', onclick: unlinkSheet }, t('sy.unlink')),
+        h('button', { class: 'btn danger', onclick: deleteCloudSheet }, t('sy.deleteCloud'))));
+    return card;
+  }
+  const keyInput = (d, label) => {
+    const f = textField(label, d, 'key', null, 'tly-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX'), inp = f.querySelector('input');
+    inp.setAttribute('autocomplete', 'off'); inp.setAttribute('autocapitalize', 'characters'); inp.setAttribute('spellcheck', 'false');
+    return f;
+  };
+  function busyButton(label, run) {
+    const b = h('button', { class: 'btn primary', onclick: async () => { b.disabled = true; b.textContent = t('sy.working'); try { await run(); } finally { if (b.isConnected) { b.disabled = false; b.textContent = label; } } } }, label);
+    return b;
+  }
+  function createVaultSheet() {
+    const d = { invite: '' }, err = h('p', { class: 'err-line', role: 'alert' });
+    const btn = busyButton(t('sy.createBtn'), async () => {
+      err.textContent = '';
+      if (!d.invite.trim()) { err.textContent = t('sy.needInvite'); return; }
+      try { keySheet(await MB.sync.createVault(d.invite)); } catch (e) { err.textContent = syncErrorText(e); }
+    });
+    openSheet(t('sy.create'), h('div', null, h('p', { class: 'muted' }, t('sy.createHelp')), textField(t('sy.invite'), d, 'invite'), h('div', { class: 'actions' }, btn), err));
+  }
+  function keySheet(key) {
+    const copy = async () => { try { await navigator.clipboard.writeText(key); toast(t('c.copied')); } catch (e) { toast(t('e.copyFailed')); } };
+    openSheet(t('sy.keyTitle'), h('div', null, h('div', { class: 'synckey', tabindex: '0' }, key),
+      h('div', { class: 'notice warn' }, h('span', null, t('sy.keyWarn'))),
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: copy }, t('c.copy')), h('button', { class: 'btn', onclick: closeSheet }, t('c.done')))));
+  }
+  function linkSheet() {
+    const d = { key: '' }, err = h('p', { class: 'err-line', role: 'alert' });
+    const btn = busyButton(t('sy.linkBtn'), async () => {
+      err.textContent = '';
+      if (!MB.sync.normalizeKey(d.key)) { err.textContent = t('sy.badKey'); return; }
+      try { const st = await MB.sync.link(d.key); closeSheet(); toast(st.state === 'offline' ? t('sy.linkedOffline') : t('sy.linked')); }
+      catch (e) { err.textContent = syncErrorText(e); }
+    });
+    openSheet(t('sy.link'), h('div', null, h('p', { class: 'muted' }, t('sy.linkHelp')), keyInput(d, t('sy.key')),
+      h('p', { class: 'muted small' }, t('sy.iphone')), h('div', { class: 'actions' }, btn), err));
+  }
+  async function downloadCloud() {
+    try {
+      const text = JSON.stringify(JSON.parse(await MB.sync.exportCloud()), null, 2);
+      if (await saveFile(fileBase() + '-cloud.json', text, 'application/json', false)) toast(t('sy.downloaded'));
+    } catch (e) { toast(syncErrorText(e)); }
+  }
+  function unlinkSheet() {
+    const n = MB.sync.status().pending;
+    confirmSheet(t('sy.unlink'), t('sy.unlinkConfirm') + (n ? ' ' + t('sy.unlinkPending', { n }) : ''), t('sy.unlinkBtn'),
+      async () => { await MB.sync.unlink(); toast(t('sy.unlinked')); }, t('c.cancel'));
+  }
+  function deleteCloudSheet() {
+    confirmSheet(t('sy.deleteCloud'), t('sy.deleteConfirm'), t('sy.deleteBtn'),
+      async () => { try { await MB.sync.deleteCloud(); toast(t('sy.deleted')); } catch (e) { toast(syncErrorText(e)); } }, t('c.cancel'));
+  }
+
+  /* Changes from another device (sync) or another tab. State is refreshed per document; the page re-renders in place only
+     when it shows what changed, and never while a sheet is open or an input has focus (then it waits for close or blur). */
+  const pendingPaths = new Set();
+  const editing = () => { const a = document.activeElement, main = $('#main'); return !!(a && main && main.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
+  function changedElsewhere(paths) { paths.forEach(p => pendingPaths.add(p)); applyPending(); }
+  function applyPending() {
+    if (!pendingPaths.size || U.sheetOpen() || editing()) return;
+    const paths = [...pendingPaths]; pendingPaths.clear();
+    if (paths.includes('settings/main')) S.settings = SC.normalizeSettings(store.get('settings/main'));
+    if (paths.some(p => p.startsWith('foods/'))) S.foods = store.list('foods').sort(byName);
+    if (paths.some(p => p.startsWith('templates/'))) S.templates = store.list('templates');
+    if (paths.includes('days/' + S.date)) loadDay(S.date);
+    const r = S.route, shows = p => p === 'settings/main' || (p.startsWith('days/') && (r === 'today' || r === 'progress')) || (p.startsWith('foods/') && r === 'library') || (p === 'm/profiles' && r === 'settings');
+    if (r !== 'start' && paths.some(shows)) render();
+  }
+  function otherTab({ docs, meta, profileGone }) {
+    if (profileGone) { pendingPaths.clear(); hydrate(); rerenderAll(); MB.sync.profileChanged(); return; }
+    if (meta.some(k => k.startsWith('sync:'))) MB.sync.refresh();
+    if (meta.includes('profiles')) { refreshProfileButton(); pendingPaths.add('m/profiles'); }
+    changedElsewhere(docs);
   }
 
   /* ---------- Get started ---------- */
@@ -907,7 +1044,7 @@
       ta.value = ''; st.text = ''; plan = null; applyBtn.disabled = true;
       result.replaceChildren(h('div', { class: 'line ok' }, t('i.applied')));
       toast(t('i.applied')); onDone && onDone();
-      if (st.into === 'new') rerenderAll();
+      if (st.into === 'new') { rerenderAll(); MB.sync.profileChanged(); }
     }
     const panel = h('div', { class: 'import' }, drop, file, ta, targetWrap,
       h('div', { class: 'grid2' }, h('div', { class: 'field' }, h('span', null, t('i.mode')), modeSeg), h('div', { class: 'field' }, h('span', null, t('i.into')), intoSeg)),
@@ -916,15 +1053,17 @@
     if (S.pendingImport) { const txt = S.pendingImport; S.pendingImport = null; setTimeout(() => { setText(txt); toast(t('i.shared')); }, 30); }
     return panel;
   }
+  /* Merge keeps the file's timestamps so older rows never overwrite newer ones; Replace stamps now, so a restored
+     backup also wins over newer copies on synced devices */
   async function applyPlan(plan) {
-    const now = new Date().toISOString(), upserts = [], deletes = [];
+    const now = store.stamp(), upserts = [], deletes = [], at = t => (plan.mode !== 'replace' && t) || now;
     if (plan.settings) upserts.push(['settings/main', { ...plan.settings, updatedAt: now }]);
     for (const key of ['foods', 'templates']) {
       plan[key].remove.forEach(id => deletes.push(key + '/' + id));
-      plan[key].upsert.forEach(r => { const { id, ...rest } = r; upserts.push([key + '/' + id, { ...rest, updatedAt: rest.updatedAt || now }]); });
+      plan[key].upsert.forEach(r => { const { id, ...rest } = r; upserts.push([key + '/' + id, { ...rest, updatedAt: at(rest.updatedAt) }]); });
     }
     plan.days.remove.forEach(date => deletes.push('days/' + date));
-    plan.days.upsert.forEach(d => upserts.push(['days/' + d.date, { ...d, updatedAt: d.updatedAt || now }]));
+    plan.days.upsert.forEach(d => upserts.push(['days/' + d.date, { ...d, updatedAt: at(d.updatedAt) }]));
     await store.bulk({ upserts, deletes });
     hydrate(); S.foodTab = t('f.all');
   }
@@ -977,15 +1116,29 @@
   const NAV = ['today', 'plan', 'progress', 'library', 'settings'], ROUTES = [...NAV, 'start'], ALIAS = { week: 'progress', foods: 'library' };
   function shell() {
     const langSel = h('select', { class: 'lang', 'aria-label': t('s.language'), onchange: e => { I.set(e.target.value); rerenderAll(); } }, Object.entries(I.LANGS).map(([c, n]) => h('option', { value: c, selected: c === I.lang }, n)));
-    const prof = store.currentProfile(), many = store.profiles().length > 1;
     const top = h('header', { class: 'topbar' },
-      h('div', { class: 'brand' }, h('span', { class: 'brand-name' }, MB.APP.name), h('span', { class: 'status', 'data-state': '' }, '')),
+      h('div', { class: 'brand' }, h('span', { class: 'brand-name' }, MB.APP.name),
+        h('button', { class: 'syncdot hidden', type: 'button', onclick: syncDotTap }, h('i', { 'aria-hidden': 'true' }), h('span', { class: 'syncdot-n' })),
+        h('span', { class: 'status', 'data-state': '' }, '')),
       h('div', { class: 'topbar-actions' },
-        (many || prof.name) ? h('button', { class: 'btn ghost small profile-btn', onclick: profileSheet, html: ICONS.user + `<span>${prof.name || t('s.profile')}</span>` }) : null,
+        profileButton(),
         h('button', { class: 'btn ghost icon theme-btn', 'aria-label': t('s.theme'), onclick: toggleTheme, html: effectiveTheme() === 'dark' ? ICONS.sun : ICONS.moon }),
         langSel));
     const nav = h('nav', { class: 'nav', 'aria-label': 'Main' }, NAV.map(r => h('a', { href: '#' + r, 'data-route': r, html: ICONS[r] + '<span>' + t('nav.' + r) + '</span>' })));
     return h('div', { class: 'app' }, top, nav, h('main', { id: 'main', class: 'main' }));
+  }
+  function profileButton() {
+    const prof = store.currentProfile(), many = store.profiles().length > 1;
+    if (!many && !prof.name) return null;
+    const b = h('button', { class: 'btn ghost small profile-btn', onclick: profileSheet, html: ICONS.user });
+    b.append(h('span', null, prof.name || t('s.profile')));
+    return b;
+  }
+  /* profile list changed in another tab: swap the button in place */
+  function refreshProfileButton() {
+    const bar = $('.topbar-actions'); if (!bar) return;
+    const old = bar.querySelector('.profile-btn'), next = profileButton();
+    if (old && next) old.replaceWith(next); else if (old) old.remove(); else if (next) bar.prepend(next);
   }
   const VIEWS = { today: viewToday, plan: viewPlan, progress: viewProgress, library: viewLibrary, settings: viewSettings, start: viewStart };
   function render() {
@@ -996,7 +1149,7 @@
     document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.route === S.route));
     window.scrollTo(0, y);
   }
-  function rerenderAll() { const app = $('.app'); if (app) app.remove(); document.body.append(shell()); setStatus(storageLabel(), ''); render(); }
+  function rerenderAll() { const app = $('.app'); if (app) app.remove(); document.body.append(shell()); setStatus(storageLabel(), ''); render(); updateSyncUI(); }
   const routeFromHash = () => { let r = location.hash.replace('#', '').split('?')[0]; if (ALIAS[r]) { if (r === 'foods') S.libTab = 'foods'; r = ALIAS[r]; } return ROUTES.includes(r) ? r : 'today'; };
   function registerSW() {
     if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
@@ -1031,6 +1184,12 @@
     if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => applyTheme(themePref()));
     document.addEventListener('dragover', e => { if (S.route !== 'start') e.preventDefault(); });
     document.addEventListener('drop', async e => { if (S.route === 'start') return; e.preventDefault(); const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]; if (f && /json$/i.test(f.name)) receiveText(await f.text(), f.name); });
+    store.onexternal = otherTab;
+    MB.sync.onchange = updateSyncUI;
+    MB.sync.onremote = changedElsewhere;
+    U.onSheetClosed(applyPending);
+    document.addEventListener('focusout', () => setTimeout(applyPending, 0));
+    MB.sync.init();
     registerSW(); checkInbox(); fileHandlers();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

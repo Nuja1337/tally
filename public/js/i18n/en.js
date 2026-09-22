@@ -121,3 +121,23 @@ MB.i18n.add('en', {
   "ex.catcow": "Cat-cow", "ex.hips": "Hip circles", "ex.squats": "Bodyweight squat", "ex.pushups": "Push-up", "ex.row": "One-arm row", "ex.press": "Dumbbell press", "ex.lateral": "Lateral raise",
   "ex.goblet": "Goblet squat", "ex.rdl": "Romanian deadlift", "ex.split": "Split squat", "ex.calf": "Calf raise", "ex.plank": "Plank"
 });
+
+/* sync */
+MB.i18n.add('en', {
+  "sy.title": "Sync", "sy.sub": "This profile on all your devices", "sy.intro": "Optional. Your data stays on this device either way. With a cloud vault, this profile syncs to your other devices, and changes made offline upload when you're back online.",
+  "sy.create": "Create cloud vault", "sy.link": "Link this device", "sy.createHelp": "Enter the invite code for this server. You'll get a sync key for linking your other devices.",
+  "sy.invite": "Invite code", "sy.needInvite": "Enter the invite code.", "sy.createBtn": "Create vault",
+  "sy.working": "Working…", "sy.keyTitle": "Your sync key", "sy.keyWarn": "Save this in your password manager. It's the only way to link other devices, and anyone with it can read and change this profile.",
+  "sy.linkHelp": "Paste the sync key from your other device. Spaces, dashes and capitals don't matter. Data here and in the cloud is combined; for each item, the newer copy wins.", "sy.key": "Sync key", "sy.iphone": "iPhone: the home-screen app keeps its own data, separate from Safari. Link inside the installed app.",
+  "sy.linkBtn": "Link", "sy.badKey": "That doesn't look like a sync key.", "sy.linked": "Linked and synced",
+  "sy.linkedOffline": "Linked. It will sync when you're online.", "sy.lastSync": "Last synced {when}", "sy.never": "Not synced yet",
+  "sy.syncNow": "Sync now", "sy.showKey": "Show sync key", "sy.download": "Download cloud backup",
+  "sy.downloaded": "Cloud backup saved", "sy.unlink": "Unlink this device", "sy.unlinkConfirm": "Stop syncing this profile here? Your data stays on this device and in the cloud.",
+  "sy.unlinkPending": "Changes not yet uploaded: {n}. They will stay only on this device.", "sy.unlinkBtn": "Unlink", "sy.unlinked": "Unlinked",
+  "sy.deleteCloud": "Delete cloud copy", "sy.deleteConfirm": "Delete this profile's cloud copy? Other linked devices stop syncing. Data on this device stays.", "sy.deleteBtn": "Delete cloud copy",
+  "sy.deleted": "Cloud copy deleted", "sy.storedIn": "Stored in this browser ({kind}) and synced to your cloud vault.", "sy.cloudKept": "The cloud copy is not affected.", "sy.dot": "Sync: {state}",
+  "sy.st.synced": "Synced", "sy.st.pending": "Waiting to upload: {n}", "sy.st.syncing": "Syncing…",
+  "sy.st.offline": "Offline. Changes upload when you're back online.", "sy.st.error": "Sync problem", "sy.err.key": "This sync key isn't recognized. The cloud copy may have been deleted.",
+  "sy.err.invite": "Wrong invite code.", "sy.err.offline": "Can't reach the server. Check your connection.", "sy.err.timeout": "The server took too long to answer.",
+  "sy.err.server": "The server had a problem ({status}). Try again later.", "sy.err.tooLarge": "{path} is too large to sync.", "sy.err.local": "Something went wrong on this device. Try again."
+});
