@@ -1,6 +1,11 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "tally",
+  "main": "worker/index.js",
   "compatibility_date": "2026-09-22",
-  "assets": { "directory": "./public" }
+  /* public/ is served directly (free, no Worker call); only /api/* and unmatched paths such as POST /share reach the Worker */
+  "assets": { "directory": "./public", "run_worker_first": ["/api/*"] },
+  "d1_databases": [{ "binding": "DB", "database_name": "tally", "migrations_dir": "migrations" }],
+  /* set with `npx wrangler secret put INVITE_CODE`; locally from .dev.vars */
+  "secrets": { "required": ["INVITE_CODE"] }
 }
