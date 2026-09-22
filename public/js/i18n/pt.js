@@ -141,3 +141,13 @@ MB.i18n.add('pt', {
   "sy.err.invite": "Código de convite incorreto.", "sy.err.offline": "Não foi possível acessar o servidor. Verifique sua conexão.", "sy.err.timeout": "O servidor demorou demais para responder.",
   "sy.err.server": "O servidor teve um problema ({status}). Tente mais tarde.", "sy.err.tooLarge": "{path} é grande demais para sincronizar.", "sy.err.local": "Algo deu errado neste dispositivo. Tente de novo."
 });
+
+/* library */
+MB.i18n.add('pt', {
+  "s.inLibrary": "Treinos, rotinas, exercícios e alimentos ficam na Biblioteca.", "pl.noWorkoutsLib": "Ainda não há treinos.", "pl.addWorkoutsFirst": "Adicione um treino na Biblioteca primeiro.",
+  "l.woSub": "O que você treina. Toque em um para editar ele e seus exercícios.", "l.addWorkout": "Adicionar treino", "l.newWorkout": "Novo treino",
+  "l.noWorkouts": "Ainda não há treinos. Adicione um ou carregue o perfil de exemplo.", "l.deleteWorkout": "Excluir {name}? Os blocos do calendário que o usam ficam, sem treino.", "l.none": "Nenhum ainda",
+  "l.newRoutine": "Nova rotina", "l.noRoutines": "Ainda não há rotinas. Adicione uma ou carregue o perfil de exemplo.", "l.deleteRoutine": "Excluir {name}? As marcações de dias anteriores ficam no seu registro.",
+  "l.everyDay": "Todos os dias", "l.everyDayHint": "Sem dias marcados, vale para todos os dias.", "l.checklist": "Lista",
+  "l.items": ["item","itens"], "l.templatesSub": "Salvos pelo Hoje. Toque em um para editar.", "l.editTemplate": "Editar modelo"
+});

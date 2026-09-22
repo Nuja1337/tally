@@ -129,7 +129,7 @@ window.MB = window.MB || {};
         : h('input', { type: f.type || 'text', class: f.small ? 'sm' : '', placeholder: f.label, 'aria-label': f.label, value: item[f.key] == null ? '' : item[f.key], inputmode: f.type === 'number' ? 'decimal' : null,
           oninput: e => { item[f.key] = f.type === 'number' ? (e.target.value === '' ? null : num(e.target.value)) : e.target.value; onChange(); } })),
       extra ? extra(item, i, draw) : null,
-      h('button', { class: 'btn ghost icon', 'aria-label': 'Remove', onclick: () => { arr.splice(i, 1); onChange(); draw(); } }, '\u00d7'))),
+      h('button', { class: 'btn ghost icon', 'aria-label': MB.i18n ? MB.i18n.t('c.remove') : 'Remove', onclick: () => { arr.splice(i, 1); onChange(); draw(); } }, '\u00d7'))),
       h('div', null, h('button', { class: 'btn small', type: 'button', onclick: () => {
         const it = { id: uid() };
         fields.forEach(f => it[f.key] = f.type === 'number' ? null : (f.type === 'select' ? (f.options()[0] || { value: '' }).value : ''));

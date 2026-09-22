@@ -3,7 +3,7 @@
 A local-first training and nutrition log: meals, habits, routines, workouts with per-side logging, an ideal-week calendar, an exercise library with images and video, bodyweight, tape measurements and rank. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
 
 - Works offline once opened, installs to the home screen like an app
-- Five pages: Today, Plan (the ideal week, workouts, training wave, gates), Progress, Library (exercises and foods), Settings
+- Five pages: Today, Plan (the ideal week), Progress, Library (workouts, routines, exercises, foods and meal templates), Settings (profile, targets, goal, habits, meal slots, rank, sync, data)
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
 - Light and dark themes
 - Several profiles on one device

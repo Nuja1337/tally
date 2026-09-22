@@ -141,3 +141,13 @@ MB.i18n.add('de', {
   "sy.err.invite": "Falscher Einladungscode.", "sy.err.offline": "Server nicht erreichbar. Prüfe deine Verbindung.", "sy.err.timeout": "Der Server hat zu lange nicht geantwortet.",
   "sy.err.server": "Der Server hatte ein Problem ({status}). Versuche es später erneut.", "sy.err.tooLarge": "{path} ist zu groß zum Synchronisieren.", "sy.err.local": "Auf diesem Gerät ist etwas schiefgelaufen. Versuche es erneut."
 });
+
+/* library */
+MB.i18n.add('de', {
+  "s.inLibrary": "Workouts, Routinen, Übungen und Lebensmittel findest du in der Bibliothek.", "pl.noWorkoutsLib": "Noch keine Workouts.", "pl.addWorkoutsFirst": "Leg zuerst ein Workout in der Bibliothek an.",
+  "l.woSub": "Was du trainierst. Tippe eins an, um es und seine Übungen zu bearbeiten.", "l.addWorkout": "Workout hinzufügen", "l.newWorkout": "Neues Workout",
+  "l.noWorkouts": "Noch keine Workouts. Leg eins an oder lade das Beispielprofil.", "l.deleteWorkout": "{name} löschen? Kalenderblöcke, die es nutzen, bleiben ohne Workout erhalten.", "l.none": "Noch keine",
+  "l.newRoutine": "Neue Routine", "l.noRoutines": "Noch keine Routinen. Leg eine an oder lade das Beispielprofil.", "l.deleteRoutine": "{name} löschen? Frühere Häkchen bleiben in deinem Log.",
+  "l.everyDay": "Jeden Tag", "l.everyDayHint": "Ohne ausgewählte Tage gilt sie jeden Tag.", "l.checklist": "Checkliste",
+  "l.items": ["Eintrag","Einträge"], "l.templatesSub": "Unter Heute gespeichert. Tippe eine an, um sie zu bearbeiten.", "l.editTemplate": "Vorlage bearbeiten"
+});

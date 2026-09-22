@@ -141,3 +141,13 @@ MB.i18n.add('en', {
   "sy.err.invite": "Wrong invite code.", "sy.err.offline": "Can't reach the server. Check your connection.", "sy.err.timeout": "The server took too long to answer.",
   "sy.err.server": "The server had a problem ({status}). Try again later.", "sy.err.tooLarge": "{path} is too large to sync.", "sy.err.local": "Something went wrong on this device. Try again."
 });
+
+/* library */
+MB.i18n.add('en', {
+  "s.inLibrary": "Workouts, routines, exercises and foods are in Library.", "pl.noWorkoutsLib": "No workouts yet.", "pl.addWorkoutsFirst": "Add a workout in Library first.",
+  "l.woSub": "What you train. Tap one to edit it and its exercises.", "l.addWorkout": "Add workout", "l.newWorkout": "New workout",
+  "l.noWorkouts": "No workouts yet. Add one, or load the example profile.", "l.deleteWorkout": "Delete {name}? Calendar blocks that use it stay, without a workout.", "l.none": "None yet",
+  "l.newRoutine": "New routine", "l.noRoutines": "No routines yet. Add one, or load the example profile.", "l.deleteRoutine": "Delete {name}? Past check marks stay in your log.",
+  "l.everyDay": "Every day", "l.everyDayHint": "No days selected means every day.", "l.checklist": "Checklist",
+  "l.items": ["item","items"], "l.templatesSub": "Saved from Today. Tap one to edit it.", "l.editTemplate": "Edit template"
+});

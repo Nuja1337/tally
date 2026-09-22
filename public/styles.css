@@ -380,3 +380,7 @@ table.plain td.n{text-align:right;font-variant-numeric:tabular-nums}
 .err-line{color:var(--red);font-size:14px;margin:8px 0 0}
 .err-line:empty{display:none}
 .synckey{font:700 19px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.03em;text-align:center;overflow-wrap:anywhere;background:var(--surface2);border-radius:var(--radius-sm);padding:16px 12px;margin:4px 0 12px;user-select:all;-webkit-user-select:all}
+
+/* library rows */
+.chev{color:var(--faint);font-size:22px;line-height:1;padding-left:4px}
+.chip.static{cursor:default}

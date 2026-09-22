@@ -5,7 +5,7 @@ import { join, relative } from 'node:path';
 import vm from 'node:vm';
 import { openTab, newDevice, seedDB, readDB, dbNames, waitFor, PUBLIC, SCRIPTS } from './harness.js';
 
-const ROUTES = ['today', 'plan', 'progress', 'library', 'settings', 'start'];
+const ROUTES = ['today', 'plan', 'progress', 'workouts', 'routines', 'exercises', 'foods', 'settings', 'start'];
 const LANGS = ['en', 'es', 'fr', 'pt', 'de', 'ja', 'ko', 'zh'];
 const settings = (extra = {}) => ({ name: 'Sam', units: { weight: 'kg' }, targets: { kcal: 2500, protein: 160 }, habits: [{ id: 'water', name: 'Water', target: 8 }], mealSlots: [{ id: 'breakfast', name: 'Breakfast' }], updatedAt: '2026-09-01T08:00:00.000Z', ...extra });
 const day = { date: '2026-09-01', habits: { water: 5 }, meals: [{ id: 'm1', slot: 'breakfast', name: 'Oats', kcal: 400, p: 30, c: 50, f: 8 }], weight: 80.2, updatedAt: '2026-09-01T09:00:00.000Z' };
@@ -15,7 +15,7 @@ describe('boot', () => {
     const tab = await openTab();
     expect(tab.document.title).toBe('Tally');
     expect(tab.text('.brand-name')).toBe('Tally');
-    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.2.0' });
+    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.2.1' });
     expect(tab.window.location.hash).toBe('#start');
     expect(await dbNames(tab.device.idb)).toEqual(['tally']);
     expect(tab.errors).toEqual([]);

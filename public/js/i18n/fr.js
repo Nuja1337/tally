@@ -141,3 +141,13 @@ MB.i18n.add('fr', {
   "sy.err.invite": "Code d'invitation incorrect.", "sy.err.offline": "Impossible de joindre le serveur. Vérifiez votre connexion.", "sy.err.timeout": "Le serveur a mis trop de temps à répondre.",
   "sy.err.server": "Le serveur a rencontré un problème ({status}). Réessayez plus tard.", "sy.err.tooLarge": "{path} est trop volumineux pour être synchronisé.", "sy.err.local": "Un problème est survenu sur cet appareil. Réessayez."
 });
+
+/* library */
+MB.i18n.add('fr', {
+  "s.inLibrary": "Entraînements, routines, exercices et aliments sont dans Bibliothèque.", "pl.noWorkoutsLib": "Pas encore d'entraînement.", "pl.addWorkoutsFirst": "Ajoutez d'abord un entraînement dans Bibliothèque.",
+  "l.woSub": "Ce que vous entraînez. Touchez-en un pour le modifier avec ses exercices.", "l.addWorkout": "Ajouter un entraînement", "l.newWorkout": "Nouvel entraînement",
+  "l.noWorkouts": "Pas encore d'entraînement. Ajoutez-en un ou chargez le profil d'exemple.", "l.deleteWorkout": "Supprimer {name} ? Les blocs du calendrier qui l'utilisent restent, sans entraînement.", "l.none": "Aucun pour l'instant",
+  "l.newRoutine": "Nouvelle routine", "l.noRoutines": "Pas encore de routine. Ajoutez-en une ou chargez le profil d'exemple.", "l.deleteRoutine": "Supprimer {name} ? Les coches des jours passés sont conservées.",
+  "l.everyDay": "Tous les jours", "l.everyDayHint": "Aucun jour coché : tous les jours.", "l.checklist": "Liste",
+  "l.items": ["élément","éléments"], "l.templatesSub": "Enregistrés depuis Aujourd'hui. Touchez-en un pour le modifier.", "l.editTemplate": "Modifier le modèle"
+});

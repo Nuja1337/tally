@@ -141,3 +141,13 @@ MB.i18n.add('es', {
   "sy.err.invite": "Código de invitación incorrecto.", "sy.err.offline": "No se puede conectar con el servidor. Revisa tu conexión.", "sy.err.timeout": "El servidor tardó demasiado en responder.",
   "sy.err.server": "El servidor tuvo un problema ({status}). Inténtalo más tarde.", "sy.err.tooLarge": "{path} es demasiado grande para sincronizar.", "sy.err.local": "Algo falló en este dispositivo. Inténtalo de nuevo."
 });
+
+/* library */
+MB.i18n.add('es', {
+  "s.inLibrary": "Entrenamientos, rutinas, ejercicios y alimentos están en Biblioteca.", "pl.noWorkoutsLib": "Aún no hay entrenamientos.", "pl.addWorkoutsFirst": "Primero añade un entrenamiento en Biblioteca.",
+  "l.woSub": "Lo que entrenas. Toca uno para editarlo junto con sus ejercicios.", "l.addWorkout": "Añadir entrenamiento", "l.newWorkout": "Nuevo entrenamiento",
+  "l.noWorkouts": "Aún no hay entrenamientos. Añade uno o carga el perfil de ejemplo.", "l.deleteWorkout": "¿Eliminar {name}? Los bloques del calendario que lo usan se quedan, sin entrenamiento.", "l.none": "Nada todavía",
+  "l.newRoutine": "Nueva rutina", "l.noRoutines": "Aún no hay rutinas. Añade una o carga el perfil de ejemplo.", "l.deleteRoutine": "¿Eliminar {name}? Las marcas de días anteriores se conservan.",
+  "l.everyDay": "Todos los días", "l.everyDayHint": "Sin días marcados, es todos los días.", "l.checklist": "Lista",
+  "l.items": ["elemento","elementos"], "l.templatesSub": "Guardadas desde Hoy. Toca una para editarla.", "l.editTemplate": "Editar plantilla"
+});

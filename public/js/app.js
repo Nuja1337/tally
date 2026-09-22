@@ -6,7 +6,7 @@
     openSheet, closeSheet, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, trend, heat } = U;
 
   const S = { route: 'today', date: today(), weekDate: today(), settings: SC.normalizeSettings(null), settingsDraft: null, settingsDirty: false,
-    day: SC.emptyDay(today()), foods: [], templates: [], foodTab: 'All', foodQ: '', foodSort: { key: 'name', dir: 1 }, libTab: 'exercises', exQ: '', planDay: dow(today()), planEdit: false,
+    day: SC.emptyDay(today()), foods: [], templates: [], foodTab: 'All', foodQ: '', foodSort: { key: 'name', dir: 1 }, libTab: 'workouts', exQ: '', planDay: dow(today()), planEdit: false,
     refs: {}, openedOn: today(), pendingImport: null };
   const unit = () => S.settings.units.weight;
   const kindName = id => { const k = S.settings.sessionKinds.find(x => x.id === id); return k ? k.name : (id || t('c.other')); };
@@ -389,7 +389,7 @@
     const withPlans = st.sessionTypes.filter(x => x.plan.length);
     wrap.append(section(t('pl.workouts'), S.planEdit ? h('button', { class: 'btn small', onclick: () => workoutPick() }, t('pl.editWorkout')) : null,
       withPlans.length ? h('div', { class: 'list' }, withPlans.map(x => h('button', { class: 'row pick', onclick: () => workoutSheet(x) }, h('span', { class: 'row-name' }, x.name), h('span', { class: 'muted small' }, t('pl.blocksCount', { b: x.plan.length, e: x.plan.reduce((a, b) => a + b.items.length, 0) })))))
-        : h('p', { class: 'empty' }, t('pl.noWorkouts'))));
+        : h('p', { class: 'empty' }, t('pl.noWorkoutsLib'), ' ', h('a', { href: '#workouts' }, t('l.addWorkout')))));
     return wrap;
   }
   function drawCalendar(cal) {
@@ -438,7 +438,7 @@
     const linkBox = h('div');
     const drawLink = () => {
       linkBox.replaceChildren();
-      if (d.kind === 'session') linkBox.append(st.sessionTypes.length ? selectField(t('t.session'), d, 'typeId', st.sessionTypes.map(x => ({ value: x.id, label: x.name }))) : h('p', { class: 'empty' }, t('s.addTypesFirst')));
+      if (d.kind === 'session') linkBox.append(st.sessionTypes.length ? selectField(t('t.session'), d, 'typeId', st.sessionTypes.map(x => ({ value: x.id, label: x.name }))) : h('p', { class: 'empty' }, t('pl.addWorkoutsFirst')));
       else if (d.kind === 'routine') linkBox.append(st.routines.length ? selectField(t('s.routines'), d, 'routineId', st.routines.map(x => ({ value: x.id, label: x.name }))) : h('p', { class: 'empty' }, t('t.noRoutines')));
       else if (d.kind === 'meal') linkBox.append(st.mealSlots.length ? selectField(t('t.slot'), d, 'slotId', st.mealSlots.map(x => ({ value: x.id, label: x.name }))) : h('p', { class: 'empty' }, t('t.noSlots')));
     };
@@ -462,15 +462,16 @@
         h('div', { class: 'list' }, b.items.map(it => { const ex = exById(it.exerciseId) || SC.resolveExercise(it.name, S.settings.exercises); const locked = ex && ex.gate && !SC.gateOpen(S.settings, ex.gate);
           const target = [it.sets ? `${it.sets} ×` : '', it.reps, it.perSide ? t('t.perSide') : '', it.rir ? `${it.rir} RIR` : '', it.rest].filter(Boolean).join(' · ');
           return h('div', { class: 'row pick' + (locked ? ' locked' : '') }, ex ? thumb(ex.image, 'thumb sm') : null, h('span', { class: 'row-name' }, ex ? h('button', { class: 'linkish', onclick: () => exerciseCard(ex) }, it.name) : it.name, h('div', { class: 'muted small' }, target, locked ? ' · ' + t('t.locked', { gate: gateLabel(ex.gate) }) : '', it.note ? ' · ' + it.note : ''))); })))),
-      S.planEdit ? h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: () => workoutEditor(type) }, t('c.edit'))) : null);
+      h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: () => workoutForm(type) }, t('c.edit'))));
     openSheet(type.name, body, { wide: true });
   }
   function workoutPick() {
     const st = S.settings;
-    openSheet(t('pl.editWorkout'), h('div', { class: 'list' }, st.sessionTypes.map(x => h('button', { class: 'row pick', onclick: () => workoutEditor(x) }, h('span', { class: 'row-name' }, x.name), h('span', { class: 'muted small' }, x.plan.length ? t('pl.blocksCount', { b: x.plan.length, e: x.plan.reduce((a, b) => a + b.items.length, 0) }) : t('pl.noPlan'))))));
+    openSheet(t('pl.editWorkout'), h('div', { class: 'list' }, st.sessionTypes.map(x => h('button', { class: 'row pick', onclick: () => workoutForm(x) }, h('span', { class: 'row-name' }, x.name), h('span', { class: 'muted small' }, x.plan.length ? t('pl.blocksCount', { b: x.plan.length, e: x.plan.reduce((a, b) => a + b.items.length, 0) }) : t('pl.noPlan'))))));
   }
-  function workoutEditor(type) {
-    const st = S.settings, plan = clone(type.plan), box = h('div');
+  /* blocks and their exercises; edits the given plan array in place */
+  function planEditor(plan) {
+    const st = S.settings, box = h('div');
     const exOptions = () => [{ value: '', label: '—' }, ...st.exercises.slice().sort(byName).map(e => ({ value: e.id, label: e.name }))];
     const draw = () => box.replaceChildren(...plan.map((b, bi) => h('div', { class: 'routine' },
       h('div', { class: 'editor-row' }, h('input', { type: 'text', placeholder: t('pl.blockLabel'), value: b.label, oninput: e => b.label = e.target.value }), h('input', { type: 'text', placeholder: t('f.note'), value: b.note || '', oninput: e => b.note = e.target.value }),
@@ -487,19 +488,128 @@
       h('button', { class: 'btn ghost small', onclick: () => { b.items.push({ id: uid(), exerciseId: '', name: '', sets: 3, reps: '8-12', perSide: false, rir: '', rest: '', note: '' }); draw(); } }, t('s.addExercise')))),
       h('button', { class: 'btn small', onclick: () => { plan.push({ id: uid(), label: String.fromCharCode(65 + plan.length), note: '', items: [] }); draw(); } }, t('pl.addBlock')));
     draw();
-    openSheet(t('pl.editWorkout') + ' · ' + type.name, h('div', null, box, h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => {
-      const s = clone(st); s.sessionTypes.find(x => x.id === type.id).plan = plan; saveSettingsNow(s); closeSheet(); render(); toast(t('c.saved'));
-    } }, t('c.save')))), { wide: true });
+    return box;
   }
 
-  /* ---------- Library: exercises and foods ---------- */
+  /* ---------- Library: workouts, routines, exercises, foods ---------- */
+  /* Library: everything you do and eat, one tab each. Rows are compact; a tap opens a sheet for that one item, saved at once. */
+  const LIB = {
+    workouts: { label: () => t('pl.workouts'), sub: () => t('l.woSub'), add: () => t('l.addWorkout'), onAdd: () => workoutForm(null), body: () => workoutsTab() },
+    routines: { label: () => t('s.routines'), sub: () => t('s.routinesSub'), add: () => t('s.addRoutine'), onAdd: () => routineForm(null), body: () => routinesTab() },
+    exercises: { label: () => t('l.exercises'), sub: () => t('l.exSub'), add: () => t('l.addExercise'), onAdd: () => exerciseForm(null), body: () => exerciseList() },
+    foods: { label: () => t('nav.foods'), sub: () => t('f.sub'), add: () => t('f.addFood'), onAdd: () => foodForm(null), body: () => { const b = h('div'), tpl = templatesBlock(); if (tpl) b.append(tpl); b.append(foodsBlock()); return b; } }
+  };
   function viewLibrary() {
-    const wrap = h('div', { class: 'page' });
-    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('nav.library')), h('div', { class: 'sub' }, S.libTab === 'exercises' ? t('l.exSub') : t('f.sub'))),
-      h('button', { class: 'btn primary', onclick: () => S.libTab === 'exercises' ? exerciseForm(null) : foodForm(null) }, S.libTab === 'exercises' ? t('l.addExercise') : t('f.addFood'))));
-    wrap.append(h('div', { class: 'tools row2' }, segmented([{ value: 'exercises', label: t('l.exercises') }, { value: 'foods', label: t('nav.foods') }], S.libTab, v => { S.libTab = v; render(); })));
-    wrap.append(S.libTab === 'exercises' ? exerciseList() : foodsBlock());
+    if (!LIB[S.libTab]) S.libTab = 'workouts';
+    const tab = LIB[S.libTab], wrap = h('div', { class: 'page' });
+    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('nav.library')), h('div', { class: 'sub' }, tab.sub())),
+      h('button', { class: 'btn primary', onclick: tab.onAdd }, tab.add())));
+    wrap.append(h('div', { class: 'tools row2' }, segmented(Object.keys(LIB).map(k => ({ value: k, label: LIB[k].label() })), S.libTab, v => { S.libTab = v; render(); })));
+    wrap.append(tab.body());
     return wrap;
+  }
+  const pickRow = (name, sub, onclick) => h('button', { class: 'row pick', onclick }, h('span', { class: 'row-name' }, h('div', null, name), sub ? h('div', { class: 'muted small' }, sub) : null), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›'));
+  const planCount = x => { const e = x.plan.reduce((a, b) => a + b.items.length, 0); return e ? t('pl.blocksCount', { b: x.plan.length, e }) : null; };
+  const confirmDelete = (name, text, onYes) => confirmSheet(t('c.delete') + ' · ' + name, text, t('c.delete'), onYes, t('c.cancel'));
+  function workoutsTab() {
+    const st = S.settings, box = h('div');
+    box.append(section(null, null, st.sessionTypes.length
+      ? h('div', { class: 'list' }, st.sessionTypes.map(x => pickRow(x.name, [kindName(x.kind), x.minutes ? `${num(x.minutes)} ${t('c.min')}` : null, planCount(x)].filter(Boolean).join(' · '), () => workoutForm(x))))
+      : h('p', { class: 'empty' }, t('l.noWorkouts'))));
+    const editBtn = fn => h('button', { class: 'btn small', onclick: fn }, t('c.edit'));
+    box.append(section(t('s.kinds'), editBtn(kindsSheet), st.sessionKinds.length ? h('div', { class: 'chips' }, st.sessionKinds.map(k => h('span', { class: 'chip small static' }, k.name))) : h('p', { class: 'empty' }, t('l.none'))));
+    const wave = SC.waveWeek(st.wave, today());
+    box.append(section(t('pl.wave'), editBtn(waveSheet), h('p', { class: 'muted small' }, st.wave.pattern.length ? st.wave.pattern.map(p => t('pl.' + p)).join(' · ') + (wave ? ' · ' + waveLabel(wave) : '') : t('l.none'))));
+    box.append(section(t('s.gates'), editBtn(gatesSheet), st.gates.length ? h('div', { class: 'chips' }, st.gates.map(g => h('span', { class: 'chip small static' }, `${g.name} · ${g.stages[g.current - 1] || g.current}`))) : h('p', { class: 'empty' }, t('l.none'))));
+    return box;
+  }
+  function saveAnd(next, then) { saveSettingsNow(next); closeSheet(); render(); toast(t('c.saved')); if (then) then(); }
+  /* one workout: its details and its exercise plan */
+  function workoutForm(type) {
+    const st = S.settings, d = type ? clone(type) : { id: '', name: '', kind: st.sessionKinds[0] ? st.sessionKinds[0].id : '', minutes: 60, kcal: 0, note: '', plan: [] };
+    const kinds = st.sessionKinds.length ? st.sessionKinds.map(k => ({ value: k.id, label: k.name })) : [{ value: '', label: '—' }];
+    openSheet(type ? type.name : t('l.newWorkout'), h('div', null,
+      textField(t('c.name'), d, 'name'),
+      h('div', { class: 'grid3' }, selectField(t('s.kind'), d, 'kind', kinds), numField(t('t.minutes'), d, 'minutes'), numField(t('c.kcal'), d, 'kcal')),
+      textField(t('f.note'), d, 'note', null, t('c.optional')),
+      h('div', { class: 'subhead' }, t('l.exercises')), planEditor(d.plan),
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', onclick: () => {
+          if (!String(d.name).trim()) { toast(t('t.needName')); return; }
+          const s = clone(S.settings), out = { ...d, minutes: num(d.minutes), kcal: num(d.kcal) }, i = type ? s.sessionTypes.findIndex(x => x.id === type.id) : -1;
+          if (!out.id) out.id = U.slug(out.name);
+          if (i >= 0) s.sessionTypes[i] = out; else s.sessionTypes.push(out);
+          saveAnd(s);
+        } }, t('c.save')),
+        type ? h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(type.name, t('l.deleteWorkout', { name: type.name }), () => { const s = clone(S.settings); s.sessionTypes = s.sessionTypes.filter(x => x.id !== type.id); saveAnd(s); }) }, t('c.delete')) : null)), { wide: true });
+  }
+  function kindsSheet() {
+    const kinds = clone(S.settings.sessionKinds);
+    openSheet(t('s.kinds'), h('div', null, listEditor(kinds, [{ key: 'name', label: t('s.kind') }], () => {}, t('s.addKind')),
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => { const s = clone(S.settings); s.sessionKinds = kinds.filter(k => String(k.name || '').trim()); saveAnd(s); } }, t('c.save')))));
+  }
+  function waveSheet() {
+    const w = { start: S.settings.wave.start || '', pattern: S.settings.wave.pattern.join(', ') };
+    openSheet(t('pl.wave'), h('div', null, h('p', { class: 'muted small' }, t('s.waveSub')),
+      h('div', { class: 'grid2' },
+        h('label', { class: 'field' }, h('span', null, t('s.waveStart')), h('input', { type: 'date', value: w.start, onchange: e => { w.start = e.target.value; } })),
+        h('label', { class: 'field' }, h('span', null, t('s.wavePattern')), h('input', { type: 'text', value: w.pattern, placeholder: 'ramp, ramp, full, deload', oninput: e => { w.pattern = e.target.value; } }))),
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => {
+        const s = clone(S.settings);
+        s.wave = { start: w.start || null, pattern: w.pattern.split(',').map(x => x.trim().toLowerCase()).filter(x => SC.WAVE.includes(x)) };
+        saveAnd(s);
+      } }, t('c.save')))));
+  }
+  function gatesSheet() {
+    const draft = { gates: clone(S.settings.gates) };
+    openSheet(t('s.gates'), h('div', null, h('p', { class: 'muted small' }, t('s.gatesSub')), gatesEditor(draft, () => {}),
+      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => { const s = clone(S.settings); s.gates = draft.gates.filter(g => String(g.name || '').trim()); saveAnd(s); } }, t('c.save')))));
+  }
+  function routinesTab() {
+    const st = S.settings;
+    return section(null, null, st.routines.length
+      ? h('div', { class: 'list' }, st.routines.map(r => pickRow(r.name, [r.days.length ? r.days.map(x => dayName(x)).join(', ') : t('l.everyDay'), `${r.items.length} ${I.unit('l.items', r.items.length)}`].join(' · '), () => routineForm(r))))
+      : h('p', { class: 'empty' }, t('l.noRoutines')));
+  }
+  /* one routine: name, days, checklist, check-in warning */
+  function routineForm(r) {
+    const d = r ? clone(r) : { id: '', name: '', items: [], days: [], alertAt: null, alertText: '' };
+    const dayChips = h('div', { class: 'chips small-gap' }, DAYS.map(day => h('button', { class: 'chip small' + (d.days.includes(day) ? ' on' : ''), onclick: e => { const on = !d.days.includes(day); d.days = on ? [...d.days, day] : d.days.filter(x => x !== day); e.currentTarget.classList.toggle('on', on); } }, dayName(day))));
+    openSheet(r ? r.name : t('l.newRoutine'), h('div', null,
+      textField(t('s.routineName'), d, 'name'),
+      h('div', { class: 'field' }, h('span', null, t('s.days')), dayChips, h('small', { class: 'muted' }, t('l.everyDayHint'))),
+      h('div', { class: 'subhead' }, t('l.checklist')),
+      listEditor(d.items, [{ key: 'name', label: t('s.exercise') }, { key: 'target', label: t('s.setsReps'), small: true }], () => {}, t('s.addExercise')),
+      h('div', { class: 'grid2 mt' }, numField(t('s.alertAt'), d, 'alertAt', null, '1'), textField(t('s.alertText'), d, 'alertText', null, t('c.optional'))),
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', onclick: () => {
+          if (!String(d.name).trim()) { toast(t('t.needName')); return; }
+          const s = clone(S.settings), i = r ? s.routines.findIndex(x => x.id === r.id) : -1;
+          if (!d.id) d.id = U.slug(d.name);
+          if (i >= 0) s.routines[i] = d; else s.routines.push(d);
+          saveAnd(s);
+        } }, t('c.save')),
+        r ? h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(r.name, t('l.deleteRoutine', { name: r.name }), () => { const s = clone(S.settings); s.routines = s.routines.filter(x => x.id !== r.id); saveAnd(s); }) }, t('c.delete')) : null)), { wide: true });
+  }
+  /* meal templates, saved from Today; shown above the foods only when there are some */
+  function templatesBlock() {
+    const slotName = id => (S.settings.mealSlots.find(s => s.id === id) || {}).name || '';
+    const tpls = S.templates.slice().sort(byName);
+    if (!tpls.length) return null;
+    return section(t('t.templates'), t('l.templatesSub'), h('div', { class: 'list' }, tpls.map(tp => pickRow(tp.name, [slotName(tp.slot), `${fmt(tp.kcal)} kcal · ${fmt(tp.p)}P ${fmt(tp.c)}C ${fmt(tp.f)}F`].filter(Boolean).join(' · '), () => templateForm(tp)))));
+  }
+  function templateForm(tp) {
+    const d = clone(tp), slots = S.settings.mealSlots.map(s => ({ value: s.id, label: s.name }));
+    openSheet(t('l.editTemplate'), h('div', null, textField(t('c.name'), d, 'name'),
+      slots.length ? selectField(t('t.slot'), d, 'slot', slots) : null,
+      h('div', { class: 'grid4' }, numField(t('c.kcal'), d, 'kcal'), numField(t('c.protein'), d, 'p'), numField(t('c.carbs'), d, 'c'), numField(t('c.fat'), d, 'f')),
+      h('div', { class: 'actions' },
+        h('button', { class: 'btn primary', onclick: () => {
+          if (!String(d.name).trim()) { toast(t('t.needName')); return; }
+          store.setDoc('templates/' + tp.id, { name: String(d.name).trim(), slot: d.slot || '', kcal: num(d.kcal), p: num(d.p), c: num(d.c), f: num(d.f), updatedAt: store.stamp() });
+          S.templates = store.list('templates'); closeSheet(); render(); toast(t('c.saved'));
+        } }, t('c.save')),
+        h('button', { class: 'btn ghost danger', onclick: () => { store.deleteDoc('templates/' + tp.id); S.templates = store.list('templates'); closeSheet(); render(); toast(t('f.deleted', { name: tp.name })); } }, t('c.delete')))));
   }
   function exerciseList() {
     const box = h('div');
@@ -721,10 +831,8 @@
     S.settingsDraft = draft;
     const wrap = h('div', { class: 'page settings' });
     const saveBar = h('div', { class: 'savebar' + (S.settingsDirty ? ' show' : '') }, h('span', null, t('s.unsaved')), h('button', { class: 'btn primary', onclick: saveSettings }, t('c.save')));
-    const redraws = [];
-    const dirty = () => { S.settingsDirty = true; saveBar.classList.add('show'); redraws.forEach(fn => fn()); };
-    const kindOptions = () => draft.sessionKinds.map(k => ({ value: k.id, label: k.name || '—' }));
-    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('s.title')))));
+    const dirty = () => { S.settingsDirty = true; saveBar.classList.add('show'); };
+    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('s.title')), h('div', { class: 'sub' }, t('s.inLibrary')))));
     wrap.append(section(t('s.profile'), null, h('div', { class: 'grid2' }, textField(t('c.name'), draft, 'name', dirty, t('c.optional')), selectField(t('s.unit'), draft.units, 'weight', [{ value: 'lb', label: t('s.lb') }, { value: 'kg', label: t('s.kg') }], dirty))));
     wrap.append(section(t('s.targets'), null, h('div', { class: 'grid2' }, numField(t('s.calories'), draft.targets, 'kcal', dirty), numField(t('s.proteinG'), draft.targets, 'protein', dirty), numField(t('s.carbsG'), draft.targets, 'carbs', dirty), numField(t('s.fatG'), draft.targets, 'fat', dirty))));
     const band = { lo: draft.goal.band ? draft.goal.band[0] : null, hi: draft.goal.band ? draft.goal.band[1] : null };
@@ -736,17 +844,6 @@
       listEditor(draft.goal.milestones, [{ key: 'label', label: t('s.milestone') }, { key: 'bodyFat', label: '% ' + t('c.fat'), type: 'number', small: true }, { key: 'weight', label: draft.units.weight, type: 'number', small: true }], dirty, t('s.addMilestone')))));
     wrap.append(section(t('s.slots'), null, listEditor(draft.mealSlots, [{ key: 'name', label: t('s.slotName') }], dirty, t('s.addSlot'))));
     wrap.append(section(t('s.habits'), t('s.habitsSub'), listEditor(draft.habits, [{ key: 'name', label: t('s.habit') }, { key: 'target', label: t('s.target'), type: 'number', small: true }, { key: 'unit', label: t('s.habitUnit'), small: true }], dirty, t('s.addHabit'))));
-    wrap.append(section(t('s.routines'), t('s.routinesSub'), routinesEditor(draft, dirty)));
-    const kindsEd = listEditor(draft.sessionKinds, [{ key: 'name', label: t('s.kind') }], dirty, t('s.addKind'));
-    wrap.append(section(t('s.kinds'), null, kindsEd));
-    const typesEd = listEditor(draft.sessionTypes, [{ key: 'name', label: t('c.name') }, { key: 'kind', label: t('s.kind'), type: 'select', small: true, options: kindOptions }, { key: 'minutes', label: t('c.min'), type: 'number', small: true }, { key: 'kcal', label: t('c.kcal'), type: 'number', small: true }], dirty, t('s.addType'));
-    redraws.push(() => { if (document.activeElement && kindsEd.contains(document.activeElement)) return; typesEd.redraw(); });
-    wrap.append(section(t('s.types'), t('s.typesSub2'), typesEd));
-    wrap.append(section(t('s.gates'), t('s.gatesSub'), gatesEditor(draft, dirty)));
-    const waveObj = { start: draft.wave.start || '', pattern: draft.wave.pattern.join(', ') };
-    wrap.append(section(t('s.wave'), t('s.waveSub'), h('div', { class: 'grid2' },
-      h('label', { class: 'field' }, h('span', null, t('s.waveStart')), h('input', { type: 'date', value: waveObj.start, onchange: e => { draft.wave.start = e.target.value || null; dirty(); } })),
-      h('label', { class: 'field' }, h('span', null, t('s.wavePattern')), h('input', { type: 'text', value: waveObj.pattern, placeholder: 'ramp, ramp, full, deload', oninput: e => { draft.wave.pattern = e.target.value.split(',').map(s => s.trim().toLowerCase()).filter(s => SC.WAVE.includes(s)); dirty(); } })))));
     wrap.append(section(t('s.rank'), t('s.rankSub'), rankEditor(draft, dirty)));
     wrap.append(section(t('s.app'), null, appBlock()));
     wrap.append(syncCard());
@@ -794,18 +891,6 @@
       h('span', { class: 'row-name' }, p.name || t('s.profile')), p.id === cur ? h('span', { class: 'badge' }, t('s.current')) : null))),
       h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => newProfileSheet() }, t('s.addProfile')))));
   }
-  function routinesEditor(draft, dirty) {
-    const box = h('div', { class: 'routines' });
-    const draw = () => box.replaceChildren(...draft.routines.map((r, i) => h('div', { class: 'routine' },
-      h('div', { class: 'editor-row' }, h('input', { type: 'text', placeholder: t('s.routineName'), 'aria-label': t('s.routineName'), value: r.name || '', oninput: e => { r.name = e.target.value; dirty(); } }),
-        h('button', { class: 'btn ghost icon', 'aria-label': t('c.remove'), onclick: () => { draft.routines.splice(i, 1); dirty(); draw(); } }, '\u00d7')),
-      h('div', { class: 'chips small-gap' }, DAYS.map(d => { r.days = r.days || []; const on = r.days.includes(d); return h('button', { class: 'chip small' + (on ? ' on' : ''), onclick: e => { const now = !r.days.includes(d); r.days = now ? [...r.days, d] : r.days.filter(x => x !== d); e.currentTarget.classList.toggle('on', now); dirty(); } }, dayName(d)); })),
-      listEditor(r.items = r.items || [], [{ key: 'name', label: t('s.exercise') }, { key: 'target', label: t('s.setsReps'), small: true }], dirty, t('s.addExercise')),
-      h('div', { class: 'grid2 mt' }, numField(t('s.alertAt'), r, 'alertAt', dirty, '1'), textField(t('s.alertText'), r, 'alertText', dirty, t('c.optional'))))),
-      h('div', null, h('button', { class: 'btn small', onclick: () => { draft.routines.push({ id: uid(), name: '', items: [], days: [], alertAt: null, alertText: '' }); dirty(); draw(); const inp = box.querySelector('.routine:last-of-type input'); if (inp) inp.focus(); } }, t('s.addRoutine'))));
-    draw();
-    return box;
-  }
   function rankEditor(draft, dirty) {
     const r = draft.rank, box = h('div'), body = h('div', { style: { display: r.enabled ? 'block' : 'none' } });
     const levelSel = h('select', { onchange: e => { r.level = e.target.value; dirty(); } });
@@ -824,9 +909,13 @@
     box.append(h('label', { class: 'row noline' }, h('input', { type: 'checkbox', checked: !!r.enabled, onchange: e => { r.enabled = e.target.checked; body.style.display = r.enabled ? 'block' : 'none'; dirty(); } }), h('span', { class: 'row-name' }, t('s.showRank'))), body);
     return box;
   }
+  /* Settings owns only these fields; everything else (workouts, routines, exercises...) is saved from Library, so a
+     draft opened earlier never overwrites those */
+  const SETTINGS_FIELDS = ['name', 'units', 'targets', 'goal', 'mealSlots', 'habits', 'rank'];
   function saveSettings() {
-    const prevUnit = S.settings.units.weight;
-    const merged = SC.normalizeSettings(S.settingsDraft);
+    const prevUnit = S.settings.units.weight, next = clone(S.settings);
+    SETTINGS_FIELDS.forEach(k => { next[k] = clone(S.settingsDraft[k]); });
+    const merged = SC.normalizeSettings(next);
     merged.updatedAt = store.stamp();
     if (merged.units.weight !== prevUnit) {
       const from = prevUnit, to = merged.units.weight;
@@ -1113,7 +1202,7 @@
     user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-7 8-7s8 3 8 7"/></svg>',
     play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>'
   };
-  const NAV = ['today', 'plan', 'progress', 'library', 'settings'], ROUTES = [...NAV, 'start'], ALIAS = { week: 'progress', foods: 'library' };
+  const NAV = ['today', 'plan', 'progress', 'library', 'settings'], ROUTES = [...NAV, 'start'], ALIAS = { week: 'progress' };
   function shell() {
     const langSel = h('select', { class: 'lang', 'aria-label': t('s.language'), onchange: e => { I.set(e.target.value); rerenderAll(); } }, Object.entries(I.LANGS).map(([c, n]) => h('option', { value: c, selected: c === I.lang }, n)));
     const top = h('header', { class: 'topbar' },
@@ -1150,7 +1239,8 @@
     window.scrollTo(0, y);
   }
   function rerenderAll() { const app = $('.app'); if (app) app.remove(); document.body.append(shell()); setStatus(storageLabel(), ''); render(); updateSyncUI(); }
-  const routeFromHash = () => { let r = location.hash.replace('#', '').split('?')[0]; if (ALIAS[r]) { if (r === 'foods') S.libTab = 'foods'; r = ALIAS[r]; } return ROUTES.includes(r) ? r : 'today'; };
+  /* #workouts, #routines, #exercises and #foods open that Library tab */
+  const routeFromHash = () => { let r = location.hash.replace('#', '').split('?')[0]; if (LIB[r]) { S.libTab = r; r = 'library'; } else if (ALIAS[r]) r = ALIAS[r]; return ROUTES.includes(r) ? r : 'today'; };
   function registerSW() {
     if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
     navigator.serviceWorker.register('./sw.js').then(reg => {

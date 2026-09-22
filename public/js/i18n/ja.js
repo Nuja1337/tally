@@ -141,3 +141,13 @@ MB.i18n.add('ja', {
   "sy.err.invite": "招待コードが違います。", "sy.err.offline": "サーバーに接続できません。接続を確認してください。", "sy.err.timeout": "サーバーの応答に時間がかかりすぎました。",
   "sy.err.server": "サーバーで問題が発生しました（{status}）。後でもう一度お試しください。", "sy.err.tooLarge": "{path} は大きすぎて同期できません。", "sy.err.local": "このデバイスで問題が発生しました。もう一度お試しください。"
 });
+
+/* library */
+MB.i18n.add('ja', {
+  "s.inLibrary": "ワークアウト、ルーティン、種目、食品はライブラリにあります。", "pl.noWorkoutsLib": "ワークアウトはまだありません。", "pl.addWorkoutsFirst": "先にライブラリでワークアウトを追加してください。",
+  "l.woSub": "トレーニングの内容です。タップすると種目ごと編集できます。", "l.addWorkout": "ワークアウトを追加", "l.newWorkout": "新しいワークアウト",
+  "l.noWorkouts": "ワークアウトはまだありません。追加するかサンプルを読み込んでください。", "l.deleteWorkout": "{name}を削除しますか？使っているカレンダーのブロックはワークアウトなしで残ります。", "l.none": "まだありません",
+  "l.newRoutine": "新しいルーティン", "l.noRoutines": "ルーティンはまだありません。追加するかサンプルを読み込んでください。", "l.deleteRoutine": "{name}を削除しますか？過去のチェックは記録に残ります。",
+  "l.everyDay": "毎日", "l.everyDayHint": "曜日を選ばない場合は毎日です。", "l.checklist": "チェックリスト",
+  "l.items": ["項目","項目"], "l.templatesSub": "今日の画面から保存したものです。タップして編集できます。", "l.editTemplate": "テンプレートを編集"
+});

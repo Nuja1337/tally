@@ -94,9 +94,11 @@ export async function openTab(opts = {}) {
     button: (label, within) => [...w.document.querySelectorAll((within ? within + ' ' : '') + 'button, ' + (within ? within + ' ' : '') + 'a.btn')].find(b => b.textContent.trim() === label) || null,
     t: (k, v) => w.MB.i18n.t(k, v),
     go: async hash => {
+      const before = w.document.querySelector('#main .page'), changes = w.location.hash !== hash;
       w.location.hash = hash;
-      const route = hash.slice(1);
-      await waitFor(() => route === 'start' ? w.document.querySelector('#main .page.start') : w.document.querySelector(`.nav a.active[data-route="${route}"]`), { what: 'route ' + hash });
+      const route = ['workouts', 'routines', 'exercises', 'foods'].includes(hash.slice(1)) ? 'library' : hash.slice(1);
+      const there = () => route === 'start' ? w.document.querySelector('#main .page.start') : w.document.querySelector(`.nav a.active[data-route="${route}"]`);
+      await waitFor(() => there() && (!changes || w.document.querySelector('#main .page') !== before), { what: 'route ' + hash });
     },
     close: () => { device.tabs.delete(tab); channels.forEach(c => c.close()); try { w.close(); } catch (e) {} }
   };

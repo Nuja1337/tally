@@ -141,3 +141,13 @@ MB.i18n.add('zh', {
   "sy.err.invite": "邀请码不正确。", "sy.err.offline": "无法连接服务器。请检查网络连接。", "sy.err.timeout": "服务器响应时间过长。",
   "sy.err.server": "服务器出现问题（{status}）。请稍后再试。", "sy.err.tooLarge": "{path} 太大，无法同步。", "sy.err.local": "此设备上出了点问题。请重试。"
 });
+
+/* library */
+MB.i18n.add('zh', {
+  "s.inLibrary": "训练内容、例程、动作和食物都在资料库中。", "pl.noWorkoutsLib": "还没有训练内容。", "pl.addWorkoutsFirst": "请先在资料库中添加训练内容。",
+  "l.woSub": "你的训练内容。点按一项即可编辑它和其中的动作。", "l.addWorkout": "添加训练内容", "l.newWorkout": "新训练内容",
+  "l.noWorkouts": "还没有训练内容。添加一个，或加载示例档案。", "l.deleteWorkout": "要删除{name}吗？使用它的日历区块会保留，但不再关联训练内容。", "l.none": "暂无",
+  "l.newRoutine": "新例程", "l.noRoutines": "还没有例程。添加一个，或加载示例档案。", "l.deleteRoutine": "要删除{name}吗？以往的勾选记录会保留。",
+  "l.everyDay": "每天", "l.everyDayHint": "不选星期则为每天。", "l.checklist": "清单",
+  "l.items": ["项","项"], "l.templatesSub": "从今天页面保存。点按一项即可编辑。", "l.editTemplate": "编辑模板"
+});

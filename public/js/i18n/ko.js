@@ -141,3 +141,13 @@ MB.i18n.add('ko', {
   "sy.err.invite": "초대 코드가 틀렸습니다.", "sy.err.offline": "서버에 연결할 수 없습니다. 연결을 확인하세요.", "sy.err.timeout": "서버 응답이 너무 오래 걸렸습니다.",
   "sy.err.server": "서버에 문제가 있습니다({status}). 나중에 다시 시도하세요.", "sy.err.tooLarge": "{path}은(는) 너무 커서 동기화할 수 없습니다.", "sy.err.local": "이 기기에서 문제가 생겼습니다. 다시 시도하세요."
 });
+
+/* library */
+MB.i18n.add('ko', {
+  "s.inLibrary": "워크아웃, 루틴, 운동, 음식은 라이브러리에 있습니다.", "pl.noWorkoutsLib": "아직 워크아웃이 없습니다.", "pl.addWorkoutsFirst": "먼저 라이브러리에서 워크아웃을 추가하세요.",
+  "l.woSub": "훈련하는 내용입니다. 탭하면 운동과 함께 편집할 수 있습니다.", "l.addWorkout": "워크아웃 추가", "l.newWorkout": "새 워크아웃",
+  "l.noWorkouts": "아직 워크아웃이 없습니다. 추가하거나 예시 프로필을 불러오세요.", "l.deleteWorkout": "{name}을(를) 삭제할까요? 이를 쓰는 캘린더 블록은 워크아웃 없이 남습니다.", "l.none": "아직 없음",
+  "l.newRoutine": "새 루틴", "l.noRoutines": "아직 루틴이 없습니다. 추가하거나 예시 프로필을 불러오세요.", "l.deleteRoutine": "{name}을(를) 삭제할까요? 지난 체크 기록은 남습니다.",
+  "l.everyDay": "매일", "l.everyDayHint": "요일을 고르지 않으면 매일입니다.", "l.checklist": "체크리스트",
+  "l.items": ["항목","항목"], "l.templatesSub": "오늘 화면에서 저장한 것입니다. 탭해서 편집하세요.", "l.editTemplate": "템플릿 편집"
+});
