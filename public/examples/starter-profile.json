@@ -1,0 +1,1289 @@
+{
+ "app": "tally",
+ "version": 4,
+ "settings": {
+  "name": "",
+  "units": {
+   "weight": "lb"
+  },
+  "targets": {
+   "kcal": 2400,
+   "protein": 160,
+   "carbs": 0,
+   "fat": 0
+  },
+  "goal": {
+   "weight": null,
+   "bodyFat": null,
+   "note": "",
+   "band": null,
+   "milestones": []
+  },
+  "mealSlots": [
+   {
+    "id": "breakfast",
+    "name": "Breakfast"
+   },
+   {
+    "id": "lunch",
+    "name": "Lunch"
+   },
+   {
+    "id": "dinner",
+    "name": "Dinner"
+   },
+   {
+    "id": "snacks",
+    "name": "Snacks"
+   }
+  ],
+  "habits": [
+   {
+    "id": "water",
+    "name": "Water",
+    "target": 8,
+    "unit": "glasses"
+   },
+   {
+    "id": "steps",
+    "name": "Steps"
+   },
+   {
+    "id": "sleep",
+    "name": "Sleep 7h+"
+   },
+   {
+    "id": "stretch",
+    "name": "Stretch"
+   }
+  ],
+  "exercises": [
+   {
+    "id": "cat-cow",
+    "name": "Cat-cow",
+    "image": "https://www.google.com/search?tbm=isch&q=Cat-cow%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Cat-cow%20exercise%20form"
+   },
+   {
+    "id": "hip-circles",
+    "name": "Hip circles",
+    "image": "https://www.google.com/search?tbm=isch&q=Hip%20circles%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Hip%20circles%20exercise%20form",
+    "perSide": true
+   },
+   {
+    "id": "squat",
+    "name": "Bodyweight squat",
+    "image": "https://www.google.com/search?tbm=isch&q=Bodyweight%20squat%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Bodyweight%20squat%20exercise%20form"
+   },
+   {
+    "id": "push-up",
+    "name": "Push-up",
+    "image": "https://www.google.com/search?tbm=isch&q=Push-up%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Push-up%20exercise%20form"
+   },
+   {
+    "id": "one-arm-row",
+    "name": "One-arm row",
+    "image": "https://www.google.com/search?tbm=isch&q=One-arm%20row%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=One-arm%20row%20exercise%20form",
+    "perSide": true
+   },
+   {
+    "id": "db-press",
+    "name": "Dumbbell press",
+    "image": "https://www.google.com/search?tbm=isch&q=Dumbbell%20press%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Dumbbell%20press%20exercise%20form"
+   },
+   {
+    "id": "lateral-raise",
+    "name": "Lateral raise",
+    "image": "https://www.google.com/search?tbm=isch&q=Lateral%20raise%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Lateral%20raise%20exercise%20form"
+   },
+   {
+    "id": "goblet-squat",
+    "name": "Goblet squat",
+    "image": "https://www.google.com/search?tbm=isch&q=Goblet%20squat%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Goblet%20squat%20exercise%20form"
+   },
+   {
+    "id": "rdl",
+    "name": "Romanian deadlift",
+    "image": "https://www.google.com/search?tbm=isch&q=Romanian%20deadlift%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Romanian%20deadlift%20exercise%20form"
+   },
+   {
+    "id": "split-squat",
+    "name": "Split squat",
+    "image": "https://www.google.com/search?tbm=isch&q=Split%20squat%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Split%20squat%20exercise%20form",
+    "perSide": true
+   },
+   {
+    "id": "calf-raise",
+    "name": "Calf raise",
+    "image": "https://www.google.com/search?tbm=isch&q=Calf%20raise%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Calf%20raise%20exercise%20form"
+   },
+   {
+    "id": "plank",
+    "name": "Plank",
+    "image": "https://www.google.com/search?tbm=isch&q=Plank%20exercise%20gif",
+    "video": "https://www.youtube.com/results?search_query=Plank%20exercise%20form",
+    "unit": "sec"
+   }
+  ],
+  "routines": [
+   {
+    "id": "morning",
+    "name": "Morning mobility",
+    "days": [],
+    "items": [
+     {
+      "id": "cat-cow",
+      "name": "Cat-cow",
+      "target": "10",
+      "exerciseId": "cat-cow"
+     },
+     {
+      "id": "hip-circles",
+      "name": "Hip circles",
+      "target": "10 each way",
+      "exerciseId": "hip-circles"
+     },
+     {
+      "id": "squats",
+      "name": "Bodyweight squats",
+      "target": "15",
+      "exerciseId": "squat"
+     },
+     {
+      "id": "push-ups",
+      "name": "Push-ups",
+      "target": "10",
+      "exerciseId": "push-up"
+     }
+    ]
+   }
+  ],
+  "sessionKinds": [
+   {
+    "id": "strength",
+    "name": "Strength"
+   },
+   {
+    "id": "cardio",
+    "name": "Cardio"
+   },
+   {
+    "id": "mobility",
+    "name": "Mobility"
+   }
+  ],
+  "sessionTypes": [
+   {
+    "id": "upper",
+    "name": "Upper body",
+    "kind": "strength",
+    "minutes": 45,
+    "kcal": 300,
+    "plan": [
+     {
+      "label": "A",
+      "items": [
+       {
+        "exerciseId": "push-up",
+        "sets": 4,
+        "reps": "8-12",
+        "rir": "1",
+        "rest": "60 s"
+       },
+       {
+        "exerciseId": "one-arm-row",
+        "sets": 4,
+        "reps": "10-12",
+        "rir": "1",
+        "rest": "60 s"
+       }
+      ]
+     },
+     {
+      "label": "B",
+      "items": [
+       {
+        "exerciseId": "db-press",
+        "sets": 3,
+        "reps": "8-12",
+        "rir": "1"
+       },
+       {
+        "exerciseId": "lateral-raise",
+        "sets": 3,
+        "reps": "12-15",
+        "rir": "1"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "lower",
+    "name": "Lower body",
+    "kind": "strength",
+    "minutes": 45,
+    "kcal": 320,
+    "plan": [
+     {
+      "label": "A",
+      "items": [
+       {
+        "exerciseId": "goblet-squat",
+        "sets": 4,
+        "reps": "8-12",
+        "rir": "2",
+        "rest": "90 s"
+       },
+       {
+        "exerciseId": "rdl",
+        "sets": 3,
+        "reps": "10-12",
+        "rir": "2"
+       }
+      ]
+     },
+     {
+      "label": "B",
+      "items": [
+       {
+        "exerciseId": "split-squat",
+        "sets": 3,
+        "reps": "8-10",
+        "rir": "2"
+       },
+       {
+        "exerciseId": "calf-raise",
+        "sets": 3,
+        "reps": "12-15"
+       },
+       {
+        "exerciseId": "plank",
+        "sets": 3,
+        "reps": "30"
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "id": "run",
+    "name": "Easy run",
+    "kind": "cardio",
+    "minutes": 30,
+    "kcal": 350
+   },
+   {
+    "id": "yoga",
+    "name": "Yoga",
+    "kind": "mobility",
+    "minutes": 45,
+    "kcal": 150
+   }
+  ],
+  "calendar": [
+   {
+    "id": "sleep",
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri",
+     "sat",
+     "sun"
+    ],
+    "start": "23:00",
+    "end": "07:00",
+    "kind": "sleep",
+    "title": "Sleep"
+   },
+   {
+    "id": "work",
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri"
+    ],
+    "start": "09:00",
+    "end": "17:00",
+    "kind": "work",
+    "title": "Work"
+   },
+   {
+    "id": "morning",
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri",
+     "sat",
+     "sun"
+    ],
+    "start": "07:00",
+    "end": "07:10",
+    "kind": "routine",
+    "routineId": "morning"
+   },
+   {
+    "id": "breakfast",
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri",
+     "sat",
+     "sun"
+    ],
+    "start": "07:30",
+    "end": "08:00",
+    "kind": "meal",
+    "slotId": "breakfast"
+   },
+   {
+    "id": "lunch",
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri",
+     "sat",
+     "sun"
+    ],
+    "start": "12:30",
+    "end": "13:00",
+    "kind": "meal",
+    "slotId": "lunch"
+   },
+   {
+    "id": "snacks",
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri",
+     "sat",
+     "sun"
+    ],
+    "start": "16:00",
+    "end": "16:15",
+    "kind": "meal",
+    "slotId": "snacks"
+   },
+   {
+    "id": "dinner",
+    "days": [
+     "mon",
+     "tue",
+     "wed",
+     "thu",
+     "fri",
+     "sat",
+     "sun"
+    ],
+    "start": "19:00",
+    "end": "19:45",
+    "kind": "meal",
+    "slotId": "dinner"
+   },
+   {
+    "id": "upper",
+    "days": [
+     "mon",
+     "fri"
+    ],
+    "start": "17:30",
+    "end": "18:15",
+    "kind": "session",
+    "typeId": "upper"
+   },
+   {
+    "id": "lower",
+    "days": [
+     "wed"
+    ],
+    "start": "17:30",
+    "end": "18:15",
+    "kind": "session",
+    "typeId": "lower"
+   },
+   {
+    "id": "run",
+    "days": [
+     "tue",
+     "sat"
+    ],
+    "start": "07:15",
+    "end": "07:45",
+    "kind": "session",
+    "typeId": "run"
+   },
+   {
+    "id": "yoga",
+    "days": [
+     "thu"
+    ],
+    "start": "19:00",
+    "end": "19:45",
+    "kind": "session",
+    "typeId": "yoga"
+   },
+   {
+    "id": "rest",
+    "days": [
+     "sun"
+    ],
+    "start": "",
+    "end": "",
+    "kind": "rest",
+    "title": "Rest day"
+   }
+  ],
+  "gates": [],
+  "wave": {
+   "start": null,
+   "pattern": []
+  },
+  "rank": {
+   "enabled": false,
+   "system": "",
+   "levels": [],
+   "level": "",
+   "sublevelName": "stripe",
+   "sublevel": 0,
+   "maxSublevel": 4,
+   "history": [],
+   "phases": []
+  }
+ },
+ "foods": [
+  {
+   "id": "chicken-breast",
+   "name": "Chicken breast, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 165,
+   "p": 31,
+   "c": 0,
+   "f": 3.6,
+   "note": ""
+  },
+  {
+   "id": "chicken-thigh",
+   "name": "Chicken thigh, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 209,
+   "p": 26,
+   "c": 0,
+   "f": 11,
+   "note": ""
+  },
+  {
+   "id": "ground-beef-85",
+   "name": "Ground beef 85%, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 246,
+   "p": 26,
+   "c": 0,
+   "f": 15.5,
+   "note": ""
+  },
+  {
+   "id": "ground-beef-93",
+   "name": "Ground beef 93%, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 182,
+   "p": 25,
+   "c": 0,
+   "f": 8.7,
+   "note": ""
+  },
+  {
+   "id": "ground-turkey",
+   "name": "Ground turkey 93%, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 176,
+   "p": 23,
+   "c": 0,
+   "f": 9,
+   "note": ""
+  },
+  {
+   "id": "sirloin",
+   "name": "Sirloin steak, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 206,
+   "p": 29,
+   "c": 0,
+   "f": 9,
+   "note": ""
+  },
+  {
+   "id": "pork-loin",
+   "name": "Pork loin, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 196,
+   "p": 29,
+   "c": 0,
+   "f": 8,
+   "note": ""
+  },
+  {
+   "id": "salmon",
+   "name": "Salmon, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 206,
+   "p": 22,
+   "c": 0,
+   "f": 12,
+   "note": ""
+  },
+  {
+   "id": "cod",
+   "name": "Cod, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 105,
+   "p": 23,
+   "c": 0,
+   "f": 0.9,
+   "note": ""
+  },
+  {
+   "id": "shrimp",
+   "name": "Shrimp, cooked",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 99,
+   "p": 24,
+   "c": 0,
+   "f": 0.3,
+   "note": ""
+  },
+  {
+   "id": "tuna-can",
+   "name": "Tuna, canned in water",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 116,
+   "p": 26,
+   "c": 0,
+   "f": 0.8,
+   "note": ""
+  },
+  {
+   "id": "tofu-firm",
+   "name": "Tofu, firm",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 144,
+   "p": 17,
+   "c": 3,
+   "f": 9,
+   "note": ""
+  },
+  {
+   "id": "deli-turkey",
+   "name": "Turkey breast, deli",
+   "category": "Proteins",
+   "serving": "100 g",
+   "kcal": 104,
+   "p": 17,
+   "c": 4,
+   "f": 2,
+   "note": ""
+  },
+  {
+   "id": "egg",
+   "name": "Egg",
+   "category": "Dairy & eggs",
+   "serving": "1 large (50 g)",
+   "kcal": 72,
+   "p": 6.3,
+   "c": 0.4,
+   "f": 4.8,
+   "note": ""
+  },
+  {
+   "id": "egg-whites",
+   "name": "Egg whites",
+   "category": "Dairy & eggs",
+   "serving": "100 g",
+   "kcal": 52,
+   "p": 11,
+   "c": 0.7,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "greek-yogurt-0",
+   "name": "Greek yogurt, nonfat",
+   "category": "Dairy & eggs",
+   "serving": "170 g",
+   "kcal": 100,
+   "p": 17,
+   "c": 6,
+   "f": 0.7,
+   "note": ""
+  },
+  {
+   "id": "greek-yogurt-2",
+   "name": "Greek yogurt, 2%",
+   "category": "Dairy & eggs",
+   "serving": "170 g",
+   "kcal": 124,
+   "p": 17,
+   "c": 7,
+   "f": 3,
+   "note": ""
+  },
+  {
+   "id": "cottage-cheese",
+   "name": "Cottage cheese, 2%",
+   "category": "Dairy & eggs",
+   "serving": "1 cup (226 g)",
+   "kcal": 190,
+   "p": 25,
+   "c": 10,
+   "f": 5,
+   "note": ""
+  },
+  {
+   "id": "milk-whole",
+   "name": "Milk, whole",
+   "category": "Dairy & eggs",
+   "serving": "1 cup (244 g)",
+   "kcal": 149,
+   "p": 8,
+   "c": 12,
+   "f": 8,
+   "note": ""
+  },
+  {
+   "id": "milk-2",
+   "name": "Milk, 2%",
+   "category": "Dairy & eggs",
+   "serving": "1 cup (244 g)",
+   "kcal": 122,
+   "p": 8,
+   "c": 12,
+   "f": 5,
+   "note": ""
+  },
+  {
+   "id": "milk-skim",
+   "name": "Milk, skim",
+   "category": "Dairy & eggs",
+   "serving": "1 cup (245 g)",
+   "kcal": 83,
+   "p": 8,
+   "c": 12,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "cheddar",
+   "name": "Cheddar",
+   "category": "Dairy & eggs",
+   "serving": "28 g",
+   "kcal": 114,
+   "p": 6.4,
+   "c": 0.9,
+   "f": 9.4,
+   "note": ""
+  },
+  {
+   "id": "mozzarella",
+   "name": "Mozzarella, part skim",
+   "category": "Dairy & eggs",
+   "serving": "28 g",
+   "kcal": 72,
+   "p": 7,
+   "c": 0.8,
+   "f": 4.5,
+   "note": ""
+  },
+  {
+   "id": "parmesan",
+   "name": "Parmesan, grated",
+   "category": "Dairy & eggs",
+   "serving": "1 tbsp (5 g)",
+   "kcal": 21,
+   "p": 1.4,
+   "c": 0.2,
+   "f": 1.4,
+   "note": ""
+  },
+  {
+   "id": "butter",
+   "name": "Butter",
+   "category": "Dairy & eggs",
+   "serving": "1 tbsp (14 g)",
+   "kcal": 102,
+   "p": 0.1,
+   "c": 0,
+   "f": 11.5,
+   "note": ""
+  },
+  {
+   "id": "white-rice",
+   "name": "White rice, cooked",
+   "category": "Grains & beans",
+   "serving": "1 cup (158 g)",
+   "kcal": 205,
+   "p": 4.3,
+   "c": 45,
+   "f": 0.4,
+   "note": ""
+  },
+  {
+   "id": "brown-rice",
+   "name": "Brown rice, cooked",
+   "category": "Grains & beans",
+   "serving": "1 cup (195 g)",
+   "kcal": 216,
+   "p": 5,
+   "c": 45,
+   "f": 1.8,
+   "note": ""
+  },
+  {
+   "id": "quinoa",
+   "name": "Quinoa, cooked",
+   "category": "Grains & beans",
+   "serving": "1 cup (185 g)",
+   "kcal": 222,
+   "p": 8,
+   "c": 39,
+   "f": 3.6,
+   "note": ""
+  },
+  {
+   "id": "oats",
+   "name": "Rolled oats, dry",
+   "category": "Grains & beans",
+   "serving": "40 g",
+   "kcal": 152,
+   "p": 5.3,
+   "c": 27,
+   "f": 2.6,
+   "note": ""
+  },
+  {
+   "id": "pasta",
+   "name": "Pasta, cooked",
+   "category": "Grains & beans",
+   "serving": "1 cup (140 g)",
+   "kcal": 221,
+   "p": 8,
+   "c": 43,
+   "f": 1.3,
+   "note": ""
+  },
+  {
+   "id": "sweet-potato",
+   "name": "Sweet potato, baked",
+   "category": "Grains & beans",
+   "serving": "1 medium (114 g)",
+   "kcal": 103,
+   "p": 2.3,
+   "c": 24,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "potato",
+   "name": "Potato, baked",
+   "category": "Grains & beans",
+   "serving": "1 medium (173 g)",
+   "kcal": 164,
+   "p": 4.6,
+   "c": 37,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "wheat-bread",
+   "name": "Whole wheat bread",
+   "category": "Grains & beans",
+   "serving": "1 slice (32 g)",
+   "kcal": 82,
+   "p": 4,
+   "c": 14,
+   "f": 1.1,
+   "note": ""
+  },
+  {
+   "id": "white-bread",
+   "name": "White bread",
+   "category": "Grains & beans",
+   "serving": "1 slice (28 g)",
+   "kcal": 75,
+   "p": 2.5,
+   "c": 14,
+   "f": 1,
+   "note": ""
+  },
+  {
+   "id": "corn-tortilla",
+   "name": "Corn tortilla",
+   "category": "Grains & beans",
+   "serving": "1 piece (26 g)",
+   "kcal": 60,
+   "p": 1.5,
+   "c": 12,
+   "f": 0.8,
+   "note": ""
+  },
+  {
+   "id": "flour-tortilla",
+   "name": "Flour tortilla",
+   "category": "Grains & beans",
+   "serving": "1 piece (45 g)",
+   "kcal": 146,
+   "p": 4,
+   "c": 24,
+   "f": 3.6,
+   "note": ""
+  },
+  {
+   "id": "black-beans",
+   "name": "Black beans, cooked",
+   "category": "Grains & beans",
+   "serving": "1 cup (172 g)",
+   "kcal": 227,
+   "p": 15,
+   "c": 41,
+   "f": 0.9,
+   "note": ""
+  },
+  {
+   "id": "chickpeas",
+   "name": "Chickpeas, cooked",
+   "category": "Grains & beans",
+   "serving": "1 cup (164 g)",
+   "kcal": 269,
+   "p": 14.5,
+   "c": 45,
+   "f": 4.2,
+   "note": ""
+  },
+  {
+   "id": "lentils",
+   "name": "Lentils, cooked",
+   "category": "Grains & beans",
+   "serving": "1 cup (198 g)",
+   "kcal": 230,
+   "p": 18,
+   "c": 40,
+   "f": 0.8,
+   "note": ""
+  },
+  {
+   "id": "edamame",
+   "name": "Edamame, shelled",
+   "category": "Grains & beans",
+   "serving": "1 cup (155 g)",
+   "kcal": 188,
+   "p": 18.5,
+   "c": 14,
+   "f": 8,
+   "note": ""
+  },
+  {
+   "id": "banana",
+   "name": "Banana",
+   "category": "Fruit",
+   "serving": "1 medium (118 g)",
+   "kcal": 105,
+   "p": 1.3,
+   "c": 27,
+   "f": 0.4,
+   "note": ""
+  },
+  {
+   "id": "apple",
+   "name": "Apple",
+   "category": "Fruit",
+   "serving": "1 medium (182 g)",
+   "kcal": 95,
+   "p": 0.5,
+   "c": 25,
+   "f": 0.3,
+   "note": ""
+  },
+  {
+   "id": "orange",
+   "name": "Orange",
+   "category": "Fruit",
+   "serving": "1 medium (131 g)",
+   "kcal": 62,
+   "p": 1.2,
+   "c": 15,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "blueberries",
+   "name": "Blueberries",
+   "category": "Fruit",
+   "serving": "1 cup (148 g)",
+   "kcal": 84,
+   "p": 1.1,
+   "c": 21,
+   "f": 0.5,
+   "note": ""
+  },
+  {
+   "id": "strawberries",
+   "name": "Strawberries",
+   "category": "Fruit",
+   "serving": "1 cup (152 g)",
+   "kcal": 49,
+   "p": 1,
+   "c": 12,
+   "f": 0.5,
+   "note": ""
+  },
+  {
+   "id": "grapes",
+   "name": "Grapes",
+   "category": "Fruit",
+   "serving": "1 cup (151 g)",
+   "kcal": 104,
+   "p": 1.1,
+   "c": 27,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "mango",
+   "name": "Mango",
+   "category": "Fruit",
+   "serving": "1 cup (165 g)",
+   "kcal": 99,
+   "p": 1.4,
+   "c": 25,
+   "f": 0.6,
+   "note": ""
+  },
+  {
+   "id": "watermelon",
+   "name": "Watermelon",
+   "category": "Fruit",
+   "serving": "1 cup (152 g)",
+   "kcal": 46,
+   "p": 0.9,
+   "c": 11.5,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "avocado",
+   "name": "Avocado",
+   "category": "Fruit",
+   "serving": "1 half (68 g)",
+   "kcal": 114,
+   "p": 1.3,
+   "c": 6,
+   "f": 10.5,
+   "note": ""
+  },
+  {
+   "id": "broccoli",
+   "name": "Broccoli, cooked",
+   "category": "Vegetables",
+   "serving": "1 cup (156 g)",
+   "kcal": 55,
+   "p": 3.7,
+   "c": 11,
+   "f": 0.6,
+   "note": ""
+  },
+  {
+   "id": "spinach",
+   "name": "Spinach, raw",
+   "category": "Vegetables",
+   "serving": "2 cups (60 g)",
+   "kcal": 14,
+   "p": 1.7,
+   "c": 2.2,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "carrot",
+   "name": "Carrot",
+   "category": "Vegetables",
+   "serving": "1 medium (61 g)",
+   "kcal": 25,
+   "p": 0.6,
+   "c": 6,
+   "f": 0.1,
+   "note": ""
+  },
+  {
+   "id": "bell-pepper",
+   "name": "Bell pepper",
+   "category": "Vegetables",
+   "serving": "1 medium (119 g)",
+   "kcal": 37,
+   "p": 1.2,
+   "c": 7,
+   "f": 0.4,
+   "note": ""
+  },
+  {
+   "id": "tomato",
+   "name": "Tomato",
+   "category": "Vegetables",
+   "serving": "1 medium (123 g)",
+   "kcal": 22,
+   "p": 1.1,
+   "c": 4.8,
+   "f": 0.2,
+   "note": ""
+  },
+  {
+   "id": "cucumber",
+   "name": "Cucumber",
+   "category": "Vegetables",
+   "serving": "1 cup (104 g)",
+   "kcal": 16,
+   "p": 0.7,
+   "c": 3.8,
+   "f": 0.1,
+   "note": ""
+  },
+  {
+   "id": "onion",
+   "name": "Onion",
+   "category": "Vegetables",
+   "serving": "1 medium (110 g)",
+   "kcal": 44,
+   "p": 1.2,
+   "c": 10,
+   "f": 0.1,
+   "note": ""
+  },
+  {
+   "id": "kimchi",
+   "name": "Kimchi",
+   "category": "Vegetables",
+   "serving": "1 cup (150 g)",
+   "kcal": 22,
+   "p": 1.7,
+   "c": 3.6,
+   "f": 0.8,
+   "note": ""
+  },
+  {
+   "id": "olive-oil",
+   "name": "Olive oil",
+   "category": "Fats & nuts",
+   "serving": "1 tbsp (14 g)",
+   "kcal": 119,
+   "p": 0,
+   "c": 0,
+   "f": 13.5,
+   "note": ""
+  },
+  {
+   "id": "almonds",
+   "name": "Almonds",
+   "category": "Fats & nuts",
+   "serving": "28 g",
+   "kcal": 164,
+   "p": 6,
+   "c": 6,
+   "f": 14,
+   "note": ""
+  },
+  {
+   "id": "walnuts",
+   "name": "Walnuts",
+   "category": "Fats & nuts",
+   "serving": "28 g",
+   "kcal": 185,
+   "p": 4.3,
+   "c": 3.9,
+   "f": 18.5,
+   "note": ""
+  },
+  {
+   "id": "peanut-butter",
+   "name": "Peanut butter",
+   "category": "Fats & nuts",
+   "serving": "2 tbsp (32 g)",
+   "kcal": 188,
+   "p": 8,
+   "c": 7,
+   "f": 16,
+   "note": ""
+  },
+  {
+   "id": "chia",
+   "name": "Chia seeds",
+   "category": "Fats & nuts",
+   "serving": "2 tbsp (28 g)",
+   "kcal": 138,
+   "p": 4.7,
+   "c": 12,
+   "f": 8.7,
+   "note": ""
+  },
+  {
+   "id": "dark-chocolate",
+   "name": "Dark chocolate, 70%",
+   "category": "Fats & nuts",
+   "serving": "28 g",
+   "kcal": 170,
+   "p": 2.2,
+   "c": 13,
+   "f": 12,
+   "note": ""
+  },
+  {
+   "id": "coffee",
+   "name": "Coffee, black",
+   "category": "Drinks",
+   "serving": "240 ml",
+   "kcal": 2,
+   "p": 0.3,
+   "c": 0,
+   "f": 0,
+   "note": ""
+  },
+  {
+   "id": "oj",
+   "name": "Orange juice",
+   "category": "Drinks",
+   "serving": "1 cup (248 g)",
+   "kcal": 112,
+   "p": 1.7,
+   "c": 26,
+   "f": 0.5,
+   "note": ""
+  },
+  {
+   "id": "wine",
+   "name": "Wine",
+   "category": "Drinks",
+   "serving": "150 ml",
+   "kcal": 123,
+   "p": 0.1,
+   "c": 4,
+   "f": 0,
+   "note": ""
+  },
+  {
+   "id": "beer",
+   "name": "Beer",
+   "category": "Drinks",
+   "serving": "355 ml",
+   "kcal": 153,
+   "p": 1.6,
+   "c": 13,
+   "f": 0,
+   "note": ""
+  },
+  {
+   "id": "whey",
+   "name": "Whey protein",
+   "category": "Supplements",
+   "serving": "1 scoop (30 g)",
+   "kcal": 120,
+   "p": 24,
+   "c": 3,
+   "f": 1.5,
+   "note": "typical value, check your label"
+  },
+  {
+   "id": "casein",
+   "name": "Casein protein",
+   "category": "Supplements",
+   "serving": "1 scoop (33 g)",
+   "kcal": 120,
+   "p": 24,
+   "c": 3,
+   "f": 1,
+   "note": "typical value, check your label"
+  },
+  {
+   "id": "pea-protein",
+   "name": "Pea protein",
+   "category": "Supplements",
+   "serving": "1 scoop (33 g)",
+   "kcal": 120,
+   "p": 24,
+   "c": 1,
+   "f": 2,
+   "note": "typical value, check your label"
+  },
+  {
+   "id": "collagen",
+   "name": "Collagen peptides",
+   "category": "Supplements",
+   "serving": "1 scoop (20 g)",
+   "kcal": 70,
+   "p": 18,
+   "c": 0,
+   "f": 0,
+   "note": "typical value, check your label"
+  },
+  {
+   "id": "creatine",
+   "name": "Creatine",
+   "category": "Supplements",
+   "serving": "5 g",
+   "kcal": 0,
+   "p": 0,
+   "c": 0,
+   "f": 0,
+   "note": "typical value, check your label"
+  }
+ ],
+ "templates": [
+  {
+   "id": "oats-and-whey",
+   "name": "Oats and whey",
+   "slot": "breakfast",
+   "kcal": 420,
+   "p": 34,
+   "c": 55,
+   "f": 6
+  },
+  {
+   "id": "chicken-rice-bowl",
+   "name": "Chicken and rice bowl",
+   "slot": "lunch",
+   "kcal": 650,
+   "p": 55,
+   "c": 75,
+   "f": 12
+  }
+ ]
+}

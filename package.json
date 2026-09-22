@@ -1,0 +1,19 @@
+{
+  "name": "tally",
+  "version": "2.2.0",
+  "private": true,
+  "description": "Dev tooling for Tally (tests, local server, deploy). The app itself never needs npm install.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "test": "vitest run",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "^1.2.3",
+    "fake-indexeddb": "^6.2.5",
+    "jsdom": "^30.1.1",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.136.3"
+  }
+}
