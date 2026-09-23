@@ -111,7 +111,7 @@ describe('changes', () => {
     await sync(A); await sync(B);
     expect(B.MB.store.get('days/' + today(B))).toEqual(A.MB.store.get('days/' + today(A)));
     expect(B.$('#main .page')).not.toBe(page);
-    expect(B.$$('#main .habit')[0].classList.contains('on') || B.$$('#main .habit')[0].classList.contains('part')).toBe(true);
+    expect(B.$('#main .habit .habit-sub').textContent).toMatch(/^1 /); /* one glass */
     expect(A.errors).toEqual([]); expect(B.errors).toEqual([]);
   });
 
@@ -215,7 +215,7 @@ describe('the open page', () => {
     expect(B.$('.sheet')).not.toBeNull();
     const page = B.$('#main .page');
     await tapHabit(A); await sync(A); await sync(B);
-    expect(B.MB.store.get('days/' + today(B)).habits).toEqual(A.MB.store.get('days/' + today(A)).habits);
+    expect(B.MB.store.get('days/' + today(B)).values).toEqual(A.MB.store.get('days/' + today(A)).values);
     expect(B.$('#main .page')).toBe(page); /* untouched while the sheet is open */
     B.$('.sheet-head button').click();
     await waitFor(() => B.$('#main .page') !== page, { what: 're-render after the sheet closed' });
@@ -235,15 +235,15 @@ describe('the open page', () => {
     B.$('#main .ringbox').click(); /* Daily targets */
     const kcal = B.$$('.sheet input[type=number]')[0];
     kcal.value = '3300'; kcal.dispatchEvent(new B.window.Event('input'));
-    A.MB.store.setDoc('settings/main', { ...A.MB.store.get('settings/main'), habits: [...A.MB.store.get('settings/main').habits, { id: 'floss', name: 'Floss', target: null, unit: '' }], updatedAt: undefined });
+    A.MB.store.setDoc('settings/main', { ...A.MB.store.get('settings/main'), trackers: [...A.MB.store.get('settings/main').trackers, { id: 'floss', name: 'Floss', type: 'check', group: 'habits' }], updatedAt: undefined });
     await sync(A); await sync(B);
-    await waitFor(() => B.MB.store.get('settings/main').habits.some(x => x.id === 'floss'), { what: 'settings pulled' });
+    await waitFor(() => B.MB.store.get('settings/main').trackers.some(x => x.id === 'floss'), { what: 'settings pulled' });
     expect(B.$('.sheet')).not.toBeNull();
     expect(B.$$('.sheet input[type=number]')[0].value).toBe('3300');
     B.button(B.t('c.save'), '.sheet').click();
     const saved = B.MB.store.get('settings/main');
     expect(saved.targets.kcal).toBe(3300);
-    expect(saved.habits.map(x => x.id)).toContain('floss');
+    expect(saved.trackers.map(x => x.id)).toContain('floss');
     await sync(B); await sync(A);
     expect(A.MB.store.get('settings/main').targets.kcal).toBe(3300);
     expect(B.errors).toEqual([]);
@@ -309,7 +309,7 @@ describe('tabs', () => {
     await waitFor(() => t2.MB.store.get('days/' + today(t2)), { what: 'tab 2 sees the write' });
     expect(t2.MB.store.get('days/' + today(t2))).toEqual(t1.MB.store.get('days/' + today(t1)));
     await waitFor(() => t2.$('#main .page') !== page, { what: 'tab 2 re-rendered' });
-    expect(t2.$$('#main .habit')[0].classList.contains('on') || t2.$$('#main .habit')[0].classList.contains('part')).toBe(true);
+    expect(t2.$('#main .habit .habit-sub').textContent).toMatch(/^1 /);
     expect(t3.MB.store.currentProfile().name).toBe('Other');
     expect(t3.MB.store.get('days/' + today(t3))).toBeNull();
     expect(t3.$('#main .page')).toBe(t3page);
@@ -347,7 +347,7 @@ describe('Settings card', () => {
     const file = A.device.downloads[0];
     expect(file.name).toMatch(/^tally-.*-cloud\.json$/);
     const backup = JSON.parse(await file.blob.text());
-    expect(backup).toMatchObject({ app: 'tally', version: 4 });
+    expect(backup).toMatchObject({ app: 'tally', version: 5 });
     expect(backup.foods.length).toBe(A.MB.store.list('foods').length);
 
     const foods = B.MB.store.list('foods').length;

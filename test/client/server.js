@@ -10,7 +10,7 @@ export async function startServer() {
   await server.getWorker().applyD1Migrations('DB');
   const base = url.href.replace(/\/$/, '');
   const api = async (method, path, { key, body } = {}) => {
-    const r = await fetch(base + path, { method, headers: { 'content-type': 'application/json', ...(key ? { authorization: 'Bearer ' + key } : {}) }, body: body == null ? undefined : JSON.stringify(body) });
+    const r = await fetch(base + path, { method, headers: { 'content-type': 'application/json', 'x-tally-format': '5', ...(key ? { authorization: 'Bearer ' + key } : {}) }, body: body == null ? undefined : JSON.stringify(body) });
     const text = await r.text();
     return { status: r.status, headers: r.headers, text, json: text ? JSON.parse(text) : null };
   };

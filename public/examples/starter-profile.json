@@ -1,6 +1,6 @@
 {
  "app": "tally",
- "version": 4,
+ "version": 5,
  "settings": {
   "name": "",
   "units": {
@@ -10,8 +10,15 @@
    "kcal": 2400,
    "protein": 160,
    "carbs": 0,
-   "fat": 0
+   "fat": 0,
+   "aim": {
+    "kcal": "near",
+    "protein": "min",
+    "carbs": "near",
+    "fat": "near"
+   }
   },
+  "nutrients": [],
   "goal": {
    "weight": null,
    "bodyFat": null,
@@ -37,24 +44,66 @@
     "name": "Snacks"
    }
   ],
-  "habits": [
+  "groups": [
+   {
+    "id": "habits",
+    "name": "Habits"
+   },
+   {
+    "id": "body",
+    "name": "Body"
+   }
+  ],
+  "trackers": [
    {
     "id": "water",
     "name": "Water",
+    "type": "count",
+    "group": "habits",
     "target": 8,
     "unit": "glasses"
    },
    {
     "id": "steps",
-    "name": "Steps"
+    "name": "Steps",
+    "type": "check",
+    "group": "habits"
    },
    {
     "id": "sleep",
-    "name": "Sleep 7h+"
+    "name": "Sleep",
+    "type": "duration",
+    "group": "habits",
+    "target": 450,
+    "aim": "min"
    },
    {
     "id": "stretch",
-    "name": "Stretch"
+    "name": "Stretch",
+    "type": "check",
+    "group": "habits"
+   },
+   {
+    "id": "weight",
+    "name": "Weight",
+    "type": "weight",
+    "group": "body"
+   },
+   {
+    "id": "m_waist",
+    "name": "Waist",
+    "type": "number",
+    "group": "body",
+    "unit": "in",
+    "freq": "any"
+   },
+   {
+    "id": "bodyFat",
+    "name": "Body fat %",
+    "type": "number",
+    "group": "body",
+    "unit": "%",
+    "freq": "any"
    }
   ],
   "exercises": [
@@ -175,7 +224,15 @@
    },
    {
     "id": "cardio",
-    "name": "Cardio"
+    "name": "Cardio",
+    "fields": [
+     {
+      "id": "distance",
+      "name": "Distance",
+      "type": "number",
+      "unit": "mi"
+     }
+    ]
    },
    {
     "id": "mobility",
@@ -460,16 +517,22 @@
    "start": null,
    "pattern": []
   },
-  "rank": {
-   "enabled": false,
-   "system": "",
-   "levels": [],
-   "level": "",
-   "sublevelName": "stripe",
-   "sublevel": 0,
-   "maxSublevel": 4,
-   "history": [],
-   "phases": []
+  "tags": [
+   {
+    "id": "sick",
+    "name": "Sick",
+    "color": "slate",
+    "skip": true
+   },
+   {
+    "id": "travel",
+    "name": "Travel",
+    "color": "blue",
+    "skip": true
+   }
+  ],
+  "progress": {
+   "hide": []
   }
  },
  "foods": [

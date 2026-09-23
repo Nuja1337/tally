@@ -5,8 +5,8 @@ import { describe, it, expect } from 'vitest';
 const INVITE = 'test-invite';
 const KEY_RE = /^tly-(?:[A-Z2-7]{4}-){6}[A-Z2-7]{2}$/;
 
-function call(method, path, { key, body, raw } = {}) {
-  const headers = key ? { authorization: 'Bearer ' + key } : {};
+function call(method, path, { key, body, raw, format = '5' } = {}) {
+  const headers = { ...(key ? { authorization: 'Bearer ' + key } : {}), ...(format ? { 'x-tally-format': format } : {}) };
   return exports.default.fetch(new Request('https://tally.test' + path, { method, headers, body: raw != null ? raw : body != null ? JSON.stringify(body) : undefined, redirect: 'manual' }));
 }
 async function newVault() {
@@ -73,6 +73,16 @@ describe('vaults', () => {
 });
 
 describe('sync', () => {
+  it('refuses apps older than data format 5, so they cannot overwrite newer documents', async () => {
+    const key = await newVault();
+    for (const format of [null, '4', 'x']) {
+      const r = await call('POST', '/api/sync', { key, format, body: { cursor: 0, changes: [put('days/2026-09-01', { date: '2026-09-01', habits: { water: 3 } }, T)] } });
+      expect(r.status, String(format)).toBe(426);
+      expect((await r.json()).error).toMatch(/update/);
+    }
+    expect((await pullAll(key)).changes).toEqual([]);
+  });
+
   it('push then pull, from the same and another device', async () => {
     const key = await newVault();
     const pushed = await sync(key, 0, [put('settings/main', { name: 'Sam' }, T), put('days/2026-09-01', { date: '2026-09-01', note: 'hi' }, T + 1)]);
@@ -195,7 +205,8 @@ describe('export', () => {
       put('settings/main', { name: 'Sam', units: { weight: 'kg' } }, T),
       put('foods/oats', { name: 'Oats', kcal: 150 }, T), put('foods/gone', { name: 'Gone' }, T), put('foods/empty', {}, T),
       put('templates/bowl', { name: 'Bowl', slot: 'lunch', kcal: 600 }, T),
-      put('days/2026-09-02', { date: '2026-09-02', note: 'b' }, T), put('days/2026-09-01', { note: 'no date field' }, T)
+      put('days/2026-09-02', { date: '2026-09-02', note: 'b' }, T), put('days/2026-09-01', { note: 'no date field' }, T),
+      put('history/2026-09-01', { targets: { kcal: 2000 } }, T), put('events/fall-open', { date: '2026-10-18', title: 'Fall Open', big: true }, T)
     ]);
     await sync(key, 0, [del('foods/gone', T + 1)]);
     const r = await call('GET', '/api/export', { key });
@@ -204,8 +215,10 @@ describe('export', () => {
     expect(r.headers.get('content-disposition')).toMatch(/attachment; filename="tally-cloud-\d{4}-\d{2}-\d{2}\.json"/);
     const text = await r.text(), data = JSON.parse(text);
     expect(text).not.toMatch(/"date":"[^"]*","date"/);
-    expect(Object.keys(data)).toEqual(['app', 'version', 'exportedAt', 'settings', 'foods', 'templates', 'days']);
-    expect(data).toMatchObject({ app: 'tally', version: 4, settings: { name: 'Sam', units: { weight: 'kg' } } });
+    expect(Object.keys(data)).toEqual(['app', 'version', 'exportedAt', 'settings', 'foods', 'templates', 'days', 'events', 'history']);
+    expect(data.events).toEqual([{ id: 'fall-open', date: '2026-10-18', title: 'Fall Open', big: true, updatedAt: new Date(T).toISOString() }]);
+    expect(data).toMatchObject({ app: 'tally', version: 5, settings: { name: 'Sam', units: { weight: 'kg' } } });
+    expect(data.history).toEqual([{ date: '2026-09-01', targets: { kcal: 2000 }, updatedAt: new Date(T).toISOString() }]);
     expect(Date.parse(data.exportedAt)).toBeGreaterThan(Date.now() - 10000);
     expect(data.foods.map(f => f.id)).toEqual(['empty', 'oats']);
     expect(data.foods[1]).toMatchObject({ id: 'oats', name: 'Oats', kcal: 150 });
@@ -215,7 +228,7 @@ describe('export', () => {
 
   it('exports an empty vault as empty lists', async () => {
     const data = await (await call('GET', '/api/export', { key: await newVault() })).json();
-    expect(data).toMatchObject({ app: 'tally', version: 4, foods: [], templates: [], days: [] });
+    expect(data).toMatchObject({ app: 'tally', version: 5, history: [], foods: [], templates: [], days: [], events: [] });
     expect(data.settings).toBeUndefined();
   });
 });

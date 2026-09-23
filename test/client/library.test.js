@@ -14,7 +14,9 @@ const settings = tab => tab.MB.store.get('settings/main');
 const headings = tab => tab.$$('#main .card-head h2').map(h => h.textContent);
 const typeIn = (tab, input, value) => { input.value = value; input.dispatchEvent(new tab.window.Event('input')); };
 const field = (tab, label, root = '.sheet') => { const f = tab.$$(`${root} .field`).find(x => x.querySelector('span') && x.querySelector('span').textContent === label); return f && f.querySelector('input, select'); };
-const rowNamed = (tab, name) => tab.$$('#main button.row.pick').find(b => b.querySelector('.row-name div').textContent === name);
+/* a list row by its name: plain rows, or rows you can drag (their name is a button next to the handle) */
+const rowNamed = (tab, name) => [...tab.$$('#main button.row.pick'), ...tab.$$('#main .sortrow button.row-name')].find(b => { const d = b.querySelector('div'); return d && d.textContent === name; });
+const undo = tab => tab.$('.toast button').click();
 
 describe('Library', () => {
   it('has Workouts, Routines, Exercises and Foods tabs, reachable by link', async () => {
@@ -32,10 +34,10 @@ describe('Library', () => {
   it('workouts: list, edit details and plan in one sheet, add, delete', async () => {
     const tab = await withExample('#workouts');
     const t = tab.t;
-    expect(tab.$$('#main .card:first-of-type button.row.pick').length).toBe(settings(tab).sessionTypes.length);
+    expect(tab.$$('#main .card:first-of-type .sortrow').length).toBe(settings(tab).sessionTypes.length);
     rowNamed(tab, 'Upper body').click();
     typeIn(tab, field(tab, t('c.name')), 'Upper A');
-    tab.button(t('pl.addBlock'), '.sheet').click();
+    tab.button(t('pl.addGroup'), '.sheet').click();
     tab.$$('.sheet .routine').at(-1).querySelector('button.btn.ghost.small').click(); /* add an exercise to the new block */
     const sel = tab.$$('.sheet .routine').at(-1).querySelector('.editor-row.wrap select');
     sel.value = 'plank'; sel.dispatchEvent(new tab.window.Event('change'));
@@ -53,11 +55,25 @@ describe('Library', () => {
     tab.button(t('c.save'), '.sheet').click();
     expect(settings(tab).sessionTypes.find(x => x.name === 'Swim')).toMatchObject({ id: 'swim', minutes: 40 });
 
+    /* deleting happens at once; Undo brings it back */
     rowNamed(tab, 'Swim').click();
     tab.button(t('c.delete'), '.sheet').click();
-    expect(tab.text('.sheet')).toContain(t('l.deleteWorkout', { name: 'Swim' }));
-    tab.button(t('c.delete'), '.sheet').click();
+    expect(tab.$('.sheet')).toBeNull();
     expect(settings(tab).sessionTypes.some(x => x.name === 'Swim')).toBe(false);
+    expect(tab.text('.toast')).toContain(t('t.removed', { name: 'Swim' }));
+    undo(tab);
+    expect(settings(tab).sessionTypes.map(x => x.name)).toContain('Swim');
+    expect(rowNamed(tab, 'Swim')).toBeTruthy();
+    expect(tab.errors).toEqual([]);
+  });
+
+  it('workouts and routines drag into order; the order is saved', async () => {
+    const tab = await withExample('#workouts');
+    const names = () => settings(tab).sessionTypes.map(x => x.name), before = names();
+    const handle = tab.$$('#main .sortrow .drag')[0];
+    handle.dispatchEvent(new tab.window.KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+    expect(names()).toEqual([before[1], before[0], ...before.slice(2)]);
+    expect(tab.$$('#main .sortrow .row-name div:first-child').map(d => d.textContent).slice(0, 2)).toEqual([before[1], before[0]]);
     expect(tab.errors).toEqual([]);
   });
 
@@ -119,7 +135,6 @@ describe('Library', () => {
 
     rowNamed(tab, 'Evening').click();
     tab.button(t('c.delete'), '.sheet').click();
-    tab.button(t('c.delete'), '.sheet').click();
     expect(settings(tab).routines.map(r => r.name)).not.toContain('Evening');
     expect(tab.errors).toEqual([]);
   });
@@ -136,6 +151,8 @@ describe('Library', () => {
     rowNamed(tab, first.name).click();
     tab.button(t('c.delete'), '.sheet').click();
     expect(tab.MB.store.get('templates/' + first.id)).toBeNull();
+    undo(tab);
+    expect(tab.MB.store.get('templates/' + first.id)).toMatchObject({ name: first.name, kcal: 999 });
     expect(tab.errors).toEqual([]);
   });
 });

@@ -13,7 +13,7 @@ afterAll(async () => { if (srv) await srv.close(); });
 function profileDocs(MB) {
   const out = [];
   const s = MB.store.get('settings/main'); if (s) out.push(['settings/main', s]);
-  for (const coll of ['foods', 'templates', 'days']) for (const { id, ...doc } of MB.store.list(coll)) out.push([coll + '/' + id, doc]);
+  for (const coll of ['foods', 'templates', 'days', 'history']) for (const { id, ...doc } of MB.store.list(coll)) out.push([coll + '/' + id, doc]);
   return out;
 }
 async function pushAll(key, docs) {
@@ -44,7 +44,8 @@ async function roundTrip(tab) {
   [...panel.querySelectorAll('button')].find(b => b.textContent === fresh.MB.i18n.t('c.apply')).click();
   await waitFor(() => fresh.MB.store.list('foods').length === tab.MB.store.list('foods').length, { what: 'import applied' });
   const norm = MB => ({ settings: MB.schema.normalizeSettings(MB.store.get('settings/main')), foods: MB.store.list('foods').map(({ updatedAt, ...f }) => f).sort((a, b) => a.id < b.id ? -1 : 1),
-    templates: MB.store.list('templates').map(({ updatedAt, ...t }) => t).sort((a, b) => a.id < b.id ? -1 : 1), days: MB.store.list('days').map(({ updatedAt, id, ...d }) => d) });
+    templates: MB.store.list('templates').map(({ updatedAt, ...t }) => t).sort((a, b) => a.id < b.id ? -1 : 1), days: MB.store.list('days').map(({ updatedAt, id, ...d }) => d),
+    history: MB.store.list('history').map(({ updatedAt, id, ...h }) => h) });
   const a = norm(tab.MB), b = norm(fresh.MB);
   delete a.settings.updatedAt; delete b.settings.updatedAt;
   expect(b).toEqual(a);

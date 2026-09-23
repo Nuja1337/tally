@@ -3,6 +3,8 @@
    INVITE_CODE secret. Sync: the client pushes changed documents, then pulls every row with seq > cursor. Per document, the
    newest updatedAt wins; deletes are tombstones. Free-plan budget: at most 42 D1 queries and one SHA-256 per request. */
 
+/* data format the app must speak to sync; older apps get 426 until they reload */
+const FORMAT = 5;
 const LIMITS = { body: 1024 * 1024, doc: 512 * 1024, changes: 40, page: 200, pageBytes: 2 * 1024 * 1024, path: 300, skewMs: 2 * 60 * 1000 };
 const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const PATH_RE = /^[a-z][a-z0-9_-]*\/[^/\u0000-\u001f\u007f]+$/;
@@ -72,6 +74,7 @@ async function createVault(request, env) {
 }
 
 async function sync(request, env, vault) {
+  if (!(Number(request.headers.get('x-tally-format')) >= FORMAT)) throw new HttpError(426, 'update the app to keep syncing');
   const body = await readJson(request);
   if (!isObj(body)) throw new HttpError(400, 'expected an object');
   const cursor = body.cursor == null ? 0 : body.cursor;
@@ -106,22 +109,22 @@ async function sync(request, env, vault) {
   return json(200, `{"cursor":${next},"more":${more},"serverTime":${now},"changes":[${items.join(',')}]}`);
 }
 
-/* a normal Tally export (format v4), importable as-is */
+/* a normal Tally export (format v5), importable as-is */
 async function exportVault(request, env, vault) {
   const { results } = await env.DB.prepare('SELECT path, body FROM docs WHERE vault = ?1 AND deleted = 0 ORDER BY path').bind(vault).all();
   /* the app writes the date first in day docs, so a prefix check spots it without parsing */
   const withField = (k, v, body) => body.startsWith(`{"${k}":`) ? body : `{${JSON.stringify(k)}:${JSON.stringify(v)}` + (body === '{}' ? '}' : ',' + body.slice(1));
   let settings = null;
-  const lists = { foods: [], templates: [], days: [] };
+  const lists = { foods: [], templates: [], days: [], events: [], history: [] };
   for (const r of results) {
     const i = r.path.indexOf('/'), coll = r.path.slice(0, i), id = r.path.slice(i + 1);
     if (r.path === 'settings/main') settings = r.body;
-    else if (coll === 'foods' || coll === 'templates') lists[coll].push(withField('id', id, r.body));
-    else if (coll === 'days') lists.days.push(withField('date', id, r.body));
+    else if (coll === 'foods' || coll === 'templates' || coll === 'events') lists[coll].push(withField('id', id, r.body));
+    else if (coll === 'days' || coll === 'history') lists[coll].push(withField('date', id, r.body));
   }
   const exportedAt = new Date().toISOString();
-  const text = `{"app":"tally","version":4,"exportedAt":"${exportedAt}"` + (settings ? `,"settings":${settings}` : '') +
-    `,"foods":[${lists.foods.join(',')}],"templates":[${lists.templates.join(',')}],"days":[${lists.days.join(',')}]}`;
+  const text = `{"app":"tally","version":5,"exportedAt":"${exportedAt}"` + (settings ? `,"settings":${settings}` : '') +
+    `,"foods":[${lists.foods.join(',')}],"templates":[${lists.templates.join(',')}],"days":[${lists.days.join(',')}],"events":[${lists.events.join(',')}],"history":[${lists.history.join(',')}]}`;
   return json(200, text, { 'content-disposition': `attachment; filename="tally-cloud-${exportedAt.slice(0, 10)}.json"` });
 }
 

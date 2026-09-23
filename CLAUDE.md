@@ -1,6 +1,6 @@
 # Tally
 
-Local-first fitness and nutrition log (PWA): meals, habits, routines, workouts with per-side logging, an ideal-week calendar, an exercise library, bodyweight and measurements. Formerly "Mettle" (2.x) and "Matbook" (1.x). Owner: Alex.
+Local-first fitness and nutrition log (PWA): meals and nutrients, trackers for anything (habits, measurements, bodyweight, ratings, times), routines, workouts with per-side logging, effort and custom fields, an ideal-week calendar, one-off events (big ones stand out), progressions, an exercise library with history, day tags, a goal with checkpoints. Formerly "Mettle" (2.x) and "Matbook" (1.x). Owner: Alex.
 
 ## Stack
 - Client: vanilla JavaScript as classic `<script>` files under a global `MB` namespace. No build step, no bundler, no framework, no client runtime dependencies. Lives in `public/`.
@@ -11,7 +11,7 @@ Local-first fitness and nutrition log (PWA): meals, habits, routines, workouts w
 ## Files
 - `public/js/ui.js` DOM helpers, dates, sheets, charts
 - `public/js/i18n.js` + `public/js/i18n/<lang>.js` 8 dictionaries: en es fr pt de ja ko zh
-- `public/js/schema.js` data format v4: defaults, normalize, import planning, export, starter profile, field docs
+- `public/js/schema.js` data format v5: defaults, normalize, v4 upgrade (habits, measurements, rank), status grades, setup history, events, import planning, export, starter packs, field docs
 - `public/js/store.js` IndexedDB store with profiles (`p/<profileId>/<path>`) and global meta (`m/<key>`)
 - `public/js/sync.js` outbox and cloud sync (added in 2.2)
 - `public/js/app.js` pages (Today, Plan, Progress, Library, Settings, Get started), routing, boot
@@ -21,6 +21,9 @@ Local-first fitness and nutrition log (PWA): meals, habits, routines, workouts w
 - Every user-facing string goes through `t()` and must exist in all 8 dictionaries with identical keys and placeholders. Run `node scripts/check-i18n.mjs`.
 - Any change under `public/`: bump `VERSION` in `public/sw.js` and keep its `ASSETS` list matching the real files.
 - The service worker must never cache `/api/*`.
+- Statuses use the five-step scale in schema.js (`targetStatus`, `trackerGrade`, `gradeOf` for one day, `rateGrade` for rates over weeks and months) and the `--g-*` color tokens; never hard-code green/red for a status. Past days are judged with `setupOn(date)` (setup history), not the current settings.
+- Events can tag a day and take it off the plan. For a date, read tags with `tagIdsOn(date, day)` or `skipDay(day, date)` and planned training with `plannedOn(date)`, never `day.tags` or `SC.plannedFor` directly.
+- `Element.append`/`replaceChildren` print `null` as text: filter optional children (`h()` already skips them).
 - Alex dislikes screen flash and needless re-renders. Update in place; never re-render a page while a sheet is open or an input has focus.
 - Data format changes: update `DOCS` in `schema.js` and the README format section together; keep old files importable.
 - Never commit personal data. `private/` is gitignored and holds Alex's profile export.

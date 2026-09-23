@@ -28,11 +28,12 @@ window.MB = window.MB || {};
     try {
       let res;
       try {
-        res = await fetch(path, { method, headers: { ...(key ? { authorization: 'Bearer ' + key } : {}), ...(body ? { 'content-type': 'application/json' } : {}) },
+        res = await fetch(path, { method, headers: { 'x-tally-format': String(MB.schema.VERSION), ...(key ? { authorization: 'Bearer ' + key } : {}), ...(body ? { 'content-type': 'application/json' } : {}) },
           body: body ? JSON.stringify(body) : undefined, signal: ctl ? ctl.signal : undefined });
       } catch (e) { throw new SyncError(ctl && ctl.signal.aborted ? 'timeout' : 'offline'); }
       if (res.status === 401) throw new SyncError('key', { status: 401 });
       if (res.status === 403) throw new SyncError('invite', { status: 403 });
+      if (res.status === 426) throw new SyncError('upgrade', { status: 426 });
       if (!res.ok) { let msg = ''; try { msg = (await res.json()).error || ''; } catch (e) {} throw new SyncError('server', { status: res.status, detail: msg }); }
       if (res.status === 204) return null;
       try { return method === 'GET' ? await res.text() : await res.json(); } catch (e) { throw new SyncError(ctl && ctl.signal.aborted ? 'timeout' : 'offline'); }
@@ -84,7 +85,7 @@ window.MB = window.MB || {};
     if (!(e instanceof SyncError)) { console.warn('sync failed', e); e = new SyncError('local'); }
     failure = { code: e.code, status: e.status, path: e.path };
     if (e.code !== 'offline' && e.code !== 'timeout') store.syncUpdate(id, m => (m && m.key) ? { ...m, lastError: { code: e.code, status: e.status || null } } : m).catch(() => {});
-    if (e.code === 'key') return; /* the vault is gone or the key is wrong: wait for the person */
+    if (e.code === 'key' || e.code === 'upgrade') return; /* the vault is gone, the key is wrong or this app is out of date: wait for the person */
     backoff = Math.min(BACKOFF_MAX, backoff ? backoff * 2 : BACKOFF_MIN);
     schedule(backoff);
   }

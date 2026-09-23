@@ -1,10 +1,12 @@
 # Tally
 
-A local-first training and nutrition log: meals, habits, routines, workouts with per-side logging, an ideal-week calendar, an exercise library with images and video, bodyweight, tape measurements and rank. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
+A local-first training and nutrition log: meals and nutrients, trackers for anything (checks, counts, numbers, ratings, durations, times, notes, bodyweight), routines, workouts with per-side logging, effort and custom fields, an ideal-week calendar, one-off events (tournaments, trips, appointments), an exercise library with history and records, progressions and day tags. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
 
 - Works offline once opened, installs to the home screen like an app
-- Five pages: Today, Plan (the ideal week), Progress (a week, a month or a year), Library (workouts, routines, exercises, foods and saved meals), Settings (profile, language and theme, sync, data). Targets, habits and meals of the day are edited on Today; goal, milestones and rank on Progress.
-- Totals turn green when a target is met, amber when close or not logged yet, red when a finished day fell short or went over
+- Five pages: Today, Plan (what is coming up and the ideal week), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, exercises, foods and saved meals), Settings (profile, language, theme, status colors, folding, sync, data). Targets, nutrients, tracker sections, meals of the day and tags are edited on Today; the goal and its checkpoints on Progress.
+- Five-step status colors from missed to met (with a color-blind option); past days keep the colors their setup gave them
+- Cards fold, finished ones by themselves; everything you create drags into order; deletes can be undone
+- Starter packs: General, BJJ athlete, Runner, Fat loss
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
 - Light and dark themes
 - Several profiles on one device
@@ -95,9 +97,9 @@ Installed copies keep working offline and get updates on the next open.
 
 ## Your data
 
-Everything lives in the browser's IndexedDB (localStorage if that is blocked). Clearing site data deletes it; a synced profile can be restored by linking again, but export now and then either way. Today shows a reminder after seven unexported days. Settings › Sync › **Download cloud backup** saves the cloud copy as a normal export.
+Everything lives in the browser's IndexedDB (localStorage if that is blocked). Progress › Data exports a month, or every day, as CSV. Clearing site data deletes it; a synced profile can be restored by linking again, but export now and then either way. Today shows a reminder after seven unexported days. Settings › Sync › **Download cloud backup** saves the cloud copy as a normal export.
 
-**Export** (Settings › Export): everything, setup only (settings, foods, templates), or days since a date. Download, share, or copy the JSON.
+**Export** (Settings › Export): everything, setup only (settings, foods, templates), or days and events since a date. Download, share, or copy the JSON.
 
 **Import** (Get started, or Settings › Import): drop a file, choose one, paste from the clipboard, or paste text. Preview shows what will change before you apply. On Android you can also share a `.json` file straight into the installed app; on desktop the installed app opens `.json` files.
 
@@ -109,79 +111,105 @@ Modes:
 
 Import into the current profile or into a new one.
 
-## Profile format (v4)
+## Profile format (v5)
 
 One JSON object with optional sections. Paste just the part you are changing.
 
 ```json
 {
   "app": "tally",
-  "version": 4,
+  "version": 5,
   "profile": { "name": "Sam" },
   "settings": {
     "name": "Sam",
     "units": { "weight": "lb" },
     "targets": { "kcal": 2600, "protein": 170, "carbs": 0, "fat": 0, "aim": { "kcal": "near", "protein": "min", "carbs": "near", "fat": "near" } },
+    "nutrients": [{ "id": "fiber", "name": "Fiber", "unit": "g", "target": 30, "aim": "min" }],
     "goal": { "weight": 180, "bodyFat": 12, "note": "", "band": [178, 182],
-              "milestones": [{ "label": "Month 4", "bodyFat": 13.5, "weight": 181, "lean": 157, "fat": 24 }] },
+              "milestones": [{ "label": "Month 4", "date": "2027-01-15", "weight": 181, "bodyFat": 13.5 }] },
     "mealSlots": ["Breakfast", "Lunch", "Dinner", "Snacks"],
-    "habits": [{ "name": "Water", "target": 8, "unit": "glasses" }, "Steps", "Stretch"],
+    "groups": [{ "id": "habits", "name": "Habits" }, { "id": "recovery", "name": "Recovery" }, { "id": "body", "name": "Body" }],
+    "trackers": [{ "id": "water", "name": "Water", "type": "count", "target": 8, "unit": "glasses", "group": "habits" },
+                 { "id": "stretch", "name": "Stretch", "type": "check", "freq": "days", "days": ["mon", "wed", "fri"], "group": "habits" },
+                 { "id": "sleep", "name": "Sleep", "type": "duration", "target": 480, "aim": "min", "group": "recovery" },
+                 { "id": "soreness", "name": "Soreness", "type": "rating", "target": 2, "aim": "max", "group": "recovery" },
+                 { "id": "bedtime", "name": "Bedtime", "type": "time", "target": "23:00", "aim": "max", "group": "recovery" },
+                 { "id": "weight", "name": "Weight", "type": "weight", "group": "body" },
+                 { "id": "m_waist", "name": "Waist", "type": "number", "unit": "in", "freq": "weekly", "perWeek": 1, "group": "body" }],
     "exercises": [{ "id": "push-up", "name": "Push-up", "category": "Strength", "cues": "Elbows at 45°", "perSide": false, "unit": "reps",
                     "image": "https://example.com/push-up.gif", "video": "https://www.youtube.com/results?search_query=push+up",
                     "gate": { "id": "wrist", "at": 3 } }],
     "routines": [{ "id": "morning", "name": "Morning mobility", "days": ["mon", "wed", "fri"], "alertAt": null, "alertText": "",
                    "items": [{ "name": "Cat-cow", "target": "10", "exerciseId": "cat-cow" }] }],
-    "sessionKinds": [{ "name": "Strength", "color": "blue" }, "Cardio"],
+    "sessionKinds": [{ "id": "bjj", "name": "BJJ", "color": "blue", "fields": [{ "id": "rounds", "name": "Rounds", "type": "number" }, { "id": "focus", "name": "Focus", "type": "text" }] },
+                     { "name": "Strength" }],
     "sessionTypes": [{ "id": "upper", "name": "Upper body", "kind": "strength", "minutes": 45, "kcal": 300,
                        "plan": [{ "label": "A", "items": [{ "exerciseId": "push-up", "sets": 4, "reps": "8-12", "rir": "1", "rest": "60 s" },
                                                           { "exerciseId": "one-arm-row", "sets": 4, "reps": "10-12", "perSide": true }] }] }],
     "calendar": [{ "days": ["mon", "fri"], "start": "17:30", "end": "18:15", "kind": "session", "typeId": "upper" },
                  { "days": ["mon", "tue", "wed", "thu", "fri"], "start": "09:00", "end": "17:00", "kind": "work", "title": "Work" },
                  { "days": ["mon", "tue", "wed", "thu", "fri", "sat", "sun"], "start": "23:00", "end": "07:00", "kind": "sleep", "title": "Sleep" }],
-    "gates": [{ "id": "wrist", "name": "Wrist", "stages": ["Phase 1", "Phase 2", "Phase 3"], "current": 1 }],
+    "gates": [{ "id": "wrist", "name": "Wrist", "stages": ["Phase 1", "Phase 2", "Phase 3"], "current": 1 },
+              { "id": "belt", "name": "BJJ belt", "stages": ["White", "Blue", "Purple", "Brown", "Black"], "current": 1 }],
     "wave": { "start": "2026-09-21", "pattern": ["ramp", "ramp", "full", "deload"] },
-    "rank": { "enabled": true, "system": "BJJ belt", "levels": ["White", "Blue", "Purple", "Brown", "Black"], "level": "White",
-              "sublevelName": "stripe", "sublevel": 2, "maxSublevel": 4,
-              "phases": [{ "name": "Phase I", "minSublevel": 0 }, { "name": "Phase II", "minSublevel": 3 }],
-              "history": [{ "date": "2026-03-01", "level": "White", "sublevel": 2 }] }
+    "tags": [{ "id": "sick", "name": "Sick", "color": "slate", "skip": true }, { "id": "travel", "name": "Travel", "color": "olive", "skip": true },
+             { "id": "competition", "name": "Competition", "color": "gold" }],
+    "progress": { "hide": [] }
   },
-  "foods": [{ "name": "Chicken breast, cooked", "category": "Proteins", "serving": "100 g", "kcal": 165, "p": 31, "c": 0, "f": 3.6, "note": "" }],
-  "templates": [{ "name": "Oats and whey", "slot": "breakfast", "kcal": 420, "p": 34, "c": 55, "f": 6 }],
-  "days": [{ "date": "2026-09-01", "habits": { "water": 6, "steps": true }, "checks": { "morning": ["cat-cow"] },
-             "meals": [{ "slot": "breakfast", "name": "Oats and whey", "kcal": 420, "p": 34, "c": 55, "f": 6 }],
-             "sessions": [{ "typeId": "upper", "name": "Upper body", "kind": "strength", "minutes": 45, "kcal": 300,
-                            "sets": [{ "ex": "Push-up", "exerciseId": "push-up", "wt": null, "reps": 12 }, { "ex": "One-arm row", "wt": 50, "reps": 10, "reps2": 9 }] }],
-             "weight": 181.4, "measures": { "waist": 84, "chest": 104 }, "note": "" }]
+  "foods": [{ "name": "Chicken breast, cooked", "category": "Proteins", "serving": "100 g", "kcal": 165, "p": 31, "c": 0, "f": 3.6, "n": { "fiber": 0 }, "note": "" }],
+  "templates": [{ "name": "Oats and whey", "slot": "breakfast", "kcal": 420, "p": 34, "c": 55, "f": 6, "n": { "fiber": 6 } }],
+  "days": [{ "date": "2026-09-01", "values": { "water": 6, "stretch": true, "sleep": 450, "soreness": 2, "bedtime": "23:20", "m_waist": 34.5 },
+             "checks": { "morning": ["cat-cow"] },
+             "meals": [{ "slot": "breakfast", "name": "Oats and whey", "kcal": 420, "p": 34, "c": 55, "f": 6, "n": { "fiber": 6 } }],
+             "sessions": [{ "typeId": "upper", "name": "Upper body", "kind": "strength", "minutes": 45, "kcal": 300, "effort": 7,
+                            "sets": [{ "ex": "Push-up", "exerciseId": "push-up", "wt": null, "reps": 12 }, { "ex": "One-arm row", "wt": 50, "reps": 10, "reps2": 9 }] },
+                          { "name": "BJJ class", "kind": "bjj", "minutes": 90, "effort": 8, "fields": { "rounds": 6, "focus": "Guard retention" } }],
+             "weight": 181.4, "tags": ["competition"], "note": "" }],
+  "events": [{ "id": "fall-open", "date": "2026-10-18", "time": "09:00", "title": "Fall Open", "tag": "competition", "big": true, "offPlan": true, "result": "2 wins, bronze" },
+             { "id": "thanksgiving", "date": "2026-11-25", "end": "2026-11-29", "title": "Thanksgiving trip", "tag": "travel" },
+             { "date": "2026-09-29", "time": "16:00", "title": "Physio: wrist", "note": "Ask about Phase 2" }],
+  "history": [{ "date": "2026-08-01", "targets": { "kcal": 2400, "protein": 160, "carbs": 0, "fat": 0, "aim": { "kcal": "near", "protein": "min", "carbs": "near", "fat": "near" } },
+                "nutrients": [], "trackers": [{ "id": "water", "type": "count", "target": 8, "aim": "min", "freq": "daily" }],
+                "routines": [{ "id": "morning", "days": [], "items": ["cat-cow"] }],
+                "calendar": [{ "id": "upper", "days": ["mon", "fri"], "start": "17:30", "end": "18:15", "typeId": "upper" }],
+                "types": [{ "id": "upper", "kind": "strength", "minutes": 45, "kcal": 300 }] }]
 }
 ```
 
 Notes:
 
 - Ids are optional; they are derived from names (`Water` → `water`). Keep them stable if you edit files by hand.
-- `targets.aim` says how each total counts as met: `min` (at least the target), `near` (within 10%) or `max` (at most). Missing aims default to `near` for calories, carbs and fat and `min` for protein.
-- Names in the app: `mealSlots` are "Meals of the day", `templates` are "Saved meals", `sessionKinds` are "Categories", `sessionTypes` are "Workouts", `gates` are "Progressions", `wave` is the "Training cycle" (`ramp` shows as Build, `full` as Peak), `calendar` blocks are plan items.
-- `progress.hide` lists Progress cards the profile hides: `nutrition`, `weight`, `training`, `habits`, `body`. Rank shows when `rank.enabled` is true.
-- `sessionKinds[].color` is one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.
-- A habit with a `target` counts up (tap adds one); without one it is a checkbox. `day.habits` holds `true` or the count.
+- **Trackers** replace v4 habits and tape measurements. `type` is `check`, `count`, `number`, `rating` (1–5), `duration` (minutes), `time` (`HH:MM`), `text` or `weight` (one at most; its value is `day.weight`, in the profile unit). `target` and `aim` (`min` at least, `near` about, `max` at most; for times `max` means by, `min` at or after, `near` within 15 minutes) are optional.
+- `freq` says when a tracker is expected: `daily`, `days` (the weekdays in `days`), `weekly` (`perWeek` times a week) or `any` (whenever; never counted as missed). Defaults: `any` for number, text and weight, `daily` for the rest. `archived` trackers leave Today and keep their history. `group` is the section (a card on Today); sections and trackers show in list order.
+- `day.values` holds each tracker's value by id. Body fat for the goal is the tracker with id `bodyFat`.
+- **goal**: target `weight` and `bodyFat`, a `band` to stay in, a `note`, and `milestones` (checkpoints with `label`, `date`, `weight`, `bodyFat`). Progress works out lean and fat mass from weight and body fat; older files' `lean` and `fat` are ignored.
+- **events** are one-off things on a date: a tournament, a trip, an appointment, an injury, a test, a promotion. `end` (inclusive) makes one span days, `time` is `HH:MM`, `result` and `note` are free text. `tag` is a tag id: the event's days count as tagged (a `skip` tag leaves them out of averages). `big` makes it stand out on calendars with a countdown on Today. `offPlan` means planned training on those days is not expected. Moving a progression up adds an event.
+- **Status colors** have five steps: met (green), close (light green), halfway (yellow), started (orange), missed (red). A day that is still going stays neutral while it is short; going over counts at once. Rates over weeks and months: 95% met, 75% close, 50% halfway, 25% started.
+- `targets.aim` works the same for calories and macros. Missing aims default to `near` for calories, carbs and fat and `min` for protein. `nutrients` adds more (fiber, sodium…); foods, saved meals and logged meals carry them in `n`.
+- `sessionKinds[].fields` are what a session of that category logs: `number` (with `unit`), `text`, `rating` or `duration`. Sessions keep them in `fields`, plus `effort` (1–10). Effort × minutes is the session load.
+- `tags` mark days; `skip: true` leaves those days out of averages and rates. `day.tags` lists tag ids; an event's tag counts on its days too.
+- **history** keeps the setup each stretch of days is judged by: an entry holds what judging needs (targets, nutrient targets, trackers' targets and frequencies, routines, planned sessions) from its `date` on. The app writes one whenever setup changes, so changing a target today leaves last month's colors alone. Days before the first entry use the first one.
+- Names in the app: `mealSlots` are "Meals of the day", `templates` are "Saved meals", `groups` are "Sections", `sessionKinds` are "Categories", `sessionTypes` are "Workouts", `gates` are "Progressions", `wave` is the "Training cycle" (`ramp` shows as Build, `full` as Peak), `calendar` blocks are plan items.
+- `progress.hide` lists Progress cards the profile hides: `nutrition`, `weight`, `training`, `habits` (consistency), `trackers`, `tags`, `events`, `body` (the goal).
+- `sessionKinds[].color` and `tags[].color` are one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.
 - `routines[].days` limits a routine to those weekdays; empty or missing means every day. `alertAt` turns a routine into a check-in: when that many items are ticked, Today shows `alertText`.
 - `exercises[].image` can be a direct image or GIF link (shown inline) or any page (opened in a tab). `video` is a link. `perSide` logs left and right reps and flags a gap over 10%. `gate` hides nothing but marks the exercise locked until that gate reaches the stage `at`.
-- `sessionTypes[].plan` is a list of blocks (supersets); `items` reference exercises by `exerciseId` or by `name`. Logging a session of that type pre-fills the sets.
+- `sessionTypes[].plan` is a list of blocks (supersets); `items` reference exercises by `exerciseId` or by `name`. Logging a session of that type pre-fills the sets and shows what you did last time.
 - `calendar` blocks build the ideal week: `kind` is `session`, `routine`, `meal`, `sleep`, `work`, `rest` or `other`, with `typeId`, `routineId` or `slotId` for the linked thing. Times are `HH:MM`, optional; a block that ends before it starts runs overnight. A session block with times scales the type's calories to the block length. The old `schedule` object is still accepted and becomes untimed session blocks.
-- `wave.pattern` repeats from `wave.start`; values are `ramp`, `full` or `deload`. `gates[].current` is 1-based.
-- `day.measures` keys: `waist`, `chest`, `arm`, `thigh`, `calf`, `neck`, `bodyFat`.
+- `wave.pattern` repeats from `wave.start`; values are `ramp`, `full` or `deload`. `gates[].current` is 1-based. A progression is any ladder: rehab phases, a belt, a grade.
 - `p`, `c`, `f` also accept `protein`, `carbs`, `fat`. `slot` also accepts `window`.
 - A bare list is accepted too (`[{ "name": "Oat milk", ... }]`); the import panel asks which section it belongs to.
-- Exports from earlier versions (Mettle 2.x, Matbook 1.x) and the original artifact import unchanged; local data from those versions migrates automatically on first open.
+- **Older files import unchanged.** v4 `settings.habits` become `check` or `count` trackers in a Habits section; the bodyweight becomes the `weight` tracker and the seven tape measurements (`day.measures`: `waist`, `chest`, `arm`, `thigh`, `calf`, `neck`, `bodyFat`) become number trackers `m_waist` … `m_neck` and `bodyFat` in a Body section; ones never logged start archived. `day.habits` and `day.measures` are read into `day.values`. A `settings.rank` (levels, sub-levels, promotions) becomes a progression with a stage per level and sub-level, and each promotion in its `history` becomes a big event; rank phases are dropped. Exports from Mettle 2.x, Matbook 1.x and the original artifact import too, and local data from those versions migrates on first open.
 
 Remove example:
 
 ```json
-{ "foods": ["banana"], "days": ["2026-09-01"], "settings": { "habits": ["water"], "routineItems": { "morning": ["cat-cow"] } } }
+{ "foods": ["banana"], "days": ["2026-09-01"], "events": ["fall-open"], "history": ["2026-08-01"], "settings": { "trackers": ["water"], "routineItems": { "morning": ["cat-cow"] } } }
 ```
 
-`public/examples/starter-profile.json` is the built-in example in English: four meal slots, four habits, a morning routine, twelve exercises, four session types (two with workouts), a timed week and 72 whole foods with reference values.
+`public/examples/starter-profile.json` is the General starter pack in English: four meal slots, Habits and Body sections, a morning routine, twelve exercises, four workouts (two with plans), a timed week, two tags and 72 whole foods with reference values. Get started also offers BJJ athlete, Runner and Fat loss packs.
 
-Sync adds nothing to this format: the outbox and cursor are kept per device and never appear in exports. The cloud backup is a normal v4 export.
+Sync adds nothing to this format: the outbox and cursor are kept per device and never appear in exports. The cloud backup is a normal v5 export.
 
 ## API
 
@@ -190,15 +218,15 @@ Same origin as the app, JSON in and out, errors as `{ "error": "..." }`.
 | Route | Auth | Body | Result |
 |---|---|---|---|
 | `POST /api/vault` | invite code | `{ invite }` | `201 { key }`, `403` on a wrong code |
-| `POST /api/sync` | `Authorization: Bearer <key>` | `{ cursor, changes: [{ path, doc, updatedAt, deleted }] }` | `200 { cursor, changes, more, serverTime }` |
-| `GET /api/export` | Bearer | | `200` a v4 export |
+| `POST /api/sync` | `Authorization: Bearer <key>`, `x-tally-format: 5` | `{ cursor, changes: [{ path, doc, updatedAt, deleted }] }` | `200 { cursor, changes, more, serverTime }` |
+| `GET /api/export` | Bearer | | `200` a v5 export |
 | `DELETE /api/vault` | Bearer | | `204`, the vault and all its documents are gone |
 
-An unknown key is `401`. `updatedAt` is milliseconds; more than 2 minutes in the future is clamped to server time.
+An unknown key is `401`. `updatedAt` is milliseconds; more than 2 minutes in the future is clamped to server time. A sync without `x-tally-format: 5` (an app that has not reloaded since the update) gets `426`, so old copies of the app cannot overwrite v5 documents; the app asks you to reload.
 
 ## Languages
 
-The interface follows the browser language when we have it, otherwise English; the dropdown in the top bar overrides it. Only the interface is translated: your own habit, food and routine names stay as you typed them, and the example profile loads in the selected language. Dictionaries live in `public/js/i18n/`; copy `en.js`, translate the values, add the file to `public/index.html` and `public/sw.js`, and run `node scripts/check-i18n.mjs`.
+The interface follows the browser language when we have it, otherwise English; the dropdown in the top bar overrides it. Only the interface is translated: your own habit, food and routine names stay as you typed them, and the starter packs load in the selected language. Dictionaries live in `public/js/i18n/`; copy `en.js`, translate the values, add the file to `public/index.html` and `public/sw.js`, and run `node scripts/check-i18n.mjs`.
 
 ## Layout
 
@@ -209,13 +237,14 @@ public/                      the app, served as static files
   js/ui.js                   DOM helpers, dates, sheets, charts (rings, bars, trend, heat)
   js/i18n.js                 language detection and t()
   js/i18n/<lang>.js          dictionaries
-  js/schema.js               defaults, normalization, migration, import planning, export, starter profile
+  js/schema.js               data format v5: defaults, normalization, v4 upgrade, the five-step scale, tracker grades,
+                             setup history, import planning, export, starter packs
   js/store.js                IndexedDB store: profiles, outbox, pulled changes, tabs, migration from earlier names
   js/sync.js                 cloud sync loop, vault create/link/unlink
   js/app.js                  pages, routing, import/export, sync UI, boot
   sw.js                      offline cache and share target
   manifest.webmanifest       install metadata, share target, file handler
-  examples/                  starter profile
+  examples/                  the General starter pack
 worker/index.js              API: vaults, sync, export, share fallback
 migrations/                  D1 schema
 wrangler.jsonc               Worker, assets and D1 config

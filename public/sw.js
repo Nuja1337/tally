@@ -1,6 +1,6 @@
 /* Tally service worker: caches the app shell for offline use and receives files shared into the app.
    Bump VERSION whenever a file changes so installed copies fetch the update. /api/ is never cached. */
-const VERSION = 'tally-2.2.4';
+const VERSION = 'tally-2.3.0';
 const ASSETS = ['./', './index.html', './styles.css', './manifest.webmanifest', './js/ui.js', './js/i18n.js', './js/schema.js', './js/store.js', './js/sync.js', './js/app.js',
   './js/i18n/en.js', './js/i18n/es.js', './js/i18n/fr.js', './js/i18n/pt.js', './js/i18n/de.js', './js/i18n/ja.js', './js/i18n/ko.js', './js/i18n/zh.js',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-512-maskable.png', './icons/apple-touch-icon.png', './examples/starter-profile.json'];

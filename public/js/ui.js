@@ -78,7 +78,7 @@ window.MB = window.MB || {};
       opts.action ? h('button', { onclick: () => { t.remove(); opts.onAction(); } }, opts.action) : null);
     document.body.append(t);
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.remove(), opts.sticky ? 12000 : (opts.action ? 6000 : 2400));
+    toastTimer = setTimeout(() => t.remove(), opts.ms || (opts.sticky ? 12000 : (opts.action ? 6000 : 2400)));
   }
   function confirmSheet(title, text, label, onYes, cancelLabel) {
     openSheet(title, h('div', null, h('p', null, text), h('div', { class: 'actions' },
@@ -120,22 +120,64 @@ window.MB = window.MB || {};
     document.addEventListener('click', () => tip.classList.remove('show'));
     return h('span', { class: 'helpwrap' }, b, tip);
   }
-  /* editable list of {id, ...fields}. fields: [{key,label,type,small,options}] */
-  function listEditor(arr, fields, onChange, addLabel, extra) {
-    const wrap = h('div', { class: 'editor' });
-    const draw = () => wrap.replaceChildren(...arr.map((item, i) => h('div', { class: 'editor-row' },
+  /* Drag to reorder: rows are the list's children marked data-sort, each with a .drag handle. Pointer drags move the
+     row live; arrow keys on the handle move it one place. onMove(from, to) runs once, after the row has moved. */
+  const GRIP = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="9" cy="6" r="1.6"/><circle cx="15" cy="6" r="1.6"/><circle cx="9" cy="12" r="1.6"/><circle cx="15" cy="12" r="1.6"/><circle cx="9" cy="18" r="1.6"/><circle cx="15" cy="18" r="1.6"/></svg>';
+  const dragHandle = () => h('button', { class: 'drag', type: 'button', 'aria-label': MB.i18n ? MB.i18n.t('c.reorder') : 'Reorder', title: MB.i18n ? MB.i18n.t('c.reorder') : 'Reorder', html: GRIP });
+  function sortable(list, onMove) {
+    const rows = () => [...list.children].filter(x => x.hasAttribute('data-sort'));
+    const rowOf = el => { const r = el && el.closest('[data-sort]'); return r && r.parentElement === list ? r : null; };
+    list.addEventListener('pointerdown', e => {
+      const handle = e.target.closest('.drag'), row = handle && rowOf(handle);
+      if (!row || (e.button != null && e.button !== 0)) return;
+      e.preventDefault();
+      const from = rows().indexOf(row);
+      row.classList.add('dragging');
+      try { handle.setPointerCapture(e.pointerId); } catch (err) {}
+      const move = ev => {
+        const rs = rows(), i = rs.indexOf(row), prev = rs[i - 1], next = rs[i + 1], y = ev.clientY;
+        const mid = el => { const b = el.getBoundingClientRect(); return b.top + b.height / 2; };
+        if (next && y > mid(next)) next.after(row); else if (prev && y < mid(prev)) prev.before(row);
+      };
+      const end = () => {
+        handle.removeEventListener('pointermove', move); handle.removeEventListener('pointerup', end); handle.removeEventListener('pointercancel', end);
+        row.classList.remove('dragging');
+        const to = rows().indexOf(row); if (to !== from && to >= 0) onMove(from, to);
+      };
+      handle.addEventListener('pointermove', move); handle.addEventListener('pointerup', end); handle.addEventListener('pointercancel', end);
+    });
+    list.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+      const handle = e.target.closest('.drag'), row = handle && rowOf(handle); if (!row) return;
+      const rs = rows(), i = rs.indexOf(row), j = i + (e.key === 'ArrowUp' ? -1 : 1);
+      e.preventDefault(); if (j < 0 || j >= rs.length) return;
+      if (j < i) rs[j].before(row); else rs[j].after(row);
+      onMove(i, j);
+      const again = [...list.children].filter(x => x.hasAttribute('data-sort'))[j]; const hd = again && again.querySelector('.drag'); if (hd) hd.focus();
+    });
+    return list;
+  }
+  const moveItem = (arr, from, to) => { const [x] = arr.splice(from, 1); arr.splice(to, 0, x); return arr; };
+  /* editable list of {id, ...fields}. fields: [{key,label,type,small,options}]. opts.sortable adds drag handles. */
+  function listEditor(arr, fields, onChange, addLabel, extra, opts) {
+    opts = opts || {};
+    const wrap = h('div', { class: 'editor' }), rows = h('div', { class: 'editor-rows' });
+    if (opts.sortable) sortable(rows, (from, to) => { moveItem(arr, from, to); onChange(); draw(); });
+    const draw = () => { rows.replaceChildren(...arr.map((item, i) => h('div', { class: 'editor-row', 'data-sort': opts.sortable ? '' : null },
+      opts.sortable ? dragHandle() : null,
       fields.map(f => f.type === 'select'
         ? h('select', { class: f.small ? 'sm' : '', 'aria-label': f.label, onchange: e => { item[f.key] = e.target.value; onChange(); } }, f.options().map(o => h('option', { value: o.value, selected: o.value === (item[f.key] || '') }, o.label)))
         : h('input', { type: f.type || 'text', class: f.small ? 'sm' : '', placeholder: f.label, 'aria-label': f.label, value: item[f.key] == null ? '' : item[f.key], inputmode: f.type === 'number' ? 'decimal' : null,
           oninput: e => { item[f.key] = f.type === 'number' ? (e.target.value === '' ? null : num(e.target.value)) : e.target.value; onChange(); } })),
       extra ? extra(item, i, draw) : null,
-      h('button', { class: 'btn ghost icon', 'aria-label': MB.i18n ? MB.i18n.t('c.remove') : 'Remove', onclick: () => { arr.splice(i, 1); onChange(); draw(); } }, '\u00d7'))),
-      h('div', null, h('button', { class: 'btn small', type: 'button', onclick: () => {
-        const it = { id: uid() };
-        fields.forEach(f => it[f.key] = f.type === 'number' ? null : (f.type === 'select' ? (f.options()[0] || { value: '' }).value : ''));
-        arr.push(it); onChange(); draw();
-        const rows = wrap.querySelectorAll('.editor-row'); const inp = rows.length && rows[rows.length - 1].querySelector('input'); if (inp) inp.focus();
-      } }, addLabel)));
+      h('button', { class: 'btn ghost icon', 'aria-label': MB.i18n ? MB.i18n.t('c.remove') : 'Remove', onclick: () => { arr.splice(i, 1); onChange(); draw(); } }, '\u00d7'))));
+    };
+    wrap.append(rows, h('div', null, h('button', { class: 'btn small', type: 'button', onclick: () => {
+      const it = { id: uid() };
+      fields.forEach(f => it[f.key] = f.type === 'number' ? null : (f.type === 'select' ? (f.options()[0] || { value: '' }).value : ''));
+      arr.push(it); onChange(); draw();
+      const all = rows.querySelectorAll('.editor-row'); const inp = all.length && all[all.length - 1].querySelector('input'); if (inp) inp.focus();
+    } }, addLabel)));
     draw();
     wrap.redraw = draw;
     return wrap;
@@ -197,6 +239,7 @@ window.MB = window.MB || {};
     const x = d => { const tt = new Date(d.replace(/-/g, '/')).getTime(); return pl + (t1 > t0 ? (tt - t0) / (t1 - t0) : 0.5) * (W - pl - pr); };
     const y = v => pt + (hi - v) / (hi - lo) * (H - pt - pb);
     const line = pts => pts.map((p, i) => (i ? 'L' : 'M') + x(p.date).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+    const vf = opts.fmt || fmt1;
     const dots = points.map(p => `<circle cx="${x(p.date).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.6" fill="var(--accent)" fill-opacity=".55"/>`).join('');
     const avgPath = line(points.map((p, i) => ({ date: p.date, v: avg[i] })));
     const goal = opts.goal == null ? '' : `<line x1="${pl}" x2="${W - pr}" y1="${y(opts.goal).toFixed(1)}" y2="${y(opts.goal).toFixed(1)}" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W - pr}" y="${(y(opts.goal) - 5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--green)">${opts.goalLabel || ''}</text>`;
@@ -205,24 +248,25 @@ window.MB = window.MB || {};
     return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label || ''}">${band}${goal}
   <path d="${line(points)}" fill="none" stroke="var(--accent)" stroke-opacity=".35" stroke-width="1.5" stroke-linejoin="round"/>${dots}
   <path d="${avgPath}" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
-  <text x="${x(last.date).toFixed(1)}" y="${(y(avg[avg.length - 1]) - 8).toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)">${fmt1(last.v)}</text>
+  <text x="${x(last.date).toFixed(1)}" y="${(y(avg[avg.length - 1]) - 8).toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)">${vf(last.v)}</text>
   <text x="${pl}" y="${H - 6}" font-size="10" fill="var(--muted)">${fmtShort(points[0].date)}</text><text x="${W - pr}" y="${H - 6}" text-anchor="end" font-size="10" fill="var(--muted)">${fmtShort(last.date)}</text></svg>`;
   }
-  function heat(map, weeks, endDate, color) {
-    /* map: {date: ratio 0..1}; grid of weeks columns, Mon..Sun rows */
+  function heat(map, weeks, endDate, color, marks) {
+    /* map: {date: ratio 0..1, or a grade name}; grid of weeks columns, Mon..Sun rows; marks: {date: color} rings a day (big events) */
     const start = weekStart(addDays(endDate, -7 * (weeks - 1)));
     const cell = 12, gap = 3, W = weeks * (cell + gap), H = 7 * (cell + gap) + 12;
     let rects = '';
     for (let w = 0; w < weeks; w++) for (let d = 0; d < 7; d++) {
       const date = addDays(start, w * 7 + d); if (date > endDate) continue;
-      const r = map[date]; const op = r == null ? 0 : 0.25 + 0.75 * r;
-      rects += `<rect x="${w * (cell + gap)}" y="${d * (cell + gap) + 12}" width="${cell}" height="${cell}" rx="3" fill="${r == null ? 'var(--track)' : (color || 'var(--green)')}" fill-opacity="${r == null ? 1 : op.toFixed(2)}"><title>${date}</title></rect>`;
+      const r = map[date], graded = typeof r === 'string', op = r == null || graded ? 1 : 0.25 + 0.75 * r;
+      rects += `<rect x="${w * (cell + gap)}" y="${d * (cell + gap) + 12}" width="${cell}" height="${cell}" rx="3" fill="${r == null ? 'var(--track)' : graded ? 'var(--g-' + r + ')' : (color || 'var(--green)')}" fill-opacity="${op.toFixed(2)}"><title>${date}</title></rect>`;
+      if (marks && marks[date]) rects += `<rect x="${w * (cell + gap) - 1}" y="${d * (cell + gap) + 11}" width="${cell + 2}" height="${cell + 2}" rx="4" fill="none" stroke="${marks[date]}" stroke-width="2"/>`;
     }
     const months = []; let lastM = '';
     for (let w = 0; w < weeks; w++) { const m = fmtMonth(addDays(start, w * 7)); if (m !== lastM) { months.push(`<text x="${w * (cell + gap)}" y="9" font-size="9" fill="var(--muted)">${m}</text>`); lastM = m; } }
     return `<svg class="heat" viewBox="0 0 ${W} ${H}" role="img">${months.join('')}${rects}</svg>`;
   }
 
-  MB.ui = { $, uid, clone, deepEq, fmt, fmt1, num, byName, slug, h, svg, today, isDate, parseD, addDays, diffDays, DOW, DAYS, dow, dayName, fmtLong, fmtShort, fmtDay, fmtMonth, weekStart, fmtTime, isImageUrl, thumb,
+  MB.ui = { dragHandle, sortable, moveItem, $, uid, clone, deepEq, fmt, fmt1, num, byName, slug, h, svg, today, isDate, parseD, addDays, diffDays, DOW, DAYS, dow, dayName, fmtLong, fmtShort, fmtDay, fmtMonth, weekStart, fmtTime, isImageUrl, thumb,
     openSheet, closeSheet, sheetOpen, onSheetClosed, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, stacked, trend, heat };
 })();

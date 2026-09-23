@@ -1,4 +1,4 @@
-// Edit in place (Today and Progress), a short Settings, and status colors: green met, amber close or not logged yet, red missed or over.
+// Edit in place (Today and Progress), a short Settings, and the five-step status colors: met, close, halfway, started, missed.
 import { describe, it, expect, afterEach } from 'vitest';
 import { openTab, waitFor, loadExample } from './harness.js';
 
@@ -23,7 +23,7 @@ async function reseed(tab, docs, hash = '#today') {
   const next = await openTab({ device: tab.device, hash }); open.push(next);
   return next;
 }
-const day = (date, d) => ({ date, habits: {}, checks: {}, meals: [], sessions: [], measures: {}, note: '', ...d });
+const day = (date, d) => ({ date, values: {}, checks: {}, meals: [], sessions: [], tags: [], note: '', ...d });
 async function prevDay(tab) { tab.$('#main .dayhead button').click(); await waitFor(() => tab.text('#main .dayhead h1') !== tab.t('c.today'), { what: 'previous day' }); }
 
 describe('Settings', () => {
@@ -52,14 +52,14 @@ describe('Today: setup edited where it shows', () => {
     expect(tab.$('#main .ringbox .ring').getAttribute('aria-label')).toContain('2,800');
   });
 
-  it('habits and meal slots, from their cards', async () => {
+  it('trackers and meal slots, from their cards', async () => {
     const tab = await withExample();
-    editIn(tab, 'habits').click();
-    tab.button(tab.t('s.addHabit'), '.sheet').click();
-    typeIn(tab, tab.$$('.sheet .editor-row').at(-1).querySelector('input'), 'Floss');
+    editIn(tab, 'g_habits').click();
+    tab.button(tab.t('tk.add'), '.sheet').click();
+    typeIn(tab, tab.$('.sheet input[type=text]'), 'Floss');
     save(tab);
-    expect(settings(tab).habits.map(x => x.name)).toContain('Floss');
-    expect(tab.$$('#main .habit-name').map(x => x.textContent)).toContain('Floss');
+    expect(settings(tab).trackers.find(x => x.name === 'Floss')).toMatchObject({ id: 'floss', type: 'check', freq: 'daily', group: 'habits' });
+    expect(tab.$$('#c-g_habits .habit-name').map(x => x.textContent)).toContain('Floss');
 
     editIn(tab, 'meals').click();
     typeIn(tab, tab.$$('.sheet .editor-row input')[0], 'First meal');
@@ -69,13 +69,14 @@ describe('Today: setup edited where it shows', () => {
     expect(tab.errors).toEqual([]);
   });
 
-  it('a blank profile offers to add habits and meal slots right on Today', async () => {
+  it('a blank profile offers to add trackers and meal slots right on Today', async () => {
     const tab = await openTab({ hash: '#today' }); open.push(tab);
-    tab.button(tab.t('t.addHabits'), '#main').click();
-    tab.button(tab.t('s.addHabit'), '.sheet').click();
-    typeIn(tab, tab.$('.sheet .editor-row input'), 'Walk');
+    expect(headings(tab)).toEqual(expect.arrayContaining([tab.t('t.habits'), tab.t('t.body')]));
+    expect(tab.$$('#c-g_body .habit-name').map(x => x.textContent)).toEqual([tab.t('m.weight')]);
+    tab.button(tab.t('tk.add'), '#c-g_habits').click();
+    typeIn(tab, tab.$('.sheet input[type=text]'), 'Walk');
     save(tab);
-    expect(tab.$$('#main .habit-name').map(x => x.textContent)).toEqual(['Walk']);
+    expect(tab.$$('#c-g_habits .habit-name').map(x => x.textContent)).toEqual(['Walk']);
     tab.button(tab.t('t.addSlots'), '#main').click();
     tab.button(tab.t('s.addSlot'), '.sheet').click();
     typeIn(tab, tab.$('.sheet .editor-row input'), 'Lunch');
@@ -85,8 +86,8 @@ describe('Today: setup edited where it shows', () => {
   });
 });
 
-describe('Progress: goal, milestones and rank edited on the page', () => {
-  it('goal and milestones', async () => {
+describe('Progress: the goal and its checkpoints, edited on the page', () => {
+  it('goal and milestones in one sheet; lean and fat mass are worked out', async () => {
     const tab = await withExample('#progress');
     const t = tab.t;
     tab.button(t('p.setGoalBtn'), '#main').click();
@@ -97,43 +98,21 @@ describe('Progress: goal, milestones and rank edited on the page', () => {
     expect(tab.text('#main')).toContain(t('p.toward', { w: 180, u: 'lb' }));
 
     tab.button(t('p.editGoal'), '#main').click();
-    tab.button(t('p.editMilestones'), '.sheet').click(); /* milestones belong to the goal */
-    tab.button(t('s.addMilestone'), '.sheet').click();
-    typeIn(tab, tab.$('.sheet .editor-row input'), 'Summer');
+    tab.button(t('s.addMilestone'), '.sheet').click(); /* checkpoints live in the goal sheet */
+    const [label, date, mbf, mw] = tab.$$('.sheet .editor-row input');
+    typeIn(tab, label, 'Summer'); typeIn(tab, date, '2027-06-01'); typeIn(tab, mbf, '14'); typeIn(tab, mw, '185');
     save(tab);
-    expect(settings(tab).goal.milestones.map(m => m.label)).toEqual(['Summer']);
+    expect(settings(tab).goal.milestones).toEqual([{ label: 'Summer', date: '2027-06-01', weight: 185, bodyFat: 14 }]);
     tab.button(t('p.tab.month'), '#main').click();
     expect(tab.text('#c-body')).toContain('Summer');
+    expect(tab.text('#c-body')).toContain('159.1 / 25.9'); /* 185 lb at 14% */
+    expect(tab.text('#c-body')).toContain('158.4 / 21.6'); /* the goal: 180 lb at 12% */
 
-    /* everything here can be cleared again */
-    tab.button(t('p.editMilestones'), '#c-body').click();
-    tab.button(t('p.removeAll'), '.sheet').click();
-    expect(settings(tab).goal.milestones).toEqual([]);
-    expect(tab.$('#c-body')).toBeNull();
-    tab.button(t('p.editGoal'), '#main').click();
+    /* clearing the goal clears its checkpoints too */
+    tab.button(t('c.edit'), '#c-body').click();
     tab.button(t('p.clearGoal'), '.sheet').click();
-    expect(settings(tab).goal).toMatchObject({ weight: null, bodyFat: null, band: null, note: '' });
-    expect(tab.errors).toEqual([]);
-  });
-
-  it('rank: start tracking one, record a promotion, undo it', async () => {
-    const tab = await withExample('#progress');
-    const t = tab.t;
-    tab.button(t('p.customize'), '#main').click();
-    const rankBox = tab.$$('.sheet label.row').find(l => l.textContent === t('p.card.rank')).querySelector('input');
-    rankBox.checked = true; rankBox.dispatchEvent(new tab.window.Event('change'));
-    save(tab); /* no rank set up yet, so its sheet opens */
-    const levels = tab.$$('.sheet .field').find(f => f.querySelector('span') && f.querySelector('span').textContent === t('s.levels')).querySelector('input');
-    typeIn(tab, levels, 'White, Blue');
-    save(tab);
-    expect(settings(tab).rank).toMatchObject({ enabled: true, level: 'White', sublevel: 0 });
-    tab.button(t('p.tab.year'), '#main').click();
-    tab.button(t('s.promoted'), '#main').click();
-    expect(settings(tab).rank.sublevel).toBe(1);
-    expect(settings(tab).rank.history).toHaveLength(1);
-    tab.$('.toast button').click();
-    expect(settings(tab).rank.sublevel).toBe(0);
-    expect(settings(tab).rank.history).toHaveLength(0);
+    expect(settings(tab).goal).toMatchObject({ weight: null, bodyFat: null, band: null, note: '', milestones: [] });
+    expect(tab.$('#c-body')).toBeNull();
     expect(tab.errors).toEqual([]);
   });
 });
@@ -145,7 +124,7 @@ describe('Today: status colors', () => {
     let tab = await reseed(first, { ['days/' + y]: day(y, { meals: [{ id: 'a', slot: 'breakfast', name: 'Toast', kcal: 300, p: 10, c: 40, f: 5 }] }) });
     await prevDay(tab);
     const notes = () => tab.$$('#main .ringnote').map(n => n.className);
-    expect(notes()).toEqual(['ringnote st-miss', 'ringnote st-miss']);
+    expect(notes()).toEqual(['ringnote st-low', 'ringnote st-low']); /* something, but under half */
     expect(tab.$('#main .ringnote').textContent).toBe(tab.t('t.short', { n: (s.targets.kcal - 300).toLocaleString() }));
 
     tab = await reseed(tab, { ['days/' + y]: day(y, { meals: [{ id: 'a', slot: 'breakfast', name: 'Feast', kcal: s.targets.kcal, p: s.targets.protein + 5, c: 0, f: 0 }] }) });
@@ -157,8 +136,12 @@ describe('Today: status colors', () => {
   it('today counts down without red; a finished checklist and all habits turn their counts green', async () => {
     const tab = await withExample();
     expect(tab.$('#main .ringnote').className).toBe('ringnote st-progress');
-    for (const tile of tab.$$('#main .habit')) { tile.click(); for (let i = 0; i < 10 && !tile.classList.contains('on'); i++) tile.click(); }
-    expect(tab.$('#c-habits .count').className).toBe('count st-met');
+    for (const tile of tab.$$('#c-g_habits .habit')) {
+      if (tile.getAttribute('role') === 'button') { for (let i = 0; i < 10 && !tile.classList.contains('on'); i++) tile.click(); continue; }
+      const [hh] = tile.querySelectorAll('input'); hh.value = '8'; hh.dispatchEvent(new tab.window.Event('change')); /* sleep: 8 h */
+    }
+    expect(tab.$$('#c-g_habits .habit').every(x => x.dataset.grade === 'met')).toBe(true);
+    expect(tab.$('#c-g_habits .count').className).toBe('count st-met');
     const tally = tab.$$('#main .tally').find(x => x.textContent.endsWith(tab.t('t.habits')));
     expect(tally.classList.contains('st-met')).toBe(true);
     const row = tab.$('#main .cl');
@@ -173,7 +156,7 @@ describe('Today: status colors', () => {
     const tab = await reseed(first, { 'settings/main': { ...s, routines: [...s.routines, { id: 'flags', name: 'Red flags', days: [], alertAt: 2, alertText: '', items: [{ id: 'hr', name: 'High HR', target: '' }, { id: 'sleep', name: 'Poor sleep', target: '' }] }] } });
     const row = tab.$('#cl-flags');
     row.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = true; cb.dispatchEvent(new tab.window.Event('change')); });
-    expect(row.dataset.status).toBe('over');
+    expect(row.dataset.status).toBe('alert');
     expect(tab.$('#main .notice.bad').textContent).toContain('Red flags');
   });
 });
@@ -225,10 +208,21 @@ describe('target status', () => {
     const tab = await openTab(); open.push(tab);
     const st = tab.MB.schema.targetStatus;
     expect(st(100, 0, 'min', true)).toBeNull();
-    expect([st(50, 100, 'min', false), st(100, 100, 'min', false), st(95, 100, 'min', true), st(50, 100, 'min', true)]).toEqual(['progress', 'met', 'close', 'miss']);
-    expect([st(50, 100, 'near', false), st(92, 100, 'near', false), st(108, 100, 'near', true), st(115, 100, 'near', false), st(130, 100, 'near', false), st(85, 100, 'near', true), st(70, 100, 'near', true)])
-      .toEqual(['progress', 'met', 'met', 'close', 'over', 'close', 'miss']);
-    expect([st(50, 100, 'max', false), st(50, 100, 'max', true), st(105, 100, 'max', false), st(120, 100, 'max', true)]).toEqual(['progress', 'met', 'close', 'over']);
+    expect([st(50, 100, 'min', false), st(100, 100, 'min', false), st(95, 100, 'min', true), st(50, 100, 'min', true), st(20, 100, 'min', true), st(0, 100, 'min', true)]).toEqual(['progress', 'met', 'good', 'half', 'low', 'miss']);
+    expect([st(50, 100, 'near', false), st(92, 100, 'near', false), st(108, 100, 'near', true), st(115, 100, 'near', false), st(130, 100, 'near', false), st(85, 100, 'near', true), st(70, 100, 'near', true), st(170, 100, 'near', false), st(250, 100, 'near', true)])
+      .toEqual(['progress', 'met', 'met', 'good', 'half', 'good', 'half', 'low', 'miss']);
+    expect([st(50, 100, 'max', false), st(50, 100, 'max', true), st(105, 100, 'max', false), st(120, 100, 'max', true), st(180, 100, 'max', true), st(200, 100, 'max', true)]).toEqual(['progress', 'met', 'good', 'half', 'low', 'miss']);
+  });
+
+  it('trackers: counts start at zero, ratings go by steps, times by minutes off; rates over weeks use their own steps', async () => {
+    const tab = await openTab(); open.push(tab);
+    const { normalizeTracker, trackerGrade, rateGrade, gradeOf } = tab.MB.schema, tk = x => normalizeTracker({ id: 'x', name: 'x', ...x });
+    expect([trackerGrade(tk({ type: 'count', target: 3, aim: 'max' }), undefined, true), trackerGrade(tk({ type: 'count', target: 8 }), 6, true), trackerGrade(tk({ type: 'count', target: 8 }), 6, false)]).toEqual(['met', 'half', 'progress']);
+    expect([1, 2, 3, 4, 5].map(v => trackerGrade(tk({ type: 'rating', target: 2, aim: 'max' }), v, true))).toEqual(['met', 'met', 'good', 'half', 'low']);
+    expect(['22:50', '23:10', '23:25', '23:50', '00:30'].map(v => trackerGrade(tk({ type: 'time', target: '23:00', aim: 'max' }), v, true))).toEqual(['met', 'good', 'half', 'low', 'miss']);
+    expect([trackerGrade(tk({ type: 'check' }), true, true), trackerGrade(tk({ type: 'check' }), undefined, true), trackerGrade(tk({ type: 'check' }), undefined, false)]).toEqual(['met', 'miss', 'progress']);
+    expect([0.8, 0.95, 0.6, 0.3, 0.1].map(rateGrade)).toEqual(['good', 'met', 'half', 'low', 'miss']);
+    expect([0.8, 1, 0.6, 0.3, 0].map(gradeOf)).toEqual(['half', 'met', 'half', 'low', 'miss']);
   });
 
   it('old files without aims or kind colors import unchanged; the new fields round-trip', async () => {
