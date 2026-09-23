@@ -2,7 +2,7 @@
 window.MB = window.MB || {};
 (() => {
   'use strict';
-  MB.APP = { id: 'tally', name: 'Tally', version: '2.2.3' };
+  MB.APP = { id: 'tally', name: 'Tally', version: '2.2.4' };
   const { uid, clone, num, slug, isDate } = MB.ui;
   const VERSION = 4;
   const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];

@@ -1,13 +1,12 @@
 // Library holds workouts, routines, exercises and foods.
 import { describe, it, expect, afterEach } from 'vitest';
-import { openTab, waitFor } from './harness.js';
+import { openTab, waitFor, loadExample } from './harness.js';
 
 const open = [];
 afterEach(() => { while (open.length) open.pop().close(); });
 async function withExample(hash) {
   const tab = await openTab(); open.push(tab);
-  tab.$('.tiles .tile').click();
-  await waitFor(() => tab.MB.store.list('foods').length > 50 && tab.window.location.hash === '#today', { what: 'example loaded' });
+  await loadExample(tab);
   if (hash) await tab.go(hash);
   return tab;
 }

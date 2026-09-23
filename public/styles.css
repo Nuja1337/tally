@@ -1,4 +1,4 @@
-/* Tally 2.2.3 */
+/* Tally 2.2.4 */
 :root{
   --bg:#F6F5F1;--surface:#FFFFFF;--surface2:#EFEEE9;--ink:#1A1B1F;--muted:#5F6470;--faint:#8A8F99;--line:#E4E2DB;--track:#E6E4DE;--track2:#CFCDC6;
   --accent:#D9622B;--accent2:#E9A27C;--accent-ink:#FFFFFF;--blue:#3B6E9C;--green:#2E8B5B;--amber:#D99A2B;--red:#C9413B;
@@ -542,7 +542,7 @@ table.plain tr.hit td:first-child{color:var(--green);font-weight:700}
 .cblock.one{flex-direction:row;align-items:center;gap:6px;padding:0 6px}
 .cblock.one b,.cblock.mid b{-webkit-line-clamp:1;min-width:0}
 .cblock.one b{flex:1 1 auto}
-.cal-untimed .cblock{min-height:24px}
+.cal-untimed .cblock{height:24px;flex:0 0 24px}
 .kind-row{padding:6px 0 10px;border-bottom:1px solid var(--line)}
 .swatches{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
 .sw{width:28px;height:28px;padding:0;border:0;border-radius:50%;background:var(--kc);cursor:pointer}

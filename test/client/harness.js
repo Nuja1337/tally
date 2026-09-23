@@ -35,6 +35,12 @@ export function newDevice() {
   return device;
 }
 
+/* Get started › Example; resolves once Today shows the example (the app moves to #today only after the import lands) */
+export async function loadExample(tab) {
+  tab.$('.tiles .tile').click();
+  await waitFor(() => tab.MB.store.list('foods').length > 50 && tab.window.location.hash === '#today' && tab.$('.nav a.active[data-route="today"]') && tab.$('#main .page.today'), { what: 'example loaded' });
+}
+
 export async function waitFor(cond, { timeout = 5000, what = 'condition' } = {}) {
   const end = Date.now() + timeout;
   for (;;) {

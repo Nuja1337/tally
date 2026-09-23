@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { openTab, waitFor, PUBLIC } from './harness.js';
+import { openTab, waitFor, PUBLIC, loadExample } from './harness.js';
 import { startServer, INVITE } from './server.js';
 
 let srv;
@@ -65,8 +65,7 @@ describe('served locally by the Worker', () => {
 
   it('a cloud export of the example profile imports back unchanged', async () => {
     const tab = await openTab({ origin: srv.base });
-    tab.$('.tiles .tile').click();
-    await waitFor(() => tab.MB.store.list('foods').length > 50, { what: 'example loaded' });
+    await loadExample(tab);
     /* add a logged day so days are covered too */
     tab.MB.store.setDoc('days/2026-09-01', { ...tab.MB.schema.emptyDay('2026-09-01'), meals: [{ id: 'm1', slot: 'breakfast', name: 'Oats', kcal: 400, p: 30, c: 50, f: 8 }], weight: 80.1, updatedAt: '2026-09-01T09:00:00.000Z' });
     expect(await roundTrip(tab)).toBeGreaterThan(70);

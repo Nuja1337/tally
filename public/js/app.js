@@ -607,12 +607,15 @@
       const lo = Math.min(360, ...own.map(s => Math.floor(s.a / 60) * 60)), hi = Math.max(1320, ...own.map(s => Math.ceil(s.z / 60) * 60)), px = m => ((m - lo) / 60 * HOUR_PX);
       const hours = []; for (let m = lo; m < hi; m += 60) hours.push(m);
       const colH = px(hi) + 'px';
-      const axis = h('div', { class: 'cal-axis' }, h('div', { class: 'cal-head' }), h('div', { class: 'cal-axis-in', style: { height: colH } }, hours.map(m => h('div', { class: 'cal-hour', style: { top: px(m) + 'px' } }, fmtTime(String(m / 60 % 24).padStart(2, '0') + ':00')))));
+      /* untimed items sit in a row of the same height on every day, so every column's hours line up with the axis */
+      const untimedOf = day => SC.blocksFor(st, day).filter(b => !b.start), rowsU = Math.max(0, ...DAYS.map(d => untimedOf(d).length));
+      const uH = rowsU ? (rowsU * 27 + 3) + 'px' : null;
+      const axis = h('div', { class: 'cal-axis' }, h('div', { class: 'cal-head' }), uH ? h('div', { style: { height: uH } }) : null, h('div', { class: 'cal-axis-in', style: { height: colH } }, hours.map(m => h('div', { class: 'cal-hour', style: { top: px(m) + 'px' } }, fmtTime(String(m / 60 % 24).padStart(2, '0') + ':00')))));
       cal.replaceChildren(h('div', { class: 'calgrid' }, axis, DAYS.map(day => {
-        const untimed = SC.blocksFor(st, day).filter(b => !b.start);
+        const untimed = untimedOf(day);
         const list = lanes(segs[day].filter(s => s.z > lo).map(s => ({ ...s, a: Math.max(s.a, lo) })), 20 / HOUR_PX * 60);
         return h('div', { class: 'cal-day' + (day === dow(today()) ? ' today' : '') }, h('div', { class: 'cal-head' }, dayName(day)),
-          untimed.length ? h('div', { class: 'cal-untimed' }, untimed.map(b => h('button', { class: 'cblock one', style: { '--kc': blockColor(b) }, onclick: () => blockSheet(b), title: SC.blockTitle(b, st) || t('pl.' + b.kind) }, h('b', null, SC.blockTitle(b, st) || t('pl.' + b.kind))))) : null,
+          uH ? h('div', { class: 'cal-untimed', style: { height: uH } }, untimed.map(b => h('button', { class: 'cblock one', style: { '--kc': blockColor(b) }, onclick: () => blockSheet(b), title: SC.blockTitle(b, st) || t('pl.' + b.kind) }, h('b', null, SC.blockTitle(b, st) || t('pl.' + b.kind))))) : null,
           h('div', { class: 'cal-col', style: { height: colH } }, hours.map(m => h('div', { class: 'cal-line', style: { top: px(m) + 'px' } })), list.map(s => {
             const b = s.b, title = SC.blockTitle(b, st) || t('pl.' + b.kind), height = Math.max(18, px(s.z) - px(s.a) - 2);
             const when = s.cont ? t('pl.until', { t: fmtTime(b.end) }) : `${fmtTime(b.start)}${b.end ? '–' + fmtTime(b.end) : ''}`;

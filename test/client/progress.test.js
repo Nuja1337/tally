@@ -1,13 +1,12 @@
 // Progress as a week, a month or a year; cards can be hidden; the Plan calendar with overnight and overlapping blocks.
 import { describe, it, expect, afterEach } from 'vitest';
-import { openTab, waitFor } from './harness.js';
+import { openTab, waitFor, loadExample } from './harness.js';
 
 const open = [];
 afterEach(() => { while (open.length) open.pop().close(); });
 async function withExample(hash) {
   const tab = await openTab(); open.push(tab);
-  tab.$('.tiles .tile').click();
-  await waitFor(() => tab.MB.store.list('foods').length > 50 && tab.window.location.hash === '#today', { what: 'example loaded' });
+  await loadExample(tab);
   if (hash && hash !== '#today') await tab.go(hash);
   return tab;
 }
@@ -112,7 +111,7 @@ describe('Plan', () => {
   it('an overnight block continues at the top of the next day; overlapping blocks share the width', async () => {
     const first = await withExample('#plan'), s = settings(first);
     const cal = [{ id: 'sleep', days: ['mon'], start: '22:45', end: '07:00', kind: 'sleep', title: 'Sleep' },
-      { id: 'a', days: ['wed'], start: '12:00', end: '13:00', kind: 'session', typeId: 'upper' }, { id: 'b', days: ['wed'], start: '12:30', end: '13:30', kind: 'meal', slotId: 'lunch' }];
+      { id: 'a', days: ['wed'], start: '12:00', end: '13:00', kind: 'session', typeId: 'upper' }, { id: 'b', days: ['wed'], start: '12:30', end: '13:30', kind: 'meal', slotId: 'lunch' }, { id: 'r', days: ['sun'], kind: 'rest', title: 'Rest day' }];
     const tab = await reseed(first, { 'settings/main': { ...s, calendar: cal } }, '#plan');
     const col = d => tab.$$('#main .cal-day')[d].querySelector('.cal-col');
     const mon = col(0).querySelector('.cblock'), tue = col(1).querySelector('.cblock');
@@ -120,13 +119,19 @@ describe('Plan', () => {
     expect(parseFloat(mon.style.top) + parseFloat(mon.style.height)).toBeCloseTo(parseFloat(col(0).style.height) - 1, 0); /* runs to the bottom */
     expect(tue.classList.contains('cont')).toBe(true);
     expect(tue.textContent).toContain(tab.t('pl.until', { t: tab.MB.ui.fmtTime('07:00') }));
+    /* an untimed item on one day gives every day (and the hour axis) the same row, so the hours line up */
+    const rows = tab.$$('#main .cal-untimed');
+    expect(rows).toHaveLength(7);
+    expect(new Set(rows.map(r => r.style.height)).size).toBe(1);
+    expect(tab.$('#main .cal-axis').children[1].style.height).toBe(rows[0].style.height);
+    expect(rows[6].textContent).toBe('Rest day');
     const wed = [...col(2).querySelectorAll('.cblock')];
     expect(wed.map(b => b.style.width)).toEqual(['calc(50% - 4px)', 'calc(50% - 4px)']);
     wed[0].click();
     expect(tab.button(tab.t('c.edit'), '.sheet')).not.toBeNull();
     tab.button(tab.t('c.delete'), '.sheet').click();
     tab.button(tab.t('c.delete'), '.sheet').click();
-    expect(settings(tab).calendar.map(b => b.id)).toEqual(['sleep', 'b']);
+    expect(settings(tab).calendar.map(b => b.id)).toEqual(['sleep', 'b', 'r']);
     expect(tab.errors).toEqual([]);
   });
 

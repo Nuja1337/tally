@@ -1,6 +1,6 @@
 // Two devices (separate jsdom windows and IndexedDBs) syncing through the real Worker served locally.
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
-import { openTab, newDevice, waitFor } from './harness.js';
+import { openTab, newDevice, waitFor, loadExample } from './harness.js';
 import { startServer, INVITE } from './server.js';
 
 let srv;
@@ -12,10 +12,6 @@ afterEach(() => { while (open.length) open.pop().close(); });
 const KEY_RE = /^tly-(?:[A-Z2-7]{4}-){6}[A-Z2-7]{2}$/;
 async function tabOn(device, hash) { const tab = await openTab({ device, origin: srv.base, hash }); open.push(tab); return tab; }
 const newTab = hash => tabOn(newDevice(), hash);
-async function loadExample(tab) {
-  tab.$('.tiles .tile').click();
-  await waitFor(() => tab.MB.store.list('foods').length > 50 && tab.window.location.hash === '#today', { what: 'example loaded' });
-}
 /* a full sync; a second call covers a run that was already going when the first was made */
 const sync = async tab => { await tab.MB.sync.syncNow(); return tab.MB.sync.syncNow(); };
 const synced = tab => waitFor(() => { const s = tab.MB.sync.status(); return s.linked && s.state === 'synced' && !s.pending; }, { what: 'synced', timeout: 15000 });

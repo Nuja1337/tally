@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import vm from 'node:vm';
-import { openTab, newDevice, seedDB, readDB, dbNames, waitFor, PUBLIC, SCRIPTS } from './harness.js';
+import { openTab, newDevice, seedDB, readDB, dbNames, waitFor, loadExample, PUBLIC, SCRIPTS } from './harness.js';
 
 const ROUTES = ['today', 'plan', 'progress', 'workouts', 'routines', 'exercises', 'foods', 'settings', 'start'];
 const LANGS = ['en', 'es', 'fr', 'pt', 'de', 'ja', 'ko', 'zh'];
@@ -15,7 +15,7 @@ describe('boot', () => {
     const tab = await openTab();
     expect(tab.document.title).toBe('Tally');
     expect(tab.text('.brand-name')).toBe('Tally');
-    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.2.3' });
+    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.2.4' });
     expect(tab.window.location.hash).toBe('#start');
     expect(await dbNames(tab.device.idb)).toEqual(['tally']);
     expect(tab.errors).toEqual([]);
@@ -77,8 +77,7 @@ describe('migration from earlier names', () => {
 describe('pages', () => {
   it('every page renders in every language without console errors', async () => {
     const tab = await openTab();
-    tab.$('.tiles .tile').click(); /* load the example profile */
-    await waitFor(() => tab.MB.store.list('foods').length > 50, { what: 'example loaded' });
+    await loadExample(tab);
     for (const lang of LANGS) {
       const sel = tab.$('select.lang'); sel.value = lang; sel.dispatchEvent(new tab.window.Event('change'));
       for (const r of ROUTES) {
