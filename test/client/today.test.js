@@ -97,23 +97,38 @@ describe('Progress: goal, milestones and rank edited on the page', () => {
     expect(settings(tab).goal).toMatchObject({ weight: 180, bodyFat: 12, band: [179, 182] });
     expect(tab.text('#main')).toContain(t('p.toward', { w: 180, u: 'lb' }));
 
-    tab.button(t('p.editMilestones'), '#main').click();
+    tab.button(t('p.editGoal'), '#main').click();
+    tab.button(t('p.editMilestones'), '.sheet').click(); /* milestones belong to the goal */
     tab.button(t('s.addMilestone'), '.sheet').click();
     typeIn(tab, tab.$('.sheet .editor-row input'), 'Summer');
     save(tab);
     expect(settings(tab).goal.milestones.map(m => m.label)).toEqual(['Summer']);
-    expect(tab.text('#main')).toContain('Summer');
+    tab.button(t('p.tab.month'), '#main').click();
+    expect(tab.text('#c-body')).toContain('Summer');
+
+    /* everything here can be cleared again */
+    tab.button(t('p.editMilestones'), '#c-body').click();
+    tab.button(t('p.removeAll'), '.sheet').click();
+    expect(settings(tab).goal.milestones).toEqual([]);
+    expect(tab.$('#c-body')).toBeNull();
+    tab.button(t('p.editGoal'), '#main').click();
+    tab.button(t('p.clearGoal'), '.sheet').click();
+    expect(settings(tab).goal).toMatchObject({ weight: null, bodyFat: null, band: null, note: '' });
+    expect(tab.errors).toEqual([]);
   });
 
   it('rank: start tracking one, record a promotion, undo it', async () => {
     const tab = await withExample('#progress');
     const t = tab.t;
-    tab.button(t('p.trackRank'), '#main').click();
+    tab.button(t('p.customize'), '#main').click();
+    const rankBox = tab.$$('.sheet label.row').find(l => l.textContent === t('p.card.rank')).querySelector('input');
+    rankBox.checked = true; rankBox.dispatchEvent(new tab.window.Event('change'));
+    save(tab); /* no rank set up yet, so its sheet opens */
     const levels = tab.$$('.sheet .field').find(f => f.querySelector('span') && f.querySelector('span').textContent === t('s.levels')).querySelector('input');
     typeIn(tab, levels, 'White, Blue');
     save(tab);
     expect(settings(tab).rank).toMatchObject({ enabled: true, level: 'White', sublevel: 0 });
-    expect(tab.button(t('p.trackRank'), '#main')).toBeNull();
+    tab.button(t('p.tab.year'), '#main').click();
     tab.button(t('s.promoted'), '#main').click();
     expect(settings(tab).rank.sublevel).toBe(1);
     expect(settings(tab).rank.history).toHaveLength(1);
@@ -150,7 +165,7 @@ describe('Today: status colors', () => {
     const row = tab.$('#main .cl');
     row.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.checked = true; cb.dispatchEvent(new tab.window.Event('change')); });
     expect(row.dataset.status).toBe('met');
-    expect(tab.$$('#main .tally').find(x => x.textContent.endsWith(tab.t('t.checklists'))).classList.contains('st-met')).toBe(true);
+    expect(tab.$$('#main .tally').find(x => x.textContent.endsWith(tab.t('t.routines'))).classList.contains('st-met')).toBe(true);
     expect(tab.errors).toEqual([]);
   });
 

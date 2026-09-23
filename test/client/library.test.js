@@ -62,20 +62,24 @@ describe('Library', () => {
     expect(tab.errors).toEqual([]);
   });
 
-  it('workouts: kinds, training wave and gates edit in their own sheets', async () => {
+  it('workouts: categories with colors, the training cycle and progressions edit in their own sheets', async () => {
     const tab = await withExample('#workouts');
     const t = tab.t;
     const editIn = title => tab.$$('#main .card').find(c => c.querySelector('h2') && c.querySelector('h2').textContent === title).querySelector('.card-head button');
     editIn(t('s.kinds')).click();
     tab.button(t('s.addKind'), '.sheet').click();
-    typeIn(tab, tab.$$('.sheet .editor-row input').at(-1), 'Climbing');
+    typeIn(tab, tab.$$('.sheet .kind-row input').at(-1), 'Climbing');
+    tab.$$('.sheet .kind-row').at(-1).querySelector('.sw[aria-label="' + t('col.pink') + '"]').click();
     tab.button(t('c.save'), '.sheet').click();
-    expect(settings(tab).sessionKinds.map(k => k.name)).toContain('Climbing');
+    expect(settings(tab).sessionKinds.find(k => k.name === 'Climbing')).toMatchObject({ color: 'pink' });
 
     editIn(t('pl.wave')).click();
-    const [start, pattern] = tab.$$('.sheet input');
+    const start = tab.$('.sheet input[type=date]');
     start.value = '2026-09-21'; start.dispatchEvent(new tab.window.Event('change'));
-    typeIn(tab, pattern, 'ramp, full, nonsense, deload');
+    const add = () => tab.button('+ ' + t('pl.addWeek'), '.sheet').click();
+    add(); add(); add();
+    tab.$$('.sheet .chip.wk')[1].click(); /* build -> peak */
+    tab.$$('.sheet .chip.wk')[2].click(); tab.$$('.sheet .chip.wk')[2].click(); /* build -> peak -> deload */
     tab.button(t('c.save'), '.sheet').click();
     expect(settings(tab).wave).toEqual({ start: '2026-09-21', pattern: ['ramp', 'full', 'deload'] });
 
@@ -86,6 +90,10 @@ describe('Library', () => {
     tab.button(t('c.save'), '.sheet').click();
     expect(settings(tab).gates).toMatchObject([{ name: 'Wrist', stages: ['Phase 1', 'Phase 2'], current: 1 }]);
     expect(tab.text('#main')).toContain('Wrist · Phase 1');
+    await tab.go('#plan');
+    tab.$$('#main .prog').find(b => b.textContent.includes('Wrist')).click();
+    tab.$$('.sheet button.row.pick')[1].click(); /* on to phase 2 */
+    expect(settings(tab).gates[0].current).toBe(2);
     expect(tab.errors).toEqual([]);
   });
 

@@ -3,10 +3,10 @@
   'use strict';
   const U = MB.ui, SC = MB.schema, store = MB.store, I = MB.i18n, t = I.t;
   const { $, h, svg, uid, clone, fmt, fmt1, num, byName, today, addDays, dow, DAYS, dayName, fmtLong, fmtShort, fmtDay, fmtTime, weekStart, thumb, isImageUrl,
-    openSheet, closeSheet, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, trend, heat } = U;
+    openSheet, closeSheet, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, stacked, trend, heat } = U;
 
-  const S = { route: 'today', date: today(), weekDate: today(), settings: SC.normalizeSettings(null),
-    day: SC.emptyDay(today()), foods: [], templates: [], foodTab: 'All', foodQ: '', foodSort: { key: 'name', dir: 1 }, libTab: 'workouts', exQ: '', planDay: dow(today()), planEdit: false,
+  const S = { route: 'today', date: today(), pDate: today(), pTab: (() => { try { const v = localStorage.getItem('tally:progress'); return ['week', 'month', 'year'].includes(v) ? v : 'week'; } catch (e) { return 'week'; } })(), settings: SC.normalizeSettings(null),
+    day: SC.emptyDay(today()), foods: [], templates: [], foodTab: 'All', foodQ: '', foodSort: { key: 'name', dir: 1 }, libTab: 'workouts', exQ: '', planDay: dow(today()),
     refs: {}, openedOn: today(), pendingImport: null };
   const unit = () => S.settings.units.weight;
   const kindName = id => { const k = S.settings.sessionKinds.find(x => x.id === id); return k ? k.name : (id || t('c.other')); };
@@ -130,7 +130,7 @@
     const done = d.sessions.filter(s => s.done !== false);
     const items = [
       st.habits.length ? ['habits', t('t.habits'), habitsDone(d), st.habits.length] : null,
-      lists.length ? ['checklists', t('t.checklists'), lists.filter(r => routineDone(r, d)).length, lists.length] : null,
+      lists.length ? ['checklists', t('t.routines'), lists.filter(r => routineDone(r, d)).length, lists.length] : null,
       planned.length ? ['training', t('t.training'), planned.filter(p => done.some(s => s.typeId === p.type.id)).length, planned.length] : (done.length ? ['training', t('t.training'), done.length, 0] : null)
     ].filter(Boolean);
     el.classList.toggle('hidden', !items.length);
@@ -214,7 +214,7 @@
   function setOpen(id, open) { openState[id] = open; try { localStorage.setItem(OPEN_KEY, JSON.stringify(openState)); } catch (e) {} }
   function checklistsCard() {
     const rs = routinesFor(S.date); if (!rs.length) return null;
-    return card('checklists', t('t.checklists'), h('a', { class: 'btn ghost small', href: '#routines' }, t('c.edit')), h('div', { class: 'cls' }, rs.map(checklistRow)));
+    return card('checklists', t('t.routines'), h('a', { class: 'btn ghost small', href: '#routines' }, t('c.edit')), h('div', { class: 'cls' }, rs.map(checklistRow)));
   }
   function checklistRow(r) {
     const d = S.day, count = h('span', { class: 'cl-count' }), fill = h('i'), next = h('small', { class: 'cl-next' });
@@ -528,53 +528,104 @@
   }
 
   /* ---------- Plan: the ideal week ---------- */
+  /* The week you aim for: where the training cycle and progressions stand, how training spreads over the week, the
+     calendar itself, and the workouts. Everything opens in a sheet with Edit and Delete; there is no separate edit mode. */
   function viewPlan() {
-    const st = S.settings, wrap = h('div', { class: 'page' });
+    const st = S.settings, wrap = h('div', { class: 'page plan' });
     wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('nav.plan')), h('div', { class: 'sub' }, t('pl.sub'))),
-      h('button', { class: 'btn small' + (S.planEdit ? ' primary' : ''), onclick: () => { S.planEdit = !S.planEdit; render(); } }, S.planEdit ? t('c.done') : t('c.edit'))));
-    const wave = SC.waveWeek(st.wave, today());
-    if (st.wave.pattern.length || st.gates.length) {
-      const body = h('div');
-      if (st.wave.pattern.length) body.append(h('div', { class: 'wave' }, st.wave.pattern.map((ph, i) => h('div', { class: 'wave-cell' + (wave && wave.week === i + 1 ? ' on' : '') }, h('b', null, i + 1), h('span', null, t('pl.' + ph))))),
-        h('p', { class: 'muted small' }, wave ? t('pl.cycle', { n: wave.cycle }) + ' · ' + waveLabel(wave) : t('pl.waveStarts', { d: st.wave.start ? fmtShort(st.wave.start) : '—' })));
-      if (st.gates.length) body.append(h('div', { class: 'gates' }, st.gates.map(g => S.planEdit
-        ? h('label', { class: 'field' }, h('span', null, g.name), h('select', { onchange: e => { const s = latest(), x = s.gates.find(y => y.id === g.id); if (!x) return; x.current = +e.target.value; saveSettingsNow(s); render(); toast(t('c.saved')); } }, g.stages.map((sname, i) => h('option', { value: i + 1, selected: g.current === i + 1 }, sname))))
-        : h('span', { class: 'chip small on' }, `${g.name} · ${g.stages[g.current - 1] || g.current}`))));
-      wrap.append(section(t('pl.wave'), st.gates.length ? t('pl.gatesSub') : null, body));
-    }
-    const cal = h('div', { class: 'calwrap' }); wrap.append(section(t('pl.calendar'), S.planEdit ? h('button', { class: 'btn small primary', onclick: () => blockForm(null) }, t('pl.addBlock')) : null, cal));
+      h('button', { class: 'btn primary small', onclick: () => blockForm(null) }, t('pl.addBlock'))));
+    if (st.wave.pattern.length || st.gates.length) wrap.append(cycleCard());
+    if (st.calendar.some(b => b.kind === 'session' && b.typeId)) wrap.append(weekGlance());
+    const cal = h('div', { class: 'calwrap' }); wrap.append(card('plan', t('pl.calendar'), null, cal));
     drawCalendar(cal);
     const withPlans = st.sessionTypes.filter(x => x.plan.length);
-    wrap.append(section(t('pl.workouts'), S.planEdit ? h('button', { class: 'btn small', onclick: () => workoutPick() }, t('pl.editWorkout')) : null,
-      withPlans.length ? h('div', { class: 'list' }, withPlans.map(x => h('button', { class: 'row pick', onclick: () => workoutSheet(x) }, h('span', { class: 'row-name' }, x.name), h('span', { class: 'muted small' }, t('pl.blocksCount', { b: x.plan.length, e: x.plan.reduce((a, b) => a + b.items.length, 0) })))))
+    wrap.append(card('training', t('pl.workouts'), h('a', { class: 'btn ghost small', href: '#workouts' }, t('c.edit')),
+      withPlans.length ? h('div', { class: 'list' }, withPlans.map(x => h('button', { class: 'row pick', style: { '--kc': kindColor(x.kind) }, onclick: () => workoutSheet(x) }, h('i', { class: 'kdot' }), h('span', { class: 'row-name' }, x.name), h('span', { class: 'muted small' }, t('pl.blocksCount', { b: x.plan.length, e: x.plan.reduce((a, b) => a + b.items.length, 0) })))))
         : h('p', { class: 'empty' }, t('pl.noWorkoutsLib'), ' ', h('a', { href: '#workouts' }, t('l.addWorkout')))));
     return wrap;
   }
+  /* training cycle weeks and each progression's stage; a tap changes the stage */
+  function cycleCard() {
+    const st = S.settings, wave = SC.waveWeek(st.wave, today()), body = h('div');
+    if (st.wave.pattern.length) body.append(h('div', { class: 'wave' }, st.wave.pattern.map((ph, i) => h('div', { class: 'wave-cell ph-' + ph + (wave && wave.week === i + 1 ? ' on' : '') }, h('b', null, i + 1), h('span', null, t('pl.' + ph))))),
+      h('p', { class: 'muted small' }, wave ? t('pl.cycle', { n: wave.cycle }) + ' · ' + waveLabel(wave) : t('pl.waveStarts', { d: st.wave.start ? fmtShort(st.wave.start) : '—' })));
+    if (st.gates.length) body.append(h('div', { class: 'subhead' }, t('s.gates')), h('div', { class: 'gates' }, st.gates.map(g => h('button', { class: 'prog', onclick: () => stageSheet(g) },
+      h('b', null, g.name), h('span', null, g.stages[g.current - 1] || String(g.current)), h('span', { class: 'steps' }, g.stages.map((_, i) => h('i', { class: i < g.current ? 'on' : '' }))),
+      h('small', null, t('pl.stageOf', { n: g.current, of: Math.max(1, g.stages.length) }))))));
+    return card('cycle', st.wave.pattern.length ? t('pl.wave') : t('s.gates'), h('div', { class: 'head-r' }, st.wave.pattern.length ? editBtn(waveSheet) : null), body);
+  }
+  function stageSheet(g) {
+    const exAt = i => S.settings.exercises.filter(e => e.gate && e.gate.id === g.id && e.gate.at === i + 1).map(e => e.name);
+    openSheet(g.name, h('div', null, h('p', { class: 'muted small' }, t('pl.stageHelp')), h('div', { class: 'list' }, g.stages.map((name, i) => h('button', { class: 'row pick' + (g.current === i + 1 ? ' on' : ''), onclick: () => { const s = latest(), x = s.gates.find(y => y.id === g.id); if (!x) return; x.current = i + 1; saveAnd(s); } },
+      h('span', { class: 'row-name' }, h('div', null, `${i + 1}. ${name}`), exAt(i).length ? h('div', { class: 'muted small' }, t('pl.unlocks', { list: exAt(i).join(', ') })) : null),
+      g.current === i + 1 ? h('span', { class: 'badge' }, t('s.current')) : null))),
+      h('div', { class: 'actions' }, h('button', { class: 'btn ghost small', onclick: gatesSheet }, t('pl.editProgressions')))));
+  }
+  /* planned training per weekday, stacked by category, with the weekly total */
+  function weekGlance() {
+    const st = S.settings, per = DAYS.map(d => SC.plannedFor(st, d).map(p => ({ kind: p.type.kind, minutes: p.minutes, name: p.type.name })));
+    const all = per.flat(), total = sum(all, s => s.minutes);
+    return card('glance', t('pl.glance'), h('small', { class: 'count' }, `${all.length} ${I.unit('pl.workoutsN', all.length)} · ${fmt1(total / 60)} h`), h('div', null,
+      svg(stacked(DAYS.map((d, i) => ({ label: dayName(d, 'narrow'), parts: kindParts(per[i]) })), { height: 110, label: t('pl.glance') })), kindLegend(all)));
+  }
+  /* each block runs from its start for its length; one that passes midnight continues at the top of the next day */
+  const PASSIVE = ['sleep', 'work', 'rest'];
+  function daySegments(st) {
+    const segs = {}; DAYS.forEach(d => { segs[d] = []; });
+    for (const b of st.calendar) {
+      const a = SC.hm(b.start); if (a == null) continue;
+      const z = a + (SC.duration(b) || 30);
+      for (const day of b.days) {
+        segs[day].push({ b, a, z: Math.min(z, 1440), cont: false });
+        if (z > 1440) segs[DAYS[(DAYS.indexOf(day) + 1) % 7]].push({ b, a: 0, z: z - 1440, cont: true });
+      }
+    }
+    return segs;
+  }
+  /* overlapping active blocks share the width; passive ones (sleep, work, rest) sit behind */
+  function lanes(list, minMinutes) {
+    const act = list.filter(s => !PASSIVE.includes(s.b.kind)).sort((x, y) => x.a - y.a || y.z - x.z);
+    let group = [], end = -1;
+    const close = () => { const n = Math.max(...group.map(s => s.lane)) + 1; group.forEach(s => { s.of = n; }); group = []; };
+    for (const s of act) {
+      const z = Math.max(s.z, s.a + minMinutes);
+      if (group.length && s.a >= end) close();
+      const used = new Set(group.filter(g => g.vz > s.a).map(g => g.lane));
+      let lane = 0; while (used.has(lane)) lane++;
+      s.lane = lane; s.vz = z; group.push(s); end = Math.max(end, z);
+    }
+    if (group.length) close();
+    list.filter(s => PASSIVE.includes(s.b.kind)).forEach(s => { s.lane = 0; s.of = 1; s.bg = true; });
+    return list;
+  }
+  const HOUR_PX = 52;
   function drawCalendar(cal) {
     const st = S.settings, wide = window.innerWidth >= 900;
-    if (!st.calendar.length) { cal.replaceChildren(h('p', { class: 'empty' }, t('pl.empty'))); return; }
-    const times = st.calendar.flatMap(b => [SC.hm(b.start), SC.hm(b.end)]).filter(x => x != null);
-    const lo = Math.min(6 * 60, ...times.map(x => Math.floor(x / 60) * 60)), hi = Math.max(22 * 60, ...times.map(x => Math.ceil(x / 60) * 60));
-    const blockEl = (b, positioned) => {
-      const title = SC.blockTitle(b, st) || t('pl.' + b.kind), dur = SC.duration(b);
-      const el = h('button', { class: 'cblock ' + KIND_CLASS[b.kind], onclick: () => blockSheet(b), title: title }, h('b', null, title), b.start ? h('span', null, `${fmtTime(b.start)}${b.end ? '–' + fmtTime(b.end) : ''}`) : null);
-      if (positioned && b.start) { const a = SC.hm(b.start), z = a + (dur || 30); const end = Math.min(z, hi); el.style.top = ((a - lo) / (hi - lo) * 100) + '%'; el.style.height = Math.max(2.2, (end - a) / (hi - lo) * 100) + '%'; el.classList.add('pos'); }
-      return el;
-    };
+    if (!st.calendar.length) { cal.replaceChildren(emptyAdd(t('pl.empty'), t('pl.addBlock'), () => blockForm(null))); return; }
+    const segs = daySegments(st), own = Object.values(segs).flat().filter(s => !s.cont);
     if (wide) {
-      const hours = []; for (let m = lo; m < hi; m += 60) hours.push(h('div', { class: 'cal-hour', style: { top: ((m - lo) / (hi - lo) * 100) + '%' } }, fmtTime(String(m / 60).padStart(2, '0') + ':00')));
-      cal.replaceChildren(h('div', { class: 'calgrid' }, h('div', { class: 'cal-axis' }, h('div', { class: 'cal-head' }), h('div', { class: 'cal-axis-in' }, hours)), DAYS.map(day => {
-        const bs = SC.blocksFor(st, day), timed = bs.filter(b => b.start), untimed = bs.filter(b => !b.start);
-        const wrapsOver = timed.filter(b => SC.hm(b.end) != null && SC.hm(b.end) < SC.hm(b.start));
+      const lo = Math.min(360, ...own.map(s => Math.floor(s.a / 60) * 60)), hi = Math.max(1320, ...own.map(s => Math.ceil(s.z / 60) * 60)), px = m => ((m - lo) / 60 * HOUR_PX);
+      const hours = []; for (let m = lo; m < hi; m += 60) hours.push(m);
+      const colH = px(hi) + 'px';
+      const axis = h('div', { class: 'cal-axis' }, h('div', { class: 'cal-head' }), h('div', { class: 'cal-axis-in', style: { height: colH } }, hours.map(m => h('div', { class: 'cal-hour', style: { top: px(m) + 'px' } }, fmtTime(String(m / 60 % 24).padStart(2, '0') + ':00')))));
+      cal.replaceChildren(h('div', { class: 'calgrid' }, axis, DAYS.map(day => {
+        const untimed = SC.blocksFor(st, day).filter(b => !b.start);
+        const list = lanes(segs[day].filter(s => s.z > lo).map(s => ({ ...s, a: Math.max(s.a, lo) })), 20 / HOUR_PX * 60);
         return h('div', { class: 'cal-day' + (day === dow(today()) ? ' today' : '') }, h('div', { class: 'cal-head' }, dayName(day)),
-          untimed.length ? h('div', { class: 'cal-untimed' }, untimed.map(b => blockEl(b, false))) : null,
-          h('div', { class: 'cal-col' }, hours.map(x => x.cloneNode(false)), timed.map(b => blockEl(b, true)),
-            wrapsOver.map(b => { const el = blockEl({ ...b, start: String(Math.floor(lo / 60)).padStart(2, '0') + ':00' }, true); const z = SC.hm(b.end); el.style.top = '0%'; el.style.height = Math.max(2.2, (z - lo) / (hi - lo) * 100) + '%'; el.classList.add('cont'); return el; })));
+          untimed.length ? h('div', { class: 'cal-untimed' }, untimed.map(b => h('button', { class: 'cblock one', style: { '--kc': blockColor(b) }, onclick: () => blockSheet(b), title: SC.blockTitle(b, st) || t('pl.' + b.kind) }, h('b', null, SC.blockTitle(b, st) || t('pl.' + b.kind))))) : null,
+          h('div', { class: 'cal-col', style: { height: colH } }, hours.map(m => h('div', { class: 'cal-line', style: { top: px(m) + 'px' } })), list.map(s => {
+            const b = s.b, title = SC.blockTitle(b, st) || t('pl.' + b.kind), height = Math.max(18, px(s.z) - px(s.a) - 2);
+            const when = s.cont ? t('pl.until', { t: fmtTime(b.end) }) : `${fmtTime(b.start)}${b.end ? '–' + fmtTime(b.end) : ''}`;
+            return h('button', { class: 'cblock pos ' + KIND_CLASS[b.kind] + (s.bg ? ' bg' : '') + (height < 34 ? ' one' : height < 60 ? ' mid' : '') + (s.cont ? ' cont' : ''), onclick: () => blockSheet(b), title: `${title} · ${when}`,
+              style: { top: (px(s.a) + 1) + 'px', height: height + 'px', left: `calc(${s.lane / s.of * 100}% + 2px)`, width: `calc(${100 / s.of}% - 4px)`, '--kc': blockColor(b) } },
+              h('b', null, title), height < 34 ? null : h('span', null, when));
+          })));
       })));
     } else {
       const seg = segmented(DAYS.map(d => ({ value: d, label: dayName(d, 'narrow') })), S.planDay, v => { S.planDay = v; drawCalendar(cal); });
-      const bs = SC.blocksFor(st, S.planDay);
-      cal.replaceChildren(seg, h('div', { class: 'timeline' }, bs.length ? bs.map(b => { const dur = SC.duration(b); return h('button', { class: 'tl-row ' + KIND_CLASS[b.kind], onclick: () => blockSheet(b) },
+      const bs = SC.blocksFor(st, S.planDay), train = SC.plannedFor(st, S.planDay), meals = bs.filter(b => b.kind === 'meal').length, sleep = bs.filter(b => b.kind === 'sleep').reduce((a, b) => a + (SC.duration(b) || 0), 0);
+      const sumLine = [train.length ? `${train.length} ${I.unit('pl.workoutsN', train.length)} · ${fmtDur(sum(train, p => p.minutes))}` : null, meals ? `${meals} ${I.unit('pl.mealsN', meals)}` : null, sleep ? t('pl.sleepFor', { t: fmtDur(sleep) }) : null].filter(Boolean).join(' · ');
+      cal.replaceChildren(seg, sumLine ? h('p', { class: 'muted small daysum' }, sumLine) : null, h('div', { class: 'timeline' }, bs.length ? bs.map(b => { const dur = SC.duration(b); return h('button', { class: 'tl-row', style: { '--kc': blockColor(b) }, onclick: () => blockSheet(b) },
         h('span', { class: 'tl-time' }, b.start ? fmtTime(b.start) : '·'), h('span', { class: 'tl-dot' }), h('span', { class: 'tl-title' }, SC.blockTitle(b, st) || t('pl.' + b.kind), dur ? h('small', null, ' ' + fmtDur(dur)) : null)); })
         : h('p', { class: 'empty' }, t('pl.nothingThatDay'))));
     }
@@ -587,8 +638,8 @@
       b.note ? h('p', null, b.note) : null,
       type ? h('div', null, h('p', { class: 'muted small' }, `${kindName(type.kind)} · ${num(type.minutes)} ${t('c.min')} · ${fmt(type.kcal)} kcal`), type.plan.length ? h('button', { class: 'btn small', onclick: () => workoutSheet(type) }, t('pl.viewWorkout')) : null) : null,
       routine ? h('div', { class: 'list' }, routine.items.map(it => { const ex = exFor(it); return h('div', { class: 'row pick' }, ex ? thumb(ex.image, 'thumb sm') : null, h('span', { class: 'row-name' }, ex ? h('button', { class: 'linkish', onclick: () => exerciseCard(ex) }, it.name) : it.name), it.target ? h('span', { class: 'row-target' }, it.target) : null); })) : null,
-      S.planEdit ? h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: () => blockForm(b) }, t('c.edit')),
-        h('button', { class: 'btn ghost danger', onclick: () => { const s = latest(); s.calendar = s.calendar.filter(x => x.id !== b.id); saveSettingsNow(s); closeSheet(); render(); } }, t('c.delete'))) : null);
+      h('div', { class: 'actions' }, h('button', { class: 'btn', onclick: () => blockForm(b) }, t('c.edit')),
+        h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(SC.blockTitle(b, st) || t('pl.' + b.kind), t('pl.deleteBlock'), () => { const s = latest(); s.calendar = s.calendar.filter(x => x.id !== b.id); saveAnd(s); }) }, t('c.delete'))));
     openSheet(SC.blockTitle(b, st) || t('pl.' + b.kind), body);
   }
   function blockForm(b) {
@@ -675,7 +726,7 @@
       ? h('div', { class: 'list' }, st.sessionTypes.map(x => pickRow(x.name, [kindName(x.kind), x.minutes ? `${num(x.minutes)} ${t('c.min')}` : null, planCount(x)].filter(Boolean).join(' · '), () => workoutForm(x))))
       : h('p', { class: 'empty' }, t('l.noWorkouts'))));
     const editBtn = fn => h('button', { class: 'btn small', onclick: fn }, t('c.edit'));
-    box.append(section(t('s.kinds'), editBtn(kindsSheet), st.sessionKinds.length ? h('div', { class: 'chips' }, st.sessionKinds.map(k => h('span', { class: 'chip small static' }, k.name))) : h('p', { class: 'empty' }, t('l.none'))));
+    box.append(section(t('s.kinds'), editBtn(kindsSheet), st.sessionKinds.length ? h('div', { class: 'chips' }, st.sessionKinds.map(k => h('span', { class: 'chip small static kchip', style: { '--kc': kindColor(k.id) } }, h('i'), k.name))) : h('p', { class: 'empty' }, t('l.none'))));
     const wave = SC.waveWeek(st.wave, today());
     box.append(section(t('pl.wave'), editBtn(waveSheet), h('p', { class: 'muted small' }, st.wave.pattern.length ? st.wave.pattern.map(p => t('pl.' + p)).join(' · ') + (wave ? ' · ' + waveLabel(wave) : '') : t('l.none'))));
     box.append(section(t('s.gates'), editBtn(gatesSheet), st.gates.length ? h('div', { class: 'chips' }, st.gates.map(g => h('span', { class: 'chip small static' }, `${g.name} · ${g.stages[g.current - 1] || g.current}`))) : h('p', { class: 'empty' }, t('l.none'))));
@@ -701,22 +752,33 @@
         } }, t('c.save')),
         type ? h('button', { class: 'btn ghost danger', onclick: () => confirmDelete(type.name, t('l.deleteWorkout', { name: type.name }), () => { const s = latest(); s.sessionTypes = s.sessionTypes.filter(x => x.id !== type.id); saveAnd(s); }) }, t('c.delete')) : null)), { wide: true });
   }
+  /* categories and their colors; a kind with no color picked takes the next free one */
   function kindsSheet() {
-    const kinds = clone(S.settings.sessionKinds);
-    openSheet(t('s.kinds'), h('div', null, listEditor(kinds, [{ key: 'name', label: t('s.kind') }], () => {}, t('s.addKind')),
-      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => { const s = latest(); s.sessionKinds = kinds.filter(k => String(k.name || '').trim()); saveAnd(s); } }, t('c.save')))));
+    const kinds = clone(S.settings.sessionKinds), box = h('div', { class: 'editor' });
+    const draw = () => {
+      const auto = SC.kindColors(kinds.map((k, i) => ({ ...k, id: k.id || 'new' + i })));
+      box.replaceChildren(...kinds.map((k, i) => h('div', { class: 'kind-row' },
+        h('div', { class: 'editor-row' }, h('input', { type: 'text', value: k.name || '', placeholder: t('s.kind'), 'aria-label': t('s.kind'), oninput: e => { k.name = e.target.value; } }),
+          h('button', { class: 'btn ghost icon', 'aria-label': t('c.remove'), onclick: () => { kinds.splice(i, 1); draw(); } }, '×')),
+        h('div', { class: 'swatches' }, SC.KIND_COLORS.map(c => h('button', { class: 'sw' + (k.color === c ? ' on' : !k.color && auto[k.id || 'new' + i] === c ? ' auto' : ''), type: 'button', style: { '--kc': `var(--kc-${c})` }, 'aria-label': t('col.' + c), 'aria-pressed': k.color === c ? 'true' : 'false', onclick: () => { k.color = k.color === c ? '' : c; draw(); } }))))),
+        h('div', null, h('button', { class: 'btn small', onclick: () => { kinds.push({ name: '', color: '' }); draw(); const ins = box.querySelectorAll('.kind-row input'); if (ins.length) ins[ins.length - 1].focus(); } }, t('s.addKind'))));
+    };
+    draw();
+    openSheet(t('s.kinds'), h('div', null, h('p', { class: 'muted small' }, t('s.kindsHelp')), box,
+      saveRow(() => { const s = latest(); s.sessionKinds = kinds.filter(k => String(k.name || '').trim()); saveAnd(s); })));
   }
+  /* the training cycle: weeks that repeat from a start date; tap a week to change it */
   function waveSheet() {
-    const w = { start: S.settings.wave.start || '', pattern: S.settings.wave.pattern.join(', ') };
+    const w = { start: S.settings.wave.start || today(), pattern: [...S.settings.wave.pattern] }, weeks = h('div', { class: 'chips' });
+    const draw = () => weeks.replaceChildren(...w.pattern.map((p, i) => h('button', { class: 'chip small wk ph-' + p, type: 'button', onclick: () => { w.pattern[i] = SC.WAVE[(SC.WAVE.indexOf(p) + 1) % SC.WAVE.length]; draw(); } }, h('b', null, i + 1), ' ' + t('pl.' + p))),
+      h('button', { class: 'chip small', type: 'button', onclick: () => { w.pattern.push(w.pattern[w.pattern.length - 1] || 'ramp'); draw(); } }, '+ ' + t('pl.addWeek')),
+      w.pattern.length ? h('button', { class: 'chip small', type: 'button', 'aria-label': t('pl.removeWeek'), onclick: () => { w.pattern.pop(); draw(); } }, '−') : null);
+    draw();
     openSheet(t('pl.wave'), h('div', null, h('p', { class: 'muted small' }, t('s.waveSub')),
-      h('div', { class: 'grid2' },
-        h('label', { class: 'field' }, h('span', null, t('s.waveStart')), h('input', { type: 'date', value: w.start, onchange: e => { w.start = e.target.value; } })),
-        h('label', { class: 'field' }, h('span', null, t('s.wavePattern')), h('input', { type: 'text', value: w.pattern, placeholder: 'ramp, ramp, full, deload', oninput: e => { w.pattern = e.target.value; } }))),
-      h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => {
-        const s = latest();
-        s.wave = { start: w.start || null, pattern: w.pattern.split(',').map(x => x.trim().toLowerCase()).filter(x => SC.WAVE.includes(x)) };
-        saveAnd(s);
-      } }, t('c.save')))));
+      h('label', { class: 'field' }, h('span', null, t('s.waveStart')), h('input', { type: 'date', value: w.start, onchange: e => { w.start = e.target.value; } })),
+      h('div', { class: 'field' }, h('span', null, t('s.wavePattern')), weeks),
+      saveRow(() => { const s = latest(); s.wave = { start: w.pattern.length ? (w.start || null) : null, pattern: w.pattern }; saveAnd(s); },
+        S.settings.wave.pattern.length ? h('button', { class: 'btn ghost danger', onclick: () => { const s = latest(); s.wave = { start: null, pattern: [] }; saveAnd(s); } }, t('pl.noCycle')) : null)));
   }
   function gatesSheet() {
     const draft = { gates: clone(S.settings.gates) };
@@ -868,7 +930,9 @@
         f ? h('button', { class: 'btn ghost danger', onclick: () => { store.deleteDoc('foods/' + f.id); S.foods = store.list('foods').sort(byName); closeSheet(); render(); toast(t('f.deleted', { name: f.name })); } }, t('c.delete')) : null)));
   }
 
-  /* ---------- Progress: this week, then the longer view ---------- */
+  /* ---------- Progress: a week, a month or a year ---------- */
+  /* Each view answers its own question. Week: did the days go to plan? Month: which way are things moving, and what
+     slips? Year: how far have I come? Cards the profile does not use (or hid with Customize) stay out of the way. */
   function rankSVG(r) {
     const n = Math.max(0, Math.min(r.maxSublevel || 0, r.sublevel || 0));
     const color = SC.BELT_COLORS[String(r.level || '').toLowerCase()];
@@ -881,109 +945,330 @@
     return `<svg class="belt" viewBox="0 0 600 60" role="img" aria-label="${r.level} ${n}/${max}" xmlns="http://www.w3.org/2000/svg">${[...Array(max)].map((_, i) => `<rect x="${(i * (w + gap)).toFixed(1)}" y="14" width="${w.toFixed(1)}" height="32" rx="6" fill="${i < n ? 'var(--accent)' : 'var(--track)'}"/>`).join('')}</svg>`;
   }
   function phaseFor(sub, phases) { let cur = null; for (const p of phases) if (sub >= p.minSublevel) cur = p; return cur; }
-  function weekReview() {
-    const st = S.settings, start = weekStart(S.weekDate), days = [...Array(7)].map((_, i) => addDays(start, i)), box = h('div');
-    box.append(h('div', { class: 'dayhead' },
-      h('button', { class: 'btn ghost icon', 'aria-label': t('w.prev'), onclick: () => { S.weekDate = addDays(S.weekDate, -7); render(); } }, '\u2039'),
-      h('div', { class: 'daytitle' }, h('h1', null, start === weekStart(today()) ? t('w.thisWeek') : t('w.weekOf', { d: fmtShort(start) })), h('div', { class: 'sub' }, `${fmtShort(start)} – ${fmtShort(days[6])}`)),
-      h('button', { class: 'btn ghost icon', 'aria-label': t('w.next'), onclick: () => { S.weekDate = addDays(S.weekDate, 7); render(); } }, '\u203a')));
-    const byDate = {}; store.query('days', [['date', '>=', start], ['date', '<=', days[6]]], ['date', 'asc'], 14).forEach(x => byDate[x.date || x.id] = SC.normalizeDay(x, x.date || x.id));
-    let kcalSum = 0, pSum = 0, nDays = 0, sessions = 0, minutes = 0, habDone = 0, habTot = 0;
-    const items = days.map(d => { const day = byDate[d]; const v = day ? totals(day).kcal : 0; return { label: dayName(dow(d), 'narrow'), value: v, hit: !st.targets.kcal || v >= st.targets.kcal * 0.9, color: d === today() ? 'var(--accent)' : 'var(--accent2)' }; });
-    if (items.some(i => i.value > 0)) box.append(section(t('w.calories'), null, svg(bars(items, { target: st.targets.kcal, height: 140, label: t('w.calories') }))));
-    box.append(h('div', { class: 'week' }, days.map(d => {
-      const day = byDate[d]; let body;
-      if (!day) body = h('div', { class: 'wday-body' }, h('span', { class: 'muted' }, d > today() ? t('w.upcoming') : t('w.nothing')));
-      else {
-        const x = totals(day), done = day.sessions.filter(s => s.done !== false), hd = habitsDone(day);
-        if (day.meals.length) { kcalSum += x.kcal; pSum += x.p; nDays++; }
-        sessions += done.length; minutes += done.reduce((a, s) => a + num(s.minutes), 0);
-        if (d <= today()) { habDone += hd; habTot += st.habits.length; }
-        const kcalHit = st.targets.kcal > 0 && x.kcal >= st.targets.kcal * 0.95, pHit = st.targets.protein > 0 && x.p >= st.targets.protein * 0.95;
-        body = h('div', { class: 'wday-body' },
-          h('span', null, day.meals.length ? [h('b', { class: kcalHit ? 'hit' : '' }, fmt(x.kcal)), ' kcal · ', h('b', { class: pHit ? 'hit' : '' }, fmt(x.p)), ' g'] : t('w.noMeals')),
-          h('span', null, done.length ? done.map(s => s.name).join(', ') : t('w.noTraining')),
-          st.habits.length ? h('span', null, t('w.habits', { a: hd, b: st.habits.length })) : null,
-          day.weight != null ? h('span', null, `${fmt1(day.weight)} ${unit()}`) : null);
-      }
-      return h('button', { class: 'wday' + (d === today() ? ' today' : '') + (d > today() ? ' future' : ''), onclick: () => { S.date = d; loadDay(d); location.hash = '#today'; } },
-        h('div', { class: 'wday-date' }, dayName(dow(d)), h('span', null, fmtDay(d))), body);
-    })), h('div', { class: 'stats' },
-      statCard(nDays ? fmt(kcalSum / nDays) : '–', t('w.avgKcal'), `${nDays} ${t('w.loggedDays')}`),
-      statCard(nDays ? fmt(pSum / nDays) : '–', t('w.avgProtein')),
-      statCard(String(sessions), t('w.sessions'), t('w.hours', { h: fmt1(minutes / 60) })),
-      statCard(habTot ? Math.round(habDone / habTot * 100) + '%' : '–', t('w.adherence'))));
-    return box;
+
+  const PTABS = ['week', 'month', 'year'], PTAB_KEY = 'tally:progress';
+  const PCARDS = SC.PROGRESS_CARDS;
+  const shown = key => !S.settings.progress.hide.includes(key);
+  const pad2 = n => String(n).padStart(2, '0');
+  const firstOfMonth = (d, n) => { const [y, m] = d.split('-').map(Number), x = new Date(y, m - 1 + (n || 0), 1); return `${x.getFullYear()}-${pad2(x.getMonth() + 1)}-01`; };
+  const monthLabel = (d, style) => U.parseD(d).toLocaleDateString(I.locale(), style ? { month: style } : { month: 'long', year: 'numeric' });
+  function periodOf(tab, anchor) {
+    if (tab === 'week') { const a = weekStart(anchor); return { start: a, end: addDays(a, 6) }; }
+    if (tab === 'month') { const a = firstOfMonth(anchor); return { start: a, end: addDays(firstOfMonth(a, 1), -1) }; }
+    return { start: anchor.slice(0, 4) + '-01-01', end: anchor.slice(0, 4) + '-12-31' };
   }
+  const shiftPeriod = (tab, anchor, n) => tab === 'week' ? addDays(anchor, 7 * n) : tab === 'month' ? firstOfMonth(anchor, n) : (+anchor.slice(0, 4) + n) + '-01-01';
+  const datesIn = (a, b) => { const out = []; for (let d = a; d <= b; d = addDays(d, 1)) out.push(d); return out; };
+  const sum = (arr, f) => arr.reduce((acc, x) => acc + f(x), 0);
+  const ratioStatus = r => r == null ? 'none' : r >= 0.8 ? 'met' : r >= 0.5 ? 'close' : 'miss';
+  const hasLog = d => !!(d && (d.meals.length || d.sessions.length || Object.keys(d.habits).length || d.weight != null || Object.keys(d.measures).length || Object.values(d.checks).some(c => Object.keys(c).length)));
+  const dayStatus = (key, d) => { if (!d || !d.meals.length) return null; const st = S.settings, x = totals(d); return SC.targetStatus(key === 'kcal' ? x.kcal : x.p, st.targets[key], st.targets.aim[key], d.date < today()); };
+  const appliesOn = (r, date) => !r.days.length || r.days.includes(dow(date));
+  const trackedRoutines = () => S.settings.routines.filter(r => !r.alertAt && r.items.length);
+
+  /* everything the cards need for one stretch of days (a..b, never past today) */
+  function statsFor(byDate, a, b, since) {
+    const st = S.settings, dates = b < a ? [] : datesIn(a, b), days = dates.map(d => byDate[d]).filter(Boolean), fed = days.filter(d => d.meals.length), logged = days.filter(hasLog);
+    const done = days.flatMap(d => d.sessions.filter(s => s.done !== false).map(s => ({ ...s, date: d.date })));
+    let planned = 0, plannedDone = 0; const missed = [];
+    for (const date of dates.filter(d => d >= since)) for (const p of SC.plannedFor(st, dow(date))) {
+      planned++;
+      const day = byDate[date];
+      if (day && day.sessions.some(s => s.typeId === p.type.id && s.done !== false)) plannedDone++; else if (date < today()) missed.push({ date, type: p.type });
+    }
+    return { dates, days, fed, logged, done, planned, plannedDone, missed,
+      kcal: fed.length ? sum(fed, d => totals(d).kcal) / fed.length : null, p: fed.length ? sum(fed, d => totals(d).p) / fed.length : null,
+      kcalMet: fed.filter(d => dayStatus('kcal', d) === 'met').length, pMet: fed.filter(d => dayStatus('protein', d) === 'met').length,
+      minutes: sum(done, s => num(s.minutes)),
+      habPct: st.habits.length && logged.length ? sum(logged, d => habitsDone(d)) / (logged.length * st.habits.length) : null,
+      weights: days.filter(d => d.weight != null).map(d => ({ date: d.date, v: num(d.weight) })) };
+  }
+
   function viewProgress() {
-    const st = S.settings, wrap = h('div', { class: 'page' }), u = unit();
-    wrap.append(weekReview());
+    const st = S.settings, wrap = h('div', { class: 'page progress' }), u = unit();
     const goalText = st.goal.weight ? t('p.toward', { w: st.goal.weight, u }) + (st.goal.bodyFat ? ' ' + t('p.atBf', { bf: st.goal.bodyFat }) : '') : t('p.noGoal');
-    wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('p.title')), h('div', { class: 'sub' }, goalText + (st.goal.note ? ' · ' + st.goal.note : ''))),
+    wrap.append(h('div', { class: 'dayhead phead' }, h('div', { class: 'daytitle' }, h('h1', null, t('p.title')),
+      h('div', { class: 'sub goal-line', title: st.goal.note || null }, goalText + (st.goal.note ? ' · ' + st.goal.note : ''))),
       editBtn(goalSheet, st.goal.weight ? t('p.editGoal') : t('p.setGoalBtn'))));
-    const r = st.rank;
-    if (r.enabled) {
-      const phase = phaseFor(r.sublevel, r.phases), next = r.phases.find(p => p.minSublevel > r.sublevel);
-      const sub = r.maxSublevel > 0 ? ` · ${r.sublevel} ${r.sublevelName}` : '';
-      wrap.append(section(r.system || t('p.rank'), h('div', { class: 'head-r' }, h('button', { class: 'btn small', onclick: promote }, t('s.promoted')), editBtn(rankSheet)), h('div', null, svg(rankSVG(r)),
-        h('p', null, `${r.level || t('p.unranked')}${sub}` + (phase ? ` · ${phase.name}` : '') + (next ? ` · ${t('p.phaseAt', { phase: next.name, n: next.minSublevel, sub: r.sublevelName })}` : '')),
-        r.history.length ? h('p', { class: 'muted small' }, t('p.history') + ': ' + r.history.slice().sort((a, b) => a.date < b.date ? -1 : 1).map(x => `${x.level}${x.sublevel != null ? ' ' + x.sublevel : ''} · ${fmtShort(x.date)}`).join(', ')) : null)));
-    }
-    const all = allDays().filter(d => d.date >= addDays(today(), -90) && d.date <= today());
-    const from30 = addDays(today(), -29), last30 = all.filter(d => d.date >= from30), fed = last30.filter(d => d.meals.length);
-    const kcal = fed.reduce((a, d) => a + totals(d).kcal, 0), p = fed.reduce((a, d) => a + totals(d).p, 0);
-    const done = last30.flatMap(d => d.sessions.filter(s => s.done !== false));
-    const habTot = st.habits.length, logged = last30.filter(d => Object.keys(d.habits).length || d.meals.length || d.sessions.length);
-    const adh = habTot && logged.length ? Math.round(logged.reduce((a, d) => a + habitsDone(d), 0) / (logged.length * habTot) * 100) : null;
-    const byDate = {}; all.forEach(d => byDate[d.date] = d);
-    const complete = d => byDate[d] && habTot && habitsDone(byDate[d]) === habTot;
-    let streak = 0, cur = complete(today()) ? today() : addDays(today(), -1);
-    while (complete(cur)) { streak++; cur = addDays(cur, -1); }
-    const kindCards = st.sessionKinds.map(k => { const ss = done.filter(s => s.kind === k.id); if (!ss.length) return null; return statCard(String(ss.length), t('p.kindSessions', { kind: k.name }), t('w.hours', { h: fmt1(ss.reduce((a, s) => a + num(s.minutes), 0) / 60) })); }).filter(Boolean);
-    const other = done.filter(s => !st.sessionKinds.some(k => k.id === s.kind));
-    wrap.append(section(t('p.last30'), null, h('div', { class: 'stats' },
-      statCard(fed.length ? fmt(kcal / fed.length) : '–', t('p.avgCalories'), t('p.loggedDays', { n: fed.length })),
-      statCard(fed.length ? fmt(p / fed.length) : '–', t('w.avgProtein')),
-      kindCards, other.length ? statCard(String(other.length), t('p.otherSessions')) : null,
-      statCard(adh == null ? '–' : adh + '%', t('p.adherence')),
-      statCard(String(streak), t('p.streak'), t('p.streakSub')))));
-    if (fed.length) {
-      const items = [...Array(30)].map((_, i) => { const d = addDays(from30, i); const day = byDate[d]; const v = day ? totals(day).kcal : 0; return { label: i % 7 === 0 ? fmtDay(d) : '', value: v, hit: !st.targets.kcal || v >= st.targets.kcal * 0.9, color: 'var(--accent2)' }; });
-      wrap.append(section(t('p.calories'), null, svg(bars(items, { target: st.targets.kcal, height: 150, label: t('p.calories') }))));
-    }
-    const pts = all.filter(d => d.weight != null).map(d => ({ date: d.date, v: num(d.weight) }));
-    const box = h('div');
-    if (!pts.length) box.append(h('p', { class: 'empty' }, t('p.logWeight')));
-    else {
-      const latest = pts[pts.length - 1], first = pts[0], delta = Math.round((latest.v - first.v) * 10) / 10, g = num(st.goal.weight);
-      const last7 = pts.slice(-7), avg7 = last7.reduce((a, q) => a + q.v, 0) / last7.length, band = st.goal.band;
-      box.append(svg(trend(pts, { goal: g || null, goalLabel: g ? `${g} ${u}` : '', label: t('p.bodyweight') })),
-        h('p', { class: 'muted small' }, [t('p.latest', { w: fmt1(latest.v), u }), pts.length > 1 ? t('p.change', { d: (delta >= 0 ? '+' : '') + fmt1(delta), u, date: fmtShort(first.date) }) : null, g ? t('p.toGoal', { d: fmt1(Math.round((g - latest.v) * 10) / 10), u }) : null].filter(Boolean).join(' · ') + ` · ${t('p.avg7')}`));
-      if (band) { const state = avg7 < band[0] ? 'below' : avg7 > band[1] ? 'above' : 'inside'; box.append(h('div', { class: 'notice soft ' + (state === 'inside' ? '' : 'warn') }, h('span', null, t('p.band' + state.charAt(0).toUpperCase() + state.slice(1), { avg: fmt1(avg7), u, lo: band[0], hi: band[1] })))); }
-    }
-    wrap.append(section(t('p.bodyweight'), t('p.last90'), box));
-    const measured = allDays().filter(d => Object.keys(d.measures).length);
-    {
-      const mbox = h('div');
-      if (!measured.length && !st.goal.milestones.length) mbox.append(h('p', { class: 'empty' }, t('p.noBodyComp')));
-      if (measured.length) {
-        const latest = measured[measured.length - 1], first = measured[0];
-        mbox.append(h('div', { class: 'stats' }, SC.MEASURES.filter(k => latest.measures[k] != null).map(k => { const f = measured.find(d => d.measures[k] != null); const dlt = f && f !== latest ? latest.measures[k] - f.measures[k] : null; return statCard(fmt1(latest.measures[k]), t('m.' + k), dlt == null ? fmtShort(latest.date) : `${dlt >= 0 ? '+' : ''}${fmt1(dlt)} · ${fmtShort(f.date)}`); })));
-        const waist = measured.filter(d => d.measures.waist != null).map(d => ({ date: d.date, v: d.measures.waist }));
-        if (waist.length > 1) mbox.append(h('div', { class: 'subhead' }, t('m.waist')), svg(trend(waist, { label: t('m.waist') })));
-      }
-      if (st.goal.milestones.length) mbox.append(h('div', { class: 'subhead' }, t('p.milestones')), h('table', { class: 'plain' }, h('tbody', null, st.goal.milestones.map(m => h('tr', null, h('td', null, m.label), h('td', { class: 'n' }, m.bodyFat != null ? `${m.bodyFat}%` : ''), h('td', { class: 'n muted' }, m.weight != null ? `${m.weight} ${u}` : ''), h('td', { class: 'n muted' }, m.lean != null ? `${m.lean} / ${m.fat != null ? m.fat : '–'}` : ''))))));
-      wrap.append(section(t('p.bodyComp'), editBtn(milestonesSheet, t('p.editMilestones')), mbox));
-    }
-    const weeks = [...Array(8)].map((_, i) => weekStart(addDays(today(), -7 * (7 - i))));
-    const tw = weeks.map(ws => { const we = addDays(ws, 6); const mins = all.filter(d => d.date >= ws && d.date <= we).flatMap(d => d.sessions.filter(s => s.done !== false)).reduce((a, s) => a + num(s.minutes), 0); return { label: fmtShort(ws), value: mins, color: 'var(--blue)' }; });
-    wrap.append(section(t('p.training'), null, tw.some(x => x.value) ? svg(bars(tw, { height: 140, label: t('p.training') })) : h('p', { class: 'empty' }, t('p.noTraining'))));
-    if (habTot) {
-      const map = {}; all.forEach(d => { if (Object.keys(d.habits).length || d.meals.length || d.sessions.length) map[d.date] = habitsDone(d) / habTot; });
-      wrap.append(section(t('p.habitsHeat'), null, svg(heat(map, 12, today()))));
-    }
-    if (!r.enabled) wrap.append(h('div', { class: 'actions center' }, h('button', { class: 'btn ghost small', onclick: () => rankSheet(true) }, t('p.trackRank'))));
+    const tab = S.pTab, per = periodOf(tab, S.pDate), through = per.end < today() ? per.end : today(), isNow = per.start <= today() && today() <= per.end;
+    const label = tab === 'week' ? (isNow ? t('w.thisWeek') : t('w.weekOf', { d: fmtShort(per.start) })) : tab === 'month' ? (isNow ? t('p.thisMonth') : monthLabel(per.start)) : (isNow ? t('p.thisYear') : per.start.slice(0, 4));
+    const range = tab === 'week' ? `${fmtShort(per.start)} – ${fmtShort(per.end)}` : tab === 'month' ? (isNow ? monthLabel(per.start) : '') : (isNow ? per.start.slice(0, 4) : '');
+    const go = n => { S.pDate = shiftPeriod(tab, per.start, n); render(); };
+    wrap.append(h('div', { class: 'pbar' },
+      segmented(PTABS.map(v => ({ value: v, label: t('p.tab.' + v) })), tab, v => { S.pTab = v; S.pDate = today(); try { localStorage.setItem(PTAB_KEY, v); } catch (e) {} render(); }),
+      h('div', { class: 'pnav' },
+        h('button', { class: 'btn ghost icon', 'aria-label': t('p.prev'), onclick: () => go(-1) }, '‹'),
+        h('div', { class: 'pnav-label' }, h('b', null, label), range ? h('small', null, range) : null),
+        h('button', { class: 'btn ghost icon', 'aria-label': t('p.next'), disabled: per.end >= today() ? true : null, onclick: () => go(1) }, '›'))));
+    const byDate = {}; allDays().forEach(d => { if (hasLog(d)) byDate[d.date] = d; });
+    const since = Object.keys(byDate).sort()[0] || today();
+    const prevPer = periodOf(tab, shiftPeriod(tab, per.start, -1)), span = U.diffDays(per.start, through);
+    const cur = statsFor(byDate, per.start, through, since), prev = statsFor(byDate, prevPer.start, [addDays(prevPer.start, span), prevPer.end].sort()[0], since);
+    const ctx = { tab, per, through, byDate, cur, prev, since };
+    if (per.start > today()) wrap.append(h('p', { class: 'empty pad' }, t('p.future')));
+    else ({ week: weekView, month: monthView, year: yearView })[tab](wrap, ctx);
+    wrap.append(h('div', { class: 'actions center' }, h('button', { class: 'btn ghost small', onclick: customizeSheet }, t('p.customize'))));
     return wrap;
+  }
+
+  /* shared pieces */
+  function stat(big, lab, subs, status) {
+    return h('div', { class: 'stat' + (status && status !== 'none' ? ' st-' + status : '') }, h('div', { class: 'big' }, big), h('div', { class: 'lab' }, lab), (subs || []).filter(Boolean).map(s => h('div', { class: 'sub' }, s)));
+  }
+  const signed = (n, f) => (n > 0 ? '+' : n < 0 ? '−' : '±') + (f || fmt)(Math.abs(n));
+  function summaryRow(ctx) {
+    const { cur, prev, tab } = ctx, vs = (a, b, f) => a != null && b != null ? t('p.vs.' + tab, { d: signed(a - b, f) }) : null;
+    const on = (n, of) => of ? t('p.onTarget', { n, of }) : t('p.noMeals');
+    return h('div', { class: 'stats' },
+      stat(cur.kcal == null ? '–' : fmt(cur.kcal), t('w.avgKcal'), [on(cur.kcalMet, cur.fed.length), vs(cur.kcal, prev.kcal)], cur.fed.length ? ratioStatus(cur.kcalMet / cur.fed.length) : null),
+      stat(cur.p == null ? '–' : fmt(cur.p) + ' g', t('w.avgProtein'), [on(cur.pMet, cur.fed.length), vs(cur.p, prev.p)], cur.fed.length ? ratioStatus(cur.pMet / cur.fed.length) : null),
+      stat(cur.planned ? `${cur.plannedDone}/${cur.planned}` : String(cur.done.length), cur.planned ? t('p.plannedDone') : t('w.sessions'), [t('p.hoursTrained', { h: fmt1(cur.minutes / 60) }), cur.planned && cur.done.length > cur.plannedDone ? t('p.extra', { n: cur.done.length - cur.plannedDone }) : null], cur.planned ? ratioStatus(cur.plannedDone / cur.planned) : null),
+      stat(cur.habPct == null ? '–' : Math.round(cur.habPct * 100) + '%', t('w.adherence'), [vs(cur.habPct == null ? null : cur.habPct * 100, prev.habPct == null ? null : prev.habPct * 100, n => Math.round(n) + '%')], ratioStatus(cur.habPct)));
+  }
+  const legend = () => h('div', { class: 'legend' }, [['met', 'p.lg.met'], ['close', 'p.lg.close'], ['miss', 'p.lg.miss']].map(([s, k]) => h('span', { class: 'st-' + s }, h('i'), t(k))));
+  /* daily calories and protein, each bar colored by that day's status */
+  function nutritionCard(dates, byDate, labelOf) {
+    const st = S.settings;
+    const item = (key, d) => { const day = byDate[d], x = day && day.meals.length ? totals(day) : null, s = dayStatus(key, day); return { label: labelOf(d), value: x ? (key === 'kcal' ? x.kcal : x.p) : 0, color: STATUS_COLOR[s] || 'var(--accent2)' }; };
+    return card('nutrition', t('p.nutrition'), null, h('div', null,
+      h('div', { class: 'subhead' }, t('c.kcal')), svg(bars(dates.map(d => item('kcal', d)), { target: st.targets.kcal, height: 120, label: t('c.kcal') })),
+      h('div', { class: 'subhead' }, t('c.protein')), svg(bars(dates.map(d => item('protein', d)), { target: st.targets.protein, height: 100, label: t('c.protein') })),
+      legend()));
+  }
+  /* training time by category, one bar per day, week or month */
+  const kindOf = s => S.settings.sessionKinds.some(k => k.id === s.kind) ? s.kind : '';
+  function kindParts(sessions) {
+    const kinds = [...S.settings.sessionKinds.map(k => k.id), ''];
+    return kinds.map(id => ({ value: sum(sessions.filter(s => kindOf(s) === id), s => num(s.minutes)), color: id ? kindColor(id) : 'var(--track2)' }));
+  }
+  function kindLegend(sessions) {
+    const kinds = [...S.settings.sessionKinds, { id: '', name: t('c.other') }];
+    return h('div', { class: 'kinds' }, kinds.map(k => { const ss = sessions.filter(s => kindOf(s) === k.id); return ss.length ? h('span', { class: 'kchip', style: { '--kc': k.id ? kindColor(k.id) : 'var(--track2)' } }, h('i'), h('b', null, k.name), ` ${ss.length} · ${fmt1(sum(ss, s => num(s.minutes)) / 60)} h`) : null; }));
+  }
+  function trainingStats(groups, cur, extra) {
+    const body = h('div', null,
+      cur.planned ? h('p', { class: 'muted small' }, t('p.planLine', { n: cur.plannedDone, of: cur.planned, h: fmt1(cur.minutes / 60) })) : null,
+      cur.done.length || cur.planned ? svg(stacked(groups.map(g => ({ label: g.label, parts: kindParts(g.sessions) })), { height: 130, label: t('p.training') })) : h('p', { class: 'empty' }, t('p.noTraining')),
+      kindLegend(cur.done), extra || null);
+    return card('training', t('p.trainingTitle'), null, body);
+  }
+  /* how often each habit and routine got done, as bars */
+  function rateRows(rows) {
+    return h('div', { class: 'rates' }, rows.map(([name, r, sub]) => h('div', { class: 'rate st-' + ratioStatus(r) },
+      h('span', { class: 'rate-name' }, name, sub ? h('small', null, ' ' + sub) : null), h('span', { class: 'rate-bar' }, h('i', { style: { width: r == null ? '0' : Math.round(r * 100) + '%' } })), h('b', null, r == null ? '–' : Math.round(r * 100) + '%'))));
+  }
+  function rates(days) {
+    const logged = days.filter(hasLog);
+    const hab = S.settings.habits.map(hb => [hb.name, logged.length ? logged.filter(d => SC.habitDone(hb, d.habits[hb.id])).length / logged.length : null]);
+    const rou = trackedRoutines().map(r => { const on = logged.filter(d => appliesOn(r, d.date)); return [r.name, on.length ? on.filter(d => routineDone(r, d)).length / on.length : null]; });
+    return { hab, rou };
+  }
+  function bestStreak(dates, byDate) {
+    const n = S.settings.habits.length; if (!n) return 0;
+    let best = 0, run = 0;
+    for (const d of dates) { const day = byDate[d]; if (day && habitsDone(day) === n) { run++; best = Math.max(best, run); } else if (d !== today()) run = 0; }
+    return best;
+  }
+  /* least-squares slope of weight per day */
+  function slope(points) {
+    if (points.length < 3) return null;
+    const x0 = U.parseD(points[0].date), xs = points.map(p => (U.parseD(p.date) - x0) / 86400000), n = points.length, mx = sum(xs, x => x) / n, my = sum(points, p => p.v) / n;
+    const den = sum(xs, x => (x - mx) ** 2); if (!den) return null;
+    return sum(points.map((p, i) => [xs[i], p.v]), ([x, v]) => (x - mx) * (v - my)) / den;
+  }
+  function weightCard(points, prevPoints, ctx, chartPoints) {
+    const st = S.settings, u = unit(), g = num(st.goal.weight) || null, band = st.goal.band, box = h('div');
+    if (!points.length) { box.append(h('p', { class: 'empty' }, t('p.logWeight'))); return card('weight', t('p.bodyweight'), null, box); }
+    const avg = pts => pts.length ? sum(pts, p => p.v) / pts.length : null, last7 = points.slice(-7), a7 = avg(last7), first = points[0], latest = points[points.length - 1];
+    const cp = chartPoints || points;
+    if (cp.length > 1) box.append(svg(trend(cp, { goal: g, goalLabel: g ? `${g} ${u}` : '', band, label: t('p.bodyweight') })));
+    const facts = [t('p.latest', { w: fmt1(latest.v), u })];
+    if (points.length > 1) facts.push(t('p.change', { d: signed(Math.round((latest.v - first.v) * 10) / 10, fmt1), u, date: fmtShort(first.date) }));
+    const pa = avg(prevPoints); if (pa != null && ctx.tab !== 'year') facts.push(t('p.avgVs.' + ctx.tab, { d: signed(Math.round((avg(points) - pa) * 10) / 10, fmt1), u }));
+    if (g) facts.push(t('p.toGoal', { d: fmt1(Math.abs(Math.round((g - a7) * 10) / 10)), u }));
+    box.append(h('p', { class: 'muted small' }, facts.join(' · ')));
+    const k = ctx.tab === 'week' ? null : slope(points);
+    if (k != null) {
+      const perWeek = Math.round(k * 7 * 10) / 10;
+      let line = perWeek === 0 ? t('p.steady') : t('p.rate', { d: signed(perWeek, fmt1), u });
+      const inBand = band && a7 >= band[0] && a7 <= band[1];
+      if (g && !inBand && perWeek !== 0 && Math.abs(g - a7) >= 0.5) line += ' · ' + (Math.sign(g - a7) === Math.sign(perWeek) ? t('p.eta', { date: fmtShort(addDays(today(), Math.round((g - a7) / k))) }) : t('p.away'));
+      box.append(h('p', { class: 'small' }, line));
+    }
+    if (band && a7 != null) { const state = a7 < band[0] ? 'below' : a7 > band[1] ? 'above' : 'inside'; box.append(h('div', { class: 'notice soft ' + (state === 'inside' ? 'good' : 'warn') }, h('span', null, t('p.band' + state.charAt(0).toUpperCase() + state.slice(1), { avg: fmt1(a7), u, lo: band[0], hi: band[1] })))); }
+    return card('weight', t('p.bodyweight'), null, box);
+  }
+  function bodyCompCard(days) {
+    const st = S.settings, measured = days.filter(d => Object.keys(d.measures).length);
+    if (!measured.length && !st.goal.milestones.length) return null;
+    const box = h('div');
+    if (measured.length) {
+      const latest = measured[measured.length - 1];
+      box.append(h('div', { class: 'stats' }, SC.MEASURES.filter(k => latest.measures[k] != null).map(k => { const f = measured.find(d => d.measures[k] != null), dlt = f && f !== latest ? latest.measures[k] - f.measures[k] : null; return statCard(fmt1(latest.measures[k]) + (k === 'bodyFat' ? '%' : ''), t('m.' + k), dlt == null ? fmtShort(latest.date) : `${signed(Math.round(dlt * 10) / 10, fmt1)} · ${fmtShort(f.date)}`); })));
+      const waist = measured.filter(d => d.measures.waist != null).map(d => ({ date: d.date, v: d.measures.waist }));
+      if (waist.length > 1) box.append(h('div', { class: 'subhead' }, t('m.waist')), svg(trend(waist, { label: t('m.waist') })));
+    }
+    if (st.goal.milestones.length) {
+      const bf = [...allDays()].reverse().find(d => d.measures.bodyFat != null), cur = bf ? bf.measures.bodyFat : null, u = unit();
+      box.append(h('div', { class: 'subhead' }, t('p.milestones')), h('table', { class: 'plain' }, h('tbody', null, st.goal.milestones.map(m => {
+        const hit = cur != null && m.bodyFat != null && cur <= m.bodyFat;
+        return h('tr', { class: hit ? 'hit' : '' }, h('td', null, hit ? '✓ ' : '', m.label), h('td', { class: 'n' }, m.bodyFat != null ? `${m.bodyFat}%` : ''), h('td', { class: 'n muted' }, m.weight != null ? `${m.weight} ${u}` : ''), h('td', { class: 'n muted' }, m.lean != null ? `${m.lean} / ${m.fat != null ? m.fat : '–'}` : ''));
+      }))));
+    }
+    return card('body', t('p.bodyComp'), editBtn(milestonesSheet, t('p.editMilestones')), box);
+  }
+  function rankCard() {
+    const r = S.settings.rank;
+    if (!r.enabled) return null;
+    const phase = phaseFor(r.sublevel, r.phases), next = r.phases.find(p => p.minSublevel > r.sublevel);
+    const sub = r.maxSublevel > 0 ? ` · ${r.sublevel} ${r.sublevelName}` : '';
+    return card('rank', r.system || t('p.rank'), h('div', { class: 'head-r' }, h('button', { class: 'btn small', onclick: promote }, t('s.promoted')), editBtn(rankSheet)), h('div', null, svg(rankSVG(r)),
+      h('p', null, `${r.level || t('p.unranked')}${sub}` + (phase ? ` · ${phase.name}` : '') + (next ? ` · ${t('p.phaseAt', { phase: next.name, n: next.minSublevel, sub: r.sublevelName })}` : '')),
+      r.history.length ? h('p', { class: 'muted small' }, t('p.history') + ': ' + r.history.slice().sort((a, b) => a.date < b.date ? -1 : 1).map(x => `${x.level}${x.sublevel != null ? ' ' + x.sublevel : ''} · ${fmtShort(x.date)}`).join(', ')) : null));
+  }
+
+  /* Week: each day against the plan, what got skipped, and every habit and routine day by day */
+  function weekView(wrap, ctx) {
+    const { per, byDate, cur, prev } = ctx, st = S.settings, dates = datesIn(per.start, per.end);
+    wrap.append(card('glance', t('p.days'), null, weekTable(dates, byDate)));
+    wrap.append(summaryRow(ctx));
+    if (shown('nutrition') && cur.fed.length) wrap.append(nutritionCard(dates, byDate, d => dayName(dow(d), 'narrow')));
+    if (shown('training')) {
+      const missed = cur.missed.length ? h('p', { class: 'small st-miss missline' }, t('p.missed', { list: cur.missed.slice(0, 6).map(m => `${m.type.name} (${dayName(dow(m.date))})`).join(', ') })) : null;
+      wrap.append(trainingStats(dates.map(d => ({ label: dayName(dow(d), 'narrow'), sessions: byDate[d] ? byDate[d].sessions.filter(s => s.done !== false) : [] })), cur, missed));
+    }
+    if (shown('habits') && (st.habits.length || trackedRoutines().length)) wrap.append(card('consistency', t('p.consistency'), null, weekMatrix(dates, byDate)));
+    if (shown('weight')) wrap.append(weightCard(cur.weights, prev.weights, ctx));
+  }
+  /* one row per day: calories and protein colored by status, training by category, habits done */
+  function weekTable(dates, byDate) {
+    const st = S.settings, head = h('div', { class: 'wt-row wt-head' }, h('span'), h('span', null, t('c.kcal')), h('span', null, t('c.protein')), h('span', null, t('t.training')), h('span', null, t('t.habits')));
+    return h('div', { class: 'wtable' }, head, dates.map(d => {
+      const day = byDate[d], x = day && day.meals.length ? totals(day) : null, fut = d > today();
+      const sess = day ? day.sessions.filter(s => s.done !== false) : [], plan = SC.plannedFor(st, dow(d));
+      const cell = (v, s) => h('span', { class: 'st-' + (s || 'none') }, v);
+      return h('button', { class: 'wt-row' + (d === today() ? ' today' : '') + (fut ? ' future' : ''), onclick: () => { S.date = d; loadDay(d); location.hash = '#today'; } },
+        h('span', { class: 'wt-day' }, h('b', null, dayName(dow(d))), h('small', null, fmtDay(d))),
+        x ? cell(fmt(x.kcal), dayStatus('kcal', day)) : cell('–'), x ? cell(fmt(x.p) + ' g', dayStatus('protein', day)) : cell('–'),
+        h('span', { class: 'wt-train' }, sess.map(s => h('i', { style: { '--kc': kindOf(s) ? kindColor(s.kind) : 'var(--track2)' }, title: s.name })), !sess.length && plan.length ? h('small', { class: fut || d === today() ? 'muted' : 'st-miss' }, fut || d === today() ? t('p.plannedN', { n: plan.length }) : t('t.missed')) : null),
+        st.habits.length && day && hasLog(day) ? cell(`${habitsDone(day)}/${st.habits.length}`, habitsDone(day) === st.habits.length ? 'met' : null) : cell(''));
+    }));
+  }
+  function weekMatrix(dates, byDate) {
+    const rows = [...S.settings.habits.map(hb => ({ name: hb.name, on: () => true, done: d => SC.habitDone(hb, d.habits[hb.id]) })),
+      ...trackedRoutines().map(r => ({ name: r.name, on: date => appliesOn(r, date), done: d => routineDone(r, d) }))];
+    return h('div', { class: 'matrix' }, h('div', { class: 'mx-row mx-head' }, h('span'), dates.map(d => h('span', { class: d === today() ? 'cur' : '' }, dayName(dow(d), 'narrow'))), h('span')),
+      rows.map(r => {
+        let n = 0, of = 0;
+        const cells = dates.map(d => {
+          const day = byDate[d];
+          if (!r.on(d)) return h('span', { class: 'mx na' });
+          if (d > today()) return h('span', { class: 'mx fut' });
+          const ok = day && r.done(day); if (day && hasLog(day)) of++; if (ok) n++;
+          return h('span', { class: 'mx' + (ok ? ' on' : day && hasLog(day) && d < today() ? ' off' : '') });
+        });
+        return h('div', { class: 'mx-row' }, h('span', { class: 'mx-name' }, r.name), cells, h('b', { class: 'st-' + (of ? ratioStatus(n / of) : 'none') }, of ? `${n}/${of}` : ''));
+      }));
+  }
+
+  /* Month: the month at a glance, daily nutrition, weight trend and pace, training by week, which habits slip */
+  function monthView(wrap, ctx) {
+    const { per, byDate, cur, prev, through } = ctx, dates = datesIn(per.start, per.end);
+    wrap.append(card('glance', t('p.glance'), null, h('div', null, monthGrid(per, byDate), legend())));
+    wrap.append(summaryRow(ctx));
+    if (shown('nutrition') && cur.fed.length) wrap.append(nutritionCard(dates, byDate, d => { const n = +d.slice(8); return n === 1 || n % 5 === 0 ? String(n) : ''; }));
+    if (shown('weight')) wrap.append(weightCard(cur.weights, prev.weights, ctx));
+    if (shown('training')) {
+      const weeks = [...new Set(dates.map(d => weekStart(d)))];
+      const groups = weeks.map(w => ({ label: fmtShort(w < per.start ? per.start : w), sessions: cur.done.filter(s => weekStart(s.date) === w) }));
+      const misses = {}; cur.missed.forEach(m => { misses[m.type.name] = (misses[m.type.name] || 0) + 1; });
+      const worst = Object.entries(misses).sort((a, b) => b[1] - a[1])[0];
+      wrap.append(trainingStats(groups, cur, worst ? h('p', { class: 'small st-miss missline' }, t('p.mostMissed', { name: worst[0], n: worst[1] })) : null));
+    }
+    if (shown('habits')) consistencyCard(wrap, cur.days, t('p.bestStreak', { n: bestStreak(datesIn(per.start, through), byDate) }));
+    if (shown('body')) { const b = bodyCompCard(cur.days); if (b) wrap.append(b); }
+  }
+  /* a calendar: each day tinted by how it went (targets and habits), a dot when trained */
+  function dayScore(day) {
+    const st = S.settings, parts = [];
+    for (const k of ['kcal', 'protein']) { const s = dayStatus(k, day); if (s && s !== 'progress') parts.push(s === 'met' ? 1 : s === 'close' ? 0.5 : 0); }
+    if (st.habits.length && hasLog(day)) parts.push(habitsDone(day) / st.habits.length);
+    return parts.length ? sum(parts, x => x) / parts.length : null;
+  }
+  function monthGrid(per, byDate) {
+    const lead = (U.parseD(per.start).getDay() + 6) % 7;
+    return h('div', { class: 'mgrid' }, U.DAYS.map(d => h('span', { class: 'mg-head' }, dayName(d, 'narrow'))), [...Array(lead)].map(() => h('span')),
+      datesIn(per.start, per.end).map(d => {
+        const day = byDate[d], score = day && d <= today() ? dayScore(day) : null, status = score == null ? 'none' : d === today() && score < 0.8 ? 'progress' : ratioStatus(score);
+        const trained = day && day.sessions.some(s => s.done !== false);
+        return h('button', { class: 'mg st-' + status + (d === today() ? ' today' : '') + (d > today() ? ' future' : ''), onclick: () => { S.date = d; loadDay(d); location.hash = '#today'; } },
+          h('span', null, String(+d.slice(8))), trained ? h('i', { style: { '--kc': kindColor(kindOf(day.sessions.find(s => s.done !== false))) } }) : null);
+      }));
+  }
+  function consistencyCard(wrap, days, note) {
+    const { hab, rou } = rates(days);
+    if (!hab.length && !rou.length) return;
+    wrap.append(card('consistency', t('p.consistency'), null, h('div', null,
+      hab.length ? [h('div', { class: 'subhead' }, t('t.habits')), rateRows(hab)] : null,
+      rou.length ? [h('div', { class: 'subhead' }, t('t.routines')), rateRows(rou)] : null,
+      note ? h('p', { class: 'muted small mt' }, note) : null)));
+  }
+
+  /* Year: how far things moved, month by month, and the longer view of habits, body and rank */
+  function yearView(wrap, ctx) {
+    const { per, byDate, cur, through, since } = ctx, st = S.settings, from = since > per.start ? since : per.start;
+    const months = [...Array(12)].map((_, i) => firstOfMonth(per.start, i)).filter(m => m <= through && m >= firstOfMonth(from));
+    const inMonth = (m, list) => list.filter(x => x.date.slice(0, 7) === m.slice(0, 7));
+    wrap.append(summaryRow(ctx));
+    wrap.append(highlights(months, byDate, cur, through, from));
+    if (shown('weight')) {
+      const weekly = []; const seen = {};
+      cur.weights.forEach(p => { const w = weekStart(p.date); (seen[w] = seen[w] || []).push(p.v); });
+      Object.keys(seen).sort().forEach(w => weekly.push({ date: w, v: sum(seen[w], v => v) / seen[w].length }));
+      wrap.append(weightCard(cur.weights, [], ctx, weekly.length > 1 ? weekly : null));
+    }
+    if (shown('nutrition') && cur.fed.length) {
+      const item = (m, key) => { const fed = inMonth(m, cur.fed), v = fed.length ? sum(fed, d => key === 'kcal' ? totals(d).kcal : totals(d).p) / fed.length : 0; const s = fed.length ? SC.targetStatus(v, st.targets[key], st.targets.aim[key], m.slice(0, 7) < today().slice(0, 7)) : null; return { label: monthLabel(m, 'narrow'), value: v, color: STATUS_COLOR[s] || 'var(--accent)' }; };
+      wrap.append(card('nutrition', t('p.nutritionMonthly'), null, h('div', null,
+        h('div', { class: 'subhead' }, t('p.avgPerDay', { what: t('c.kcal') })), svg(bars(months.map(m => item(m, 'kcal')), { target: st.targets.kcal, height: 120 })),
+        h('div', { class: 'subhead' }, t('p.avgPerDay', { what: t('c.protein') })), svg(bars(months.map(m => item(m, 'protein')), { target: st.targets.protein, height: 100 })),
+        h('p', { class: 'muted small' }, t('p.daysLoggedByMonth') + ' ' + months.map(m => `${monthLabel(m, 'short')} ${inMonth(m, cur.fed).length}`).join(' · ')), legend())));
+    }
+    if (shown('training')) wrap.append(trainingStats(months.map(m => ({ label: monthLabel(m, 'narrow'), sessions: inMonth(m, cur.done) })), cur));
+    if (shown('habits') && st.habits.length) {
+      const map = {}; cur.days.filter(hasLog).forEach(d => { map[d.date] = habitsDone(d) / st.habits.length; });
+      const weeks = Math.max(4, Math.min(53, Math.ceil((U.diffDays(from, through) + 1) / 7) + 1));
+      wrap.append(card('consistency', t('p.consistency'), null, h('div', null, svg(heat(map, weeks, through)),
+        h('div', { class: 'subhead' }, t('t.habits')), rateRows(rates(cur.days).hab),
+        trackedRoutines().length ? [h('div', { class: 'subhead' }, t('t.routines')), rateRows(rates(cur.days).rou)] : null)));
+    }
+    if (shown('body')) { const b = bodyCompCard(cur.days); if (b) wrap.append(b); }
+    const r = rankCard(); if (r) wrap.append(r);
+  }
+  function highlights(months, byDate, cur, through, from) {
+    const st = S.settings, items = [];
+    items.push([String(cur.logged.length), t('p.daysLogged')]);
+    items.push([String(cur.done.length), t('w.sessions'), t('w.hours', { h: fmt1(cur.minutes / 60) })]);
+    const streak = bestStreak(datesIn(from, through), byDate); if (st.habits.length) items.push([String(streak), t('p.longestStreak')]);
+    const busiest = months.map(m => [m, sum(cur.done.filter(s => s.date.slice(0, 7) === m.slice(0, 7)), s => num(s.minutes))]).sort((a, b) => b[1] - a[1])[0];
+    if (busiest && busiest[1]) items.push([monthLabel(busiest[0], 'long'), t('p.mostTraining'), t('w.hours', { h: fmt1(busiest[1] / 60) })]);
+    const w = cur.weights; if (w.length > 1) items.push([signed(Math.round((w[w.length - 1].v - w[0].v) * 10) / 10, fmt1) + ' ' + unit(), t('p.weightChange')]);
+    return card('highlights', t('p.highlights'), null, h('div', { class: 'stats' }, items.map(([big, lab, sub]) => stat(big, lab, [sub]))));
+  }
+
+  /* which cards Progress shows; rank has its own switch */
+  function customizeSheet() {
+    const hide = new Set(S.settings.progress.hide), rankOn = { v: S.settings.rank.enabled };
+    const row = (label, on, set) => h('label', { class: 'row noline' }, h('input', { type: 'checkbox', checked: on, onchange: e => set(e.target.checked) }), h('span', { class: 'row-name' }, label));
+    openSheet(t('p.customize'), h('div', null, h('p', { class: 'muted small' }, t('p.customizeSub')),
+      PCARDS.map(k => row(t('p.card.' + k), !hide.has(k), on => { if (on) hide.delete(k); else hide.add(k); })),
+      row(t('p.card.rank'), rankOn.v, on => { rankOn.v = on; }),
+      saveRow(() => {
+        const s = latest(); s.progress.hide = [...hide];
+        const needsSetup = rankOn.v && !s.rank.enabled && !s.rank.levels.length;
+        s.rank.enabled = rankOn.v && !needsSetup;
+        saveAnd(s, needsSetup ? () => rankSheet(true) : null);
+      })));
   }
   function goalSheet() {
     const g = clone(S.settings.goal), u = unit(), band = { lo: g.band ? g.band[0] : null, hi: g.band ? g.band[1] : null };
@@ -992,19 +1277,23 @@
       h('div', { class: 'grid2' }, numField(t('s.bandLo', { u }), band, 'lo'), numField(t('s.bandHi', { u }), band, 'hi')),
       h('p', { class: 'muted small' }, t('s.bandHelp')),
       textField(t('s.goalNote'), g, 'note'),
-      saveRow(() => { const s = latest(); s.goal = { ...s.goal, weight: g.weight, bodyFat: g.bodyFat, note: g.note, band: band.lo != null && band.hi != null ? [band.lo, band.hi] : null }; saveAnd(s); })));
+      h('div', { class: 'field' }, h('span', null, t('p.milestones')), h('button', { class: 'btn small', onclick: milestonesSheet }, t('p.editMilestones'))),
+      saveRow(() => { const s = latest(); s.goal = { ...s.goal, weight: g.weight, bodyFat: g.bodyFat, note: g.note, band: band.lo != null && band.hi != null ? [band.lo, band.hi] : null }; saveAnd(s); },
+        g.weight != null || g.bodyFat != null || g.band || g.note ? h('button', { class: 'btn ghost danger', onclick: () => { const s = latest(); s.goal = { ...s.goal, weight: null, bodyFat: null, band: null, note: '' }; saveAnd(s); } }, t('p.clearGoal')) : null)));
   }
   function milestonesSheet() {
     const ms = clone(S.settings.goal.milestones), u = unit();
     openSheet(t('p.milestones'), h('div', null, h('p', { class: 'muted small' }, t('s.milestonesSub')),
       listEditor(ms, [{ key: 'label', label: t('s.milestone') }, { key: 'bodyFat', label: '% ' + t('c.fat'), type: 'number', small: true }, { key: 'weight', label: u, type: 'number', small: true }], () => {}, t('s.addMilestone')),
-      saveRow(() => { const s = latest(); s.goal.milestones = ms.filter(m => String(m.label || '').trim() || m.bodyFat != null || m.weight != null); saveAnd(s); })));
+      saveRow(() => { const s = latest(); s.goal.milestones = ms.filter(m => String(m.label || '').trim() || m.bodyFat != null || m.weight != null); saveAnd(s); },
+        ms.length ? h('button', { class: 'btn ghost danger', onclick: () => { const s = latest(); s.goal.milestones = []; saveAnd(s); } }, t('p.removeAll')) : null)));
   }
   function rankSheet(turnOn) {
     const draft = { rank: clone(S.settings.rank) };
     if (turnOn === true) draft.rank.enabled = true;
     openSheet(t('s.rank'), h('div', null, h('p', { class: 'muted small' }, t('s.rankSub')), rankEditor(draft, () => {}),
-      saveRow(() => { const s = latest(); s.rank = draft.rank; saveAnd(s); })), { wide: true });
+      saveRow(() => { const s = latest(); s.rank = draft.rank; saveAnd(s); },
+        S.settings.rank.enabled ? h('button', { class: 'btn ghost danger', onclick: () => { const s = latest(); s.rank.enabled = false; saveAnd(s); } }, t('p.stopRank')) : null)), { wide: true });
   }
   /* one more stripe (or whatever the sub-level is called), dated today; undo puts the rank back */
   function promote() {
@@ -1382,6 +1671,13 @@
     s_habits: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></svg>',
     s_checklists: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 6.5h10M10 12h10M10 17.5h10M4 6.5l1.2 1.2L7.5 5.3M4 12l1.2 1.2 2.3-2.4M4 17.5l1.2 1.2 2.3-2.4"/></svg>',
     s_training: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 7v10M17.5 7v10M3.5 9.5v5M20.5 9.5v5M6.5 12h11"/></svg>',
+    s_glance: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4M8 14h.01M12 14h.01M16 14h.01M8 17h.01M12 17h.01"/></svg>',
+    s_nutrition: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3v6a2 2 0 0 0 4 0V3M8 11v10M17 21V3c-2.2 1.2-3 3.6-3 7v3h3"/></svg>',
+    s_weight: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l5-6 4 3 5-7 4 4"/></svg>',
+    s_consistency: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.3l2.4 2.4 4.6-5"/></svg>',
+    s_rank: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5L7 21l5-2.5 5 2.5-1.5-7.5"/></svg>',
+    s_highlights: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z"/></svg>',
+    s_cycle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></svg>',
     s_body: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 10.5a5 5 0 0 1 7 0M12 10.5l1.5-2"/></svg>'
   };
   const NAV = ['today', 'plan', 'progress', 'library', 'settings'], ROUTES = [...NAV, 'start'], ALIAS = { week: 'progress' };
@@ -1422,7 +1718,7 @@
   }
   function rerenderAll() { const app = $('.app'); if (app) app.remove(); document.body.append(shell()); setStatus(storageLabel(), ''); render(); updateSyncUI(); }
   /* #workouts, #routines, #exercises and #foods open that Library tab */
-  const routeFromHash = () => { let r = location.hash.replace('#', '').split('?')[0]; if (LIB[r]) { S.libTab = r; r = 'library'; } else if (ALIAS[r]) r = ALIAS[r]; return ROUTES.includes(r) ? r : 'today'; };
+  const routeFromHash = () => { let r = location.hash.replace('#', '').split('?')[0]; if (LIB[r]) { S.libTab = r; r = 'library'; } else if (ALIAS[r]) { if (r === 'week') S.pTab = 'week'; r = ALIAS[r]; } return ROUTES.includes(r) ? r : 'today'; };
   function registerSW() {
     if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
     navigator.serviceWorker.register('./sw.js').then(reg => {
@@ -1449,7 +1745,7 @@
     S.route = routeFromHash();
     setStatus(storageLabel(), '');
     render();
-    window.addEventListener('hashchange', () => { const r = routeFromHash(); if (r !== S.route || r === 'library') { if (r !== 'plan') S.planEdit = false; S.route = r; closeSheet(); render(); window.scrollTo(0, 0); } });
+    window.addEventListener('hashchange', () => { const r = routeFromHash(); if (r !== S.route || r === 'library') { S.route = r; closeSheet(); render(); window.scrollTo(0, 0); } });
     let resizeTimer = null; window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(() => {
       if (S.route === 'plan') { const cal = $('.calwrap'); if (cal) drawCalendar(cal); }
       if (S.route === 'today' && S.refs.wide !== wideLayout() && !U.sheetOpen() && !editing()) render();

@@ -161,12 +161,28 @@ window.MB = window.MB || {};
     const y = v => pt + (1 - v / max) * (H - pt - pb);
     const rects = items.map((it, i) => {
       const x = pl + i * (bw + gap), top = y(it.value), hgt = Math.max(0, H - pb - top);
-      const fill = it.value <= 0 ? 'var(--track)' : (it.hit === false ? 'var(--track2)' : (it.color || 'var(--accent)'));
+      const fill = it.value <= 0 ? 'var(--track)' : (it.color || (it.hit === false ? 'var(--track2)' : 'var(--accent)'));
       const label = (n <= 14 || i % Math.ceil(n / 10) === 0) && it.label ? `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="10" fill="var(--muted)">${it.label}</text>` : '';
       return `<rect x="${x.toFixed(1)}" y="${(it.value <= 0 ? H - pb - 3 : top).toFixed(1)}" width="${bw.toFixed(1)}" height="${(it.value <= 0 ? 3 : hgt).toFixed(1)}" rx="${Math.min(5, bw / 2)}" fill="${fill}"/>${label}`;
     }).join('');
     const target = opts.target ? `<line x1="${pl}" x2="${W - pr}" y1="${y(opts.target).toFixed(1)}" y2="${y(opts.target).toFixed(1)}" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4"/>` : '';
     return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label || ''}">${rects}${target}</svg>`;
+  }
+  /* stacked bars: items [{label, parts: [{value, color}]}] */
+  function stacked(items, opts) {
+    opts = opts || {};
+    const W = 600, H = opts.height || 150, pt = 14, pb = 24, pl = 4, pr = 4;
+    const sums = items.map(i => i.parts.reduce((a, p) => a + p.value, 0)), max = Math.max(opts.target || 0, ...sums, 1) * 1.08;
+    const n = items.length, gap = n > 14 ? 3 : 8, bw = (W - pl - pr - gap * (n - 1)) / n, y = v => (1 - v / max) * (H - pt - pb);
+    const out = items.map((it, i) => {
+      const x = pl + i * (bw + gap); let top = H - pb;
+      const segs = sums[i] > 0 ? it.parts.filter(p => p.value > 0).map(p => { const hh = (H - pt - pb) - y(p.value); top -= hh; return `<rect x="${x.toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${hh.toFixed(1)}" fill="${p.color}"/>`; }).join('')
+        : `<rect x="${x.toFixed(1)}" y="${H - pb - 3}" width="${bw.toFixed(1)}" height="3" rx="1.5" fill="var(--track)"/>`;
+      const label = (n <= 14 || i % Math.ceil(n / 10) === 0) && it.label ? `<text x="${(x + bw / 2).toFixed(1)}" y="${H - 7}" text-anchor="middle" font-size="10" fill="var(--muted)">${it.label}</text>` : '';
+      return `<g>${segs}</g>${label}`;
+    }).join('');
+    const target = opts.target ? `<line x1="${pl}" x2="${W - pr}" y1="${(pt + y(opts.target)).toFixed(1)}" y2="${(pt + y(opts.target)).toFixed(1)}" stroke="var(--ink)" stroke-opacity=".55" stroke-width="1.5" stroke-dasharray="4 4"/>` : '';
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label || ''}">${out}${target}</svg>`;
   }
   function trend(points, opts) {
     /* points: [{date, v}] sorted; draws a light line with dots and a 7-day average */
@@ -174,7 +190,8 @@ window.MB = window.MB || {};
     const W = 600, H = 190, pl = 8, pr = 8, pt = 14, pb = 22;
     const vals = points.map(p => p.v);
     const avg = points.map((p, i) => { const win = points.slice(Math.max(0, i - 6), i + 1); return win.reduce((a, q) => a + q.v, 0) / win.length; });
-    let lo = Math.min(...vals, opts.goal == null ? Infinity : opts.goal), hi = Math.max(...vals, opts.goal == null ? -Infinity : opts.goal);
+    const extra = [opts.goal, ...(opts.band || [])].filter(v => v != null);
+    let lo = Math.min(...vals, ...extra), hi = Math.max(...vals, ...extra);
     const pad = Math.max(1, (hi - lo) * 0.15); lo -= pad; hi += pad;
     const t0 = new Date(points[0].date.replace(/-/g, '/')).getTime(), t1 = new Date(points[points.length - 1].date.replace(/-/g, '/')).getTime();
     const x = d => { const tt = new Date(d.replace(/-/g, '/')).getTime(); return pl + (t1 > t0 ? (tt - t0) / (t1 - t0) : 0.5) * (W - pl - pr); };
@@ -183,14 +200,15 @@ window.MB = window.MB || {};
     const dots = points.map(p => `<circle cx="${x(p.date).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.6" fill="var(--accent)" fill-opacity=".55"/>`).join('');
     const avgPath = line(points.map((p, i) => ({ date: p.date, v: avg[i] })));
     const goal = opts.goal == null ? '' : `<line x1="${pl}" x2="${W - pr}" y1="${y(opts.goal).toFixed(1)}" y2="${y(opts.goal).toFixed(1)}" stroke="var(--green)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W - pr}" y="${(y(opts.goal) - 5).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--green)">${opts.goalLabel || ''}</text>`;
+    const band = opts.band ? `<rect x="${pl}" width="${W - pl - pr}" y="${y(opts.band[1]).toFixed(1)}" height="${Math.max(1, y(opts.band[0]) - y(opts.band[1])).toFixed(1)}" fill="var(--green)" fill-opacity=".1"/>` : '';
     const last = points[points.length - 1];
-    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label || ''}">${goal}
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.label || ''}">${band}${goal}
   <path d="${line(points)}" fill="none" stroke="var(--accent)" stroke-opacity=".35" stroke-width="1.5" stroke-linejoin="round"/>${dots}
   <path d="${avgPath}" fill="none" stroke="var(--accent)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
   <text x="${x(last.date).toFixed(1)}" y="${(y(avg[avg.length - 1]) - 8).toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)">${fmt1(last.v)}</text>
   <text x="${pl}" y="${H - 6}" font-size="10" fill="var(--muted)">${fmtShort(points[0].date)}</text><text x="${W - pr}" y="${H - 6}" text-anchor="end" font-size="10" fill="var(--muted)">${fmtShort(last.date)}</text></svg>`;
   }
-  function heat(map, weeks, endDate) {
+  function heat(map, weeks, endDate, color) {
     /* map: {date: ratio 0..1}; grid of weeks columns, Mon..Sun rows */
     const start = weekStart(addDays(endDate, -7 * (weeks - 1)));
     const cell = 12, gap = 3, W = weeks * (cell + gap), H = 7 * (cell + gap) + 12;
@@ -198,7 +216,7 @@ window.MB = window.MB || {};
     for (let w = 0; w < weeks; w++) for (let d = 0; d < 7; d++) {
       const date = addDays(start, w * 7 + d); if (date > endDate) continue;
       const r = map[date]; const op = r == null ? 0 : 0.25 + 0.75 * r;
-      rects += `<rect x="${w * (cell + gap)}" y="${d * (cell + gap) + 12}" width="${cell}" height="${cell}" rx="3" fill="${r == null ? 'var(--track)' : 'var(--accent)'}" fill-opacity="${r == null ? 1 : op.toFixed(2)}"><title>${date}</title></rect>`;
+      rects += `<rect x="${w * (cell + gap)}" y="${d * (cell + gap) + 12}" width="${cell}" height="${cell}" rx="3" fill="${r == null ? 'var(--track)' : (color || 'var(--green)')}" fill-opacity="${r == null ? 1 : op.toFixed(2)}"><title>${date}</title></rect>`;
     }
     const months = []; let lastM = '';
     for (let w = 0; w < weeks; w++) { const m = fmtMonth(addDays(start, w * 7)); if (m !== lastM) { months.push(`<text x="${w * (cell + gap)}" y="9" font-size="9" fill="var(--muted)">${m}</text>`); lastM = m; } }
@@ -206,5 +224,5 @@ window.MB = window.MB || {};
   }
 
   MB.ui = { $, uid, clone, deepEq, fmt, fmt1, num, byName, slug, h, svg, today, isDate, parseD, addDays, diffDays, DOW, DAYS, dow, dayName, fmtLong, fmtShort, fmtDay, fmtMonth, weekStart, fmtTime, isImageUrl, thumb,
-    openSheet, closeSheet, sheetOpen, onSheetClosed, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, trend, heat };
+    openSheet, closeSheet, sheetOpen, onSheetClosed, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, stacked, trend, heat };
 })();

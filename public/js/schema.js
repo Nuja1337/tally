@@ -2,7 +2,7 @@
 window.MB = window.MB || {};
 (() => {
   'use strict';
-  MB.APP = { id: 'tally', name: 'Tally', version: '2.2.2' };
+  MB.APP = { id: 'tally', name: 'Tally', version: '2.2.3' };
   const { uid, clone, num, slug, isDate } = MB.ui;
   const VERSION = 4;
   const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -16,6 +16,8 @@ window.MB = window.MB || {};
   const DEFAULT_AIM = { kcal: 'near', protein: 'min', carbs: 'near', fat: 'near' };
   /* colors a session kind can take; kinds without one get the next unused color in this order */
   const KIND_COLORS = ['blue', 'violet', 'teal', 'orange', 'pink', 'gold', 'slate', 'olive'];
+  /* Progress cards a profile can hide; rank has its own switch */
+  const PROGRESS_CARDS = ['nutrition', 'weight', 'training', 'habits', 'body'];
   const BELT_COLORS = { white: '#F4F2EA', yellow: '#E8C547', orange: '#E07A2F', green: '#2E8B57', blue: '#2A56A6', purple: '#6B3FA0', brown: '#6E4A2B', black: '#141414', red: '#B4423C', coral: '#E8735A' };
 
   const DEFAULT_SETTINGS = {
@@ -27,6 +29,7 @@ window.MB = window.MB || {};
     calendar: [], exercises: [], gates: [],
     wave: { start: null, pattern: [] },
     rank: { enabled: false, system: '', levels: [], level: '', sublevelName: 'stripe', sublevel: 0, maxSublevel: 4, history: [], phases: [] },
+    progress: { hide: [] },
     updatedAt: null
   };
 
@@ -112,6 +115,7 @@ window.MB = window.MB || {};
     }).filter(b => b.days.length);
     if (isObj(d.wave)) s.wave = { start: isDate(d.wave.start) ? d.wave.start : null, pattern: Array.isArray(d.wave.pattern) ? d.wave.pattern.map(String).filter(x => WAVE.includes(x)) : [] };
     s.rank = normalizeRank(d.rank);
+    if (isObj(d.progress) && Array.isArray(d.progress.hide)) s.progress.hide = [...new Set(d.progress.hide.filter(k => PROGRESS_CARDS.includes(k)))];
     if (d.updatedAt) s.updatedAt = d.updatedAt;
     return s;
   }
@@ -233,7 +237,7 @@ window.MB = window.MB || {};
     for (const k of Object.keys(inc)) {
       const v = inc[k];
       if (k === 'name' && typeof v === 'string') { out.name = v; changed.push('name'); }
-      else if (['targets', 'goal', 'units', 'wave'].includes(k) && isObj(v)) { Object.assign(out[k], v); changed.push(k); }
+      else if (['targets', 'goal', 'units', 'wave', 'progress'].includes(k) && isObj(v)) { Object.assign(out[k], v); changed.push(k); }
       else if (k === 'schedule' && isObj(v)) { const blocks = []; for (const day of DAYS) for (const id of (Array.isArray(v[day]) ? v[day] : [])) blocks.push({ id: `sched-${day}-${id}`, days: [day], kind: 'session', typeId: String(id) }); out.calendar = opts.replaceLists ? blocks : mergeById(out.calendar, blocks.map(b => ({ ...b, name: b.id }))); changed.push('schedule'); }
       else if (k === 'calendar' && Array.isArray(v)) { const blocks = v.filter(isObj).map(b => ({ ...b, name: b.title || b.typeId || b.routineId || b.slotId || b.kind || 'block' })); out.calendar = opts.replaceLists ? blocks : mergeById(out.calendar, blocks); changed.push(`calendar (${v.length})`); }
       else if (LIST_KEYS.includes(k) && Array.isArray(v)) { out[k] = opts.replaceLists ? ensureIds(named(v)) : mergeById(out[k], v); changed.push(`${k} (${v.length})`); }
@@ -422,7 +426,7 @@ window.MB = window.MB || {};
 
   /* Field reference shown on Get started (English; the README has the same) */
   const DOCS = [
-    { key: 'settings', fields: ['name', 'units.weight', 'targets', 'targets.aim', 'goal', 'mealSlots', 'habits', 'exercises', 'routines', 'sessionKinds', 'sessionTypes', 'calendar', 'gates', 'wave', 'rank'],
+    { key: 'settings', fields: ['name', 'units.weight', 'targets', 'targets.aim', 'goal', 'mealSlots', 'habits', 'exercises', 'routines', 'sessionKinds', 'sessionTypes', 'calendar', 'gates', 'wave', 'rank', 'progress.hide'],
       sample: { units: { weight: 'kg' }, targets: { kcal: 2600, protein: 170, aim: { kcal: 'near', protein: 'min' } }, goal: { weight: 78, band: [77, 79], milestones: [{ label: 'Month 4', bodyFat: 13.5 }] }, mealSlots: ['Breakfast', 'Lunch', 'Dinner'], habits: [{ name: 'Water', target: 8, unit: 'glasses' }, 'Steps'],
         exercises: [{ id: 'push-up', name: 'Push-up', image: 'https://example.com/push-up.gif', video: 'https://youtube.com/...', cues: 'Elbows 45°', perSide: false, gate: { id: 'wrist', at: 3 } }],
         routines: [{ id: 'morning', name: 'Morning mobility', days: ['mon', 'wed', 'fri'], items: [{ name: 'Cat-cow', target: '10' }] }], sessionKinds: [{ name: 'Strength', color: 'blue' }, 'Cardio'],
@@ -436,6 +440,6 @@ window.MB = window.MB || {};
   ];
   const REMOVE_SAMPLE = { foods: ['banana'], days: ['2026-09-01'], settings: { habits: ['water'], exercises: ['plank'], routineItems: { morning: ['cat-cow'] } } };
 
-  MB.schema = { VERSION, DAYS, KINDS, AIMS, DEFAULT_AIM, KIND_COLORS, kindColors, targetStatus, WAVE, UNITS, MEASURES, CAT_KEYS, BELT_COLORS, DEFAULT_SETTINGS, normalizeSettings, normalizeRank, emptyDay, normalizeDay, normalizeFood, normalizeTemplate, habitDone,
+  MB.schema = { VERSION, DAYS, KINDS, PROGRESS_CARDS, AIMS, DEFAULT_AIM, KIND_COLORS, kindColors, targetStatus, WAVE, UNITS, MEASURES, CAT_KEYS, BELT_COLORS, DEFAULT_SETTINGS, normalizeSettings, normalizeRank, emptyDay, normalizeDay, normalizeFood, normalizeTemplate, habitDone,
     isLegacy, migrateLegacy, planImport, exportProfile, convertWeight, TARGETS, DOCS, REMOVE_SAMPLE, starterProfile, FOODS, isObj, blockTitle, hm, duration, blocksFor, plannedFor, waveWeek, gateOpen, resolveExercise, demoImage, demoVideo };
 })();

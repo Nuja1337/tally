@@ -3,7 +3,7 @@
 A local-first training and nutrition log: meals, habits, routines, workouts with per-side logging, an ideal-week calendar, an exercise library with images and video, bodyweight, tape measurements and rank. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
 
 - Works offline once opened, installs to the home screen like an app
-- Five pages: Today, Plan (the ideal week), Progress, Library (workouts, routines, exercises, foods and meal templates), Settings (profile, language and theme, sync, data). Targets, habits and meal slots are edited on Today; goal, milestones and rank on Progress.
+- Five pages: Today, Plan (the ideal week), Progress (a week, a month or a year), Library (workouts, routines, exercises, foods and saved meals), Settings (profile, language and theme, sync, data). Targets, habits and meals of the day are edited on Today; goal, milestones and rank on Progress.
 - Totals turn green when a target is met, amber when close or not logged yet, red when a finished day fell short or went over
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
 - Light and dark themes
@@ -159,6 +159,8 @@ Notes:
 
 - Ids are optional; they are derived from names (`Water` → `water`). Keep them stable if you edit files by hand.
 - `targets.aim` says how each total counts as met: `min` (at least the target), `near` (within 10%) or `max` (at most). Missing aims default to `near` for calories, carbs and fat and `min` for protein.
+- Names in the app: `mealSlots` are "Meals of the day", `templates` are "Saved meals", `sessionKinds` are "Categories", `sessionTypes` are "Workouts", `gates` are "Progressions", `wave` is the "Training cycle" (`ramp` shows as Build, `full` as Peak), `calendar` blocks are plan items.
+- `progress.hide` lists Progress cards the profile hides: `nutrition`, `weight`, `training`, `habits`, `body`. Rank shows when `rank.enabled` is true.
 - `sessionKinds[].color` is one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.
 - A habit with a `target` counts up (tap adds one); without one it is a checkbox. `day.habits` holds `true` or the count.
 - `routines[].days` limits a routine to those weekdays; empty or missing means every day. `alertAt` turns a routine into a check-in: when that many items are ticked, Today shows `alertText`.

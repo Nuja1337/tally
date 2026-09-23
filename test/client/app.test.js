@@ -15,7 +15,7 @@ describe('boot', () => {
     const tab = await openTab();
     expect(tab.document.title).toBe('Tally');
     expect(tab.text('.brand-name')).toBe('Tally');
-    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.2.2' });
+    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.2.3' });
     expect(tab.window.location.hash).toBe('#start');
     expect(await dbNames(tab.device.idb)).toEqual(['tally']);
     expect(tab.errors).toEqual([]);
@@ -89,7 +89,7 @@ describe('pages', () => {
     }
     expect(tab.errors).toEqual([]);
     tab.close();
-  });
+  }, 30000); /* 8 languages x 9 pages */
 
   it('imports files written by earlier names and exports as tally', async () => {
     const tab = await openTab();
