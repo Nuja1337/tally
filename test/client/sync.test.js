@@ -115,20 +115,45 @@ describe('changes', () => {
     expect(A.errors).toEqual([]); expect(B.errors).toEqual([]);
   });
 
-  it('both offline, the same day edited on both: the newer edit wins everywhere', async () => {
+  it('both offline, the same day edited on both: both edits are kept, and the newer note wins', async () => {
     const { A, B } = await linkedPair('#today');
     A.device.setOnline(false); B.device.setOnline(false);
+    await tapHabit(A, 0); /* water +1 on A */
     await writeNote(A, 'from A');
     await new Promise(r => setTimeout(r, 5));
+    await tapHabit(B, 1); /* steps on B */
     await writeNote(B, 'from B');
     expect(A.MB.sync.status().state).toBe('offline');
     expect(A.$('.syncdot').dataset.state).toBe('offline');
-    /* the newer device syncs first, then the older one: its push is ignored and the pull brings the newer copy */
+    /* B syncs first; A's copy is refused (it has not seen B's), merged with B's and sent again */
     B.device.setOnline(true); await sync(B);
     A.device.setOnline(true); await sync(A); await sync(B);
-    for (const tab of [A, B]) expect(tab.MB.store.get('days/' + today(tab)).note).toBe('from B');
+    for (const tab of [A, B]) {
+      const d = tab.MB.store.get('days/' + today(tab));
+      expect(d.values).toMatchObject({ water: 1, steps: true });
+      expect(d.note).toBe('from B');
+    }
     expect(A.$('#main textarea').value).toBe('from B'); /* A's page re-rendered */
     expect(A.MB.sync.status().pending).toBe(0);
+    expect(B.MB.sync.status().pending).toBe(0);
+    expect(Object.keys(A.MB.store.getMeta('sync:' + A.MB.store.currentProfile().id).outbox)).toEqual([]);
+    expect(A.errors).toEqual([]); expect(B.errors).toEqual([]);
+  });
+
+  it('a meal logged on each device offline: both meals are on both, and a meal deleted on one stays deleted', async () => {
+    const { A, B } = await linkedPair('#today');
+    const d = today(A), day = tab => tab.MB.store.get('days/' + d);
+    const meal = (id, name) => ({ id, slot: 'breakfast', name, kcal: 300, p: 20, c: 30, f: 10 });
+    A.MB.store.setDoc('days/' + d, { ...A.MB.schema.emptyDay(d), meals: [meal('m1', 'Oats'), meal('m2', 'Eggs')] });
+    await sync(A); await sync(B);
+    expect(day(B).meals.map(m => m.name)).toEqual(['Oats', 'Eggs']);
+    A.device.setOnline(false); B.device.setOnline(false);
+    A.MB.store.setDoc('days/' + d, { ...day(A), updatedAt: null, meals: [...day(A).meals.filter(m => m.id !== 'm2'), meal('m3', 'Shake')] }); /* A: eggs out, shake in */
+    await new Promise(r => setTimeout(r, 5));
+    B.MB.store.setDoc('days/' + d, { ...day(B), updatedAt: null, meals: [...day(B).meals, meal('m4', 'Rice')] }); /* B: rice in */
+    A.device.setOnline(true); await sync(A);
+    B.device.setOnline(true); await sync(B); await sync(A);
+    for (const tab of [A, B]) expect(day(tab).meals.map(m => m.name).sort()).toEqual(['Oats', 'Rice', 'Shake']);
     expect(A.errors).toEqual([]); expect(B.errors).toEqual([]);
   });
 
@@ -147,16 +172,17 @@ describe('changes', () => {
     expect(B.MB.sync.status().pending).toBe(0);
   });
 
-  it('changing the weight unit converts logged weights on every device', async () => {
+  it('switching to metric converts weights and tape measurements on every device', async () => {
     const { A, B } = await linkedPair(null);
-    A.MB.store.setDoc('days/2026-09-01', { ...A.MB.schema.emptyDay('2026-09-01'), weight: 200, updatedAt: '2026-09-01T08:00:00.000Z' });
+    A.MB.store.setDoc('days/2026-09-01', { ...A.MB.schema.emptyDay('2026-09-01'), weight: 200, values: { m_waist: 34 }, updatedAt: '2026-09-01T08:00:00.000Z' });
     await sync(A); await sync(B);
     await A.go('#settings');
-    const unitSel = [...A.$$('#main select')].find(s => [...s.options].some(o => o.value === 'kg'));
-    unitSel.value = 'kg'; unitSel.dispatchEvent(new A.window.Event('change')); /* saves at once */
+    const unitSel = [...A.$$('#main select')].find(s => [...s.options].some(o => o.value === 'metric'));
+    unitSel.value = 'metric'; unitSel.dispatchEvent(new A.window.Event('change')); /* saves at once */
     await sync(A); await sync(B);
-    expect(B.MB.store.get('settings/main').units.weight).toBe('kg');
-    expect(B.MB.store.get('days/2026-09-01').weight).toBe(90.7);
+    expect(B.MB.store.get('settings/main').units).toEqual({ system: 'metric', weight: 'kg' });
+    expect(B.MB.store.get('settings/main').trackers.find(x => x.id === 'm_waist').unit).toBe('cm');
+    expect(B.MB.store.get('days/2026-09-01')).toMatchObject({ weight: 90.7, values: { m_waist: 86.4 } });
   });
 });
 

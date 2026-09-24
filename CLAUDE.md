@@ -13,7 +13,7 @@ Local-first fitness and nutrition log (PWA): meals and nutrients, trackers for a
 - `public/js/i18n.js` + `public/js/i18n/<lang>.js` 8 dictionaries: en es fr pt de ja ko zh
 - `public/js/schema.js` data format v5: defaults, normalize, v4 upgrade (habits, measurements, rank), status grades, setup history, events, import planning, export, starter packs, field docs
 - `public/js/store.js` IndexedDB store with profiles (`p/<profileId>/<path>`) and global meta (`m/<key>`)
-- `public/js/sync.js` outbox and cloud sync (added in 2.2)
+- `public/js/sync.js` outbox and cloud sync (added in 2.2); `store.applyRemote` merges days and settings edited on two devices (`schema.mergeDoc`, base copies in `m/base:<profile>/<path>`)
 - `public/js/app.js` pages (Today, Plan, Progress, Library, Settings, Get started), routing, boot
 - `public/sw.js` offline cache, share target. `worker/index.js` API. `migrations/*.sql` D1 schema.
 
@@ -22,6 +22,8 @@ Local-first fitness and nutrition log (PWA): meals and nutrients, trackers for a
 - Any change under `public/`: bump `VERSION` in `public/sw.js` and keep its `ASSETS` list matching the real files.
 - The service worker must never cache `/api/*`.
 - Statuses use the five-step scale in schema.js (`targetStatus`, `trackerGrade`, `gradeOf` for one day, `rateGrade` for rates over weeks and months) and the `--g-*` color tokens; never hard-code green/red for a status. Past days are judged with `setupOn(date)` (setup history), not the current settings.
+- Weights and lengths: use `unit()` and `settings.units.system`; anything stored in a unit that converts must be handled in `changeSystem` (app.js). "Today" is `ui.today()`, which honors the profile's `dayStart`; never build today's date from `new Date()`.
+- Changing what the server accepts or how sync merges: bump `PROTOCOL` in both `public/js/sync.js` and `worker/index.js`, so apps that have not reloaded get 426 instead of losing data.
 - Events can tag a day and take it off the plan. For a date, read tags with `tagIdsOn(date, day)` or `skipDay(day, date)` and planned training with `plannedOn(date)`, never `day.tags` or `SC.plannedFor` directly.
 - `Element.append`/`replaceChildren` print `null` as text: filter optional children (`h()` already skips them).
 - Alex dislikes screen flash and needless re-renders. Update in place; never re-render a page while a sheet is open or an input has focus.

@@ -1,12 +1,16 @@
 /* Tally — optional cloud sync for the active profile. IndexedDB stays the source of truth: store.js records an outbox of
    local changes, this module uploads it to the Worker API and applies what comes back. Per document the newest updatedAt
-   wins (the same rule as import); deletes travel as tombstones. Offline or unlinked, nothing here runs.
+   wins (the same rule as import); deletes travel as tombstones. The server refuses a copy from a device that has not seen
+   that document's latest version (it lists it in rejected, and the pull brings the newer one), and store.applyRemote
+   merges a day or the setup edited on both sides, so no device's entries get lost. Offline or unlinked, nothing here runs.
    One loop round: send up to 40 outbox entries with the cursor, apply the returned changes, clear the entries that were
    sent unless they changed again meanwhile, save the cursor; repeat while entries remain or the server has more. */
 window.MB = window.MB || {};
 (() => {
   'use strict';
   const store = MB.store;
+  /* the sync protocol: 2 = the server may reject stale copies, and this app merges */
+  const PROTOCOL = 2;
   const BATCH = 40, BATCH_BYTES = 900 * 1024, DOC_MAX = 512 * 1024, TIMEOUT = 15000, DEBOUNCE = 3000, STALE = 30000, BACKOFF_MIN = 5000, BACKOFF_MAX = 300000;
   const ms = iso => Date.parse(iso) || 0;
   const bytes = s => (typeof TextEncoder === 'function' ? new TextEncoder().encode(s).length : s.length * 3);
@@ -28,7 +32,7 @@ window.MB = window.MB || {};
     try {
       let res;
       try {
-        res = await fetch(path, { method, headers: { 'x-tally-format': String(MB.schema.VERSION), ...(key ? { authorization: 'Bearer ' + key } : {}), ...(body ? { 'content-type': 'application/json' } : {}) },
+        res = await fetch(path, { method, headers: { 'x-tally-format': String(MB.schema.VERSION), 'x-tally-sync': String(PROTOCOL), ...(key ? { authorization: 'Bearer ' + key } : {}), ...(body ? { 'content-type': 'application/json' } : {}) },
           body: body ? JSON.stringify(body) : undefined, signal: ctl ? ctl.signal : undefined });
       } catch (e) { throw new SyncError(ctl && ctl.signal.aborted ? 'timeout' : 'offline'); }
       if (res.status === 401) throw new SyncError('key', { status: 401 });
@@ -117,13 +121,16 @@ window.MB = window.MB || {};
       const res = await request('POST', '/api/sync', meta.key, { cursor: meta.cursor || 0, changes });
       const still = store.syncMeta(id);
       if (!still || still.key !== meta.key) return; /* unlinked while the request was out */
-      const changed = await store.applyRemote(res.changes, id);
+      const changed = await store.applyRemote(res.changes, id, new Map(sent.map(([p, e]) => [p, e.updatedAt])));
+      /* a refused copy waits while the server has more pages: the newer version is still to come and gets merged */
+      const refused = new Set(Array.isArray(res.rejected) ? res.rejected : []), cleared = new Set();
       const after = await store.syncUpdate(id, m => {
         if (!m || m.key !== meta.key) return m;
         const outbox = { ...(m.outbox || {}) };
-        for (const [p, e] of sent) { const cur = outbox[p]; if (cur && cur.updatedAt === e.updatedAt && !!cur.deleted === !!e.deleted) delete outbox[p]; }
+        for (const [p, e] of sent) { const cur = outbox[p]; if (cur && cur.updatedAt === e.updatedAt && !!cur.deleted === !!e.deleted && !(res.more && refused.has(p))) { delete outbox[p]; cleared.add(p); } }
         return { ...m, outbox, cursor: Math.max(m.cursor || 0, res.cursor || 0), lastSync: Date.now(), lastError: tooLarge.length ? { code: 'tooLarge', path: tooLarge[0] } : null };
       });
+      if (cleared.size) await store.dropBases(id, [...cleared]);
       if (tooLarge.length) failure = { code: 'tooLarge', path: tooLarge[0] };
       if (changed.length && id === activeId() && typeof api.onremote === 'function') { try { api.onremote(changed); } catch (e) { console.error(e); } }
       emit();

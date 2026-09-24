@@ -2,6 +2,8 @@
    (fallback: localStorage, then memory). Document paths are relative to the active profile:
    settings/main, days/2026-09-01, foods/<id>, templates/<id>. Internally: p/<profileId>/<path>; app metadata: m/<key>.
    Sync: a linked profile keeps m/sync:<profileId> = { key, cursor, outbox: { [path]: { deleted, updatedAt } }, lastSync, lastError }.
+   A day or the setup edited while linked also keeps m/base:<profileId>/<path>: its copy from before the first edit since
+   the last sync, so an edit made elsewhere meanwhile can be merged in instead of one side winning.
    Local writes add outbox entries in the same transaction as the document; sync.js uploads them. Open tabs share one
    database and tell each other which keys changed (BroadcastChannel), so every tab shows the same data. */
 window.MB = window.MB || {};
@@ -16,6 +18,8 @@ window.MB = window.MB || {};
   const full = p => `p/${pid}/${p}`;
   const collOf = path => path.slice(0, path.lastIndexOf('/'));
   const syncKey = id => 'm/sync:' + id;
+  const baseKey = (id, path) => `m/base:${id}/${path}`;
+  const mergeable = path => path === 'settings/main' || path.startsWith('days/');
   const ms = iso => Date.parse(iso) || 0;
   const isDoc = d => !!d && typeof d === 'object' && !Array.isArray(d);
 
@@ -167,7 +171,7 @@ window.MB = window.MB || {};
   /* deleting a profile unlinks it; the cloud copy stays */
   async function deleteProfile(id) {
     const list = profiles(); if (list.length < 2 || !list.some(p => p.id === id)) return false;
-    const prefix = `p/${id}/`; const dels = [syncKey(id), ...[...mem.keys()].filter(k => k.startsWith(prefix))];
+    const prefix = `p/${id}/`, bases = baseKey(id, ''); const dels = [syncKey(id), ...[...mem.keys()].filter(k => k.startsWith(prefix) || k.startsWith(bases))];
     dels.forEach(k => mem.delete(k));
     await commit(dels.map(k => ['del', k])).catch(onError);
     await writeMeta('profiles', { list: list.filter(p => p.id !== id) });
@@ -189,6 +193,18 @@ window.MB = window.MB || {};
     return [['merge', k, fn]];
   }
   const local = paths => { const m = mem.get(syncKey(pid)); if (m && m.key && typeof api.onlocal === 'function') api.onlocal(paths); };
+  /* the last synced copy of a day or the setup, kept from its first edit until the edit is uploaded (call before writing) */
+  function baseOps(paths) {
+    const m = mem.get(syncKey(pid)); if (!m || !m.key) return [];
+    const ops = [];
+    for (const p of paths) {
+      if (!mergeable(p) || (m.outbox && m.outbox[p])) continue;
+      const prev = mem.get(full(p)), k = baseKey(pid, p);
+      if (prev === undefined) { if (mem.has(k)) { mem.delete(k); ops.push(['del', k]); } continue; }
+      mem.set(k, clone(prev)); ops.push(['put', k, clone(prev)]);
+    }
+    return ops;
+  }
 
   /* documents in the active profile */
   function get(path) { const k = full(path); return mem.has(k) ? clone(mem.get(k)) : null; }
@@ -206,8 +222,8 @@ window.MB = window.MB || {};
     colls.forEach(c => (collL[c] || []).forEach(cb => cb(list(c))));
   }
   function setDoc(path, data) {
-    const d = stamped(data); mem.set(full(path), d);
-    const pr = commit([['put', full(path), clone(d)], ...outbox([[path, { deleted: false, updatedAt: d.updatedAt || null }]])]).catch(onError);
+    const bops = baseOps([path]), d = stamped(data); mem.set(full(path), d);
+    const pr = commit([['put', full(path), clone(d)], ...bops, ...outbox([[path, { deleted: false, updatedAt: d.updatedAt || null }]])]).catch(onError);
     notify([path]); local([path]);
     return pr;
   }
@@ -218,10 +234,10 @@ window.MB = window.MB || {};
     return pr;
   }
   function bulk(ops) {
-    const ups = (ops.upserts || []).map(([p, d]) => [p, stamped(d)]), dels = ops.deletes || [], at = stamp();
+    const ups = (ops.upserts || []).map(([p, d]) => [p, stamped(d)]), dels = ops.deletes || [], at = stamp(), bops = baseOps(ups.map(x => x[0]));
     dels.forEach(p => mem.delete(full(p))); ups.forEach(([p, d]) => mem.set(full(p), d));
     const entries = [...dels.map(p => [p, { deleted: true, updatedAt: at }]), ...ups.map(([p, d]) => [p, { deleted: false, updatedAt: d.updatedAt || null }])];
-    const pr = commit([...dels.map(p => ['del', full(p)]), ...ups.map(([p, d]) => ['put', full(p), clone(d)]), ...outbox(entries)]).catch(onError);
+    const pr = commit([...dels.map(p => ['del', full(p)]), ...ups.map(([p, d]) => ['put', full(p), clone(d)]), ...bops, ...outbox(entries)]).catch(onError);
     const paths = [...dels, ...ups.map(x => x[0])];
     notify(paths); local(paths);
     return pr;
@@ -231,7 +247,7 @@ window.MB = window.MB || {};
   function refresh() { Object.keys(docL).forEach(p => docL[p].forEach(cb => cb(get(p)))); Object.keys(collL).forEach(c => collL[c].forEach(cb => cb(list(c)))); }
   /* erasing unlinks first and never uploads deletions: the cloud copy stays */
   async function eraseProfile() {
-    const prefix = full(''); const dels = [syncKey(pid), ...[...mem.keys()].filter(k => k.startsWith(prefix))];
+    const prefix = full(''), bases = baseKey(pid, ''); const dels = [syncKey(pid), ...[...mem.keys()].filter(k => k.startsWith(prefix) || k.startsWith(bases))];
     dels.forEach(k => mem.delete(k));
     await commit(dels.map(k => ['del', k])).catch(onError);
     refresh();
@@ -260,21 +276,45 @@ window.MB = window.MB || {};
     mem.set(syncKey(id), clone(meta));
     await commit([['put', syncKey(id), meta]]);
   }
-  async function syncUnlink(id = pid) { mem.delete(syncKey(id)); await commit([['del', syncKey(id)]]); }
+  async function syncUnlink(id = pid) { const dels = [syncKey(id), ...[...mem.keys()].filter(k => k.startsWith(baseKey(id, '')))]; dels.forEach(k => mem.delete(k)); await commit(dels.map(k => ['del', k])); }
+  /* uploaded: those edits are the server's copy now, so their bases go */
+  async function dropBases(id, paths) {
+    const ks = paths.map(p => baseKey(id, p)).filter(k => mem.has(k)); if (!ks.length) return;
+    ks.forEach(k => mem.delete(k)); await commit(ks.map(k => ['del', k])).catch(onError);
+  }
   /* current bodies, read from storage so a write from another tab is never missed */
   async function readDocs(id, paths) {
     const prefix = `p/${id}/`, got = await backend.get(paths.map(p => prefix + p)), out = new Map();
     for (const p of paths) if (got.has(prefix + p)) out.set(p, got.get(prefix + p));
     return out;
   }
-  /* Pulled changes, written without touching the outbox. A change applies only when it is newer than the local document
-     (or there is none) and newer than a local change still waiting to upload. Tombstones delete. Returns changed paths. */
-  async function applyRemote(changes, id = pid) {
-    const meta = await syncRead(id), waiting = (meta && meta.outbox) || {}, changed = new Set(), ops = [];
+  /* Pulled changes, written without touching the outbox. A change applies when it is newer than the local document (or
+     there is none). When the document also has a local edit waiting to upload, both edits are kept: a day or the setup is
+     merged against its base (entry by entry) and queued again; any other document keeps the newer copy, and a newer local
+     one is queued again. Tombstones delete unless a newer local edit waits. Returns changed paths. */
+  async function applyRemote(changes, id = pid, sent) {
+    const meta = await syncRead(id), waiting = (meta && meta.outbox) || {}, changed = new Set(), ops = [], requeue = {};
+    /* this device's own upload coming back (edited again since): not a conflict, but the new base */
+    const mine = c => !!sent && sent.has(c.path) && ms(sent.get(c.path)) === c.updatedAt;
+    const valid = c => c && typeof c.path === 'string' && typeof c.updatedAt === 'number' && (c.deleted || isDoc(c.doc));
+    const both = (changes || []).filter(c => valid(c) && !c.deleted && waiting[c.path] && !waiting[c.path].deleted && ms(waiting[c.path].updatedAt) !== c.updatedAt && !mine(c));
+    const bases = both.some(c => mergeable(c.path)) ? await backend.get(both.filter(c => mergeable(c.path)).map(c => baseKey(id, c.path))) : new Map();
     for (const c of changes || []) {
-      if (!c || typeof c.path !== 'string' || typeof c.updatedAt !== 'number') continue;
-      if (!c.deleted && !isDoc(c.doc)) continue;
-      if (waiting[c.path] && ms(waiting[c.path].updatedAt) >= c.updatedAt) continue;
+      if (!valid(c)) continue;
+      const w = waiting[c.path], remote = c.deleted ? null : { ...c.doc, updatedAt: new Date(c.updatedAt).toISOString() };
+      if (both.includes(c)) {
+        const at = stamp(), k = `p/${id}/${c.path}`;
+        if (mergeable(c.path)) {
+          const base = bases.has(baseKey(id, c.path)) ? bases.get(baseKey(id, c.path)) : null;
+          ops.push(['merge', k, cur => { changed.add(c.path); return cur === undefined ? remote : { ...MB.schema.mergeDoc(c.path, base, cur, remote), updatedAt: at }; }], ['put', baseKey(id, c.path), remote]);
+          requeue[c.path] = at;
+        } else if (ms(w.updatedAt) > c.updatedAt) {
+          ops.push(['merge', k, cur => cur === undefined ? cur : { ...cur, updatedAt: at }]); requeue[c.path] = at;
+        } else ops.push(['merge', k, () => { changed.add(c.path); return remote; }]);
+        continue;
+      }
+      if (mine(c) && w && ms(w.updatedAt) !== c.updatedAt && mergeable(c.path)) { ops.push(['put', baseKey(id, c.path), remote]); mem.set(baseKey(id, c.path), clone(remote)); continue; }
+      if (w && ms(w.updatedAt) >= c.updatedAt) continue;
       ops.push(['merge', `p/${id}/${c.path}`, cur => {
         if (cur !== undefined && ms(cur.updatedAt) >= c.updatedAt) return cur;
         if (c.deleted) { if (cur !== undefined) changed.add(c.path); return undefined; }
@@ -283,7 +323,10 @@ window.MB = window.MB || {};
       }]);
     }
     if (!ops.length) return [];
+    const again = Object.entries(requeue);
+    if (again.length) ops.push(['merge', syncKey(id), m => { if (!m || !m.key) return m; const next = { ...m, outbox: { ...(m.outbox || {}) } }; for (const [p, at] of again) next.outbox[p] = { deleted: false, updatedAt: at }; return next; }]);
     await commit(ops);
+    for (const [p] of again) { const k = baseKey(id, p), b = both.find(c => c.path === p); if (b && mergeable(p)) mem.set(k, { ...b.doc, updatedAt: new Date(b.updatedAt).toISOString() }); }
     const paths = [...changed];
     if (id === pid && paths.length) notify(paths);
     return paths;
@@ -291,7 +334,7 @@ window.MB = window.MB || {};
 
   const api = { init, kind: () => kind, get, list, query, setDoc, deleteDoc, bulk, subscribeDoc, subscribeColl, refresh, eraseProfile, count, getMeta, setMeta: writeMeta,
     profiles, currentProfile, setProfile, addProfile, renameProfile, deleteProfile, stamp,
-    syncMeta, syncRead, syncUpdate, syncLink, syncUnlink, readDocs, applyRemote,
+    syncMeta, syncRead, syncUpdate, syncLink, syncUnlink, readDocs, applyRemote, dropBases,
     onerror: null, onlocal: null, onexternal: null };
   migratePrefs(); /* runs before boot reads the theme and language */
   MB.store = api;

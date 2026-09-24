@@ -15,7 +15,7 @@ describe('boot', () => {
     const tab = await openTab();
     expect(tab.document.title).toBe('Tally');
     expect(tab.text('.brand-name')).toBe('Tally');
-    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.3.0' });
+    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.4.0' });
     expect(tab.window.location.hash).toBe('#start');
     expect(await dbNames(tab.device.idb)).toEqual(['tally']);
     expect(tab.errors).toEqual([]);

@@ -5,8 +5,8 @@ import { describe, it, expect } from 'vitest';
 const INVITE = 'test-invite';
 const KEY_RE = /^tly-(?:[A-Z2-7]{4}-){6}[A-Z2-7]{2}$/;
 
-function call(method, path, { key, body, raw, format = '5' } = {}) {
-  const headers = { ...(key ? { authorization: 'Bearer ' + key } : {}), ...(format ? { 'x-tally-format': format } : {}) };
+function call(method, path, { key, body, raw, format = '5', protocol = '2' } = {}) {
+  const headers = { ...(key ? { authorization: 'Bearer ' + key } : {}), ...(format ? { 'x-tally-format': format } : {}), ...(protocol ? { 'x-tally-sync': protocol } : {}) };
   return exports.default.fetch(new Request('https://tally.test' + path, { method, headers, body: raw != null ? raw : body != null ? JSON.stringify(body) : undefined, redirect: 'manual' }));
 }
 async function newVault() {
@@ -80,7 +80,27 @@ describe('sync', () => {
       expect(r.status, String(format)).toBe(426);
       expect((await r.json()).error).toMatch(/update/);
     }
+    /* 2.3.0 spoke format 5 but not sync protocol 2: it could not merge, so it must reload first */
+    for (const protocol of [null, '1']) expect((await call('POST', '/api/sync', { key, protocol, body: { cursor: 0, changes: [] } })).status, String(protocol)).toBe(426);
     expect((await pullAll(key)).changes).toEqual([]);
+  });
+
+  it('refuses a copy from a device that has not seen the latest version, and lists it in rejected', async () => {
+    const key = await newVault(), p = 'days/2026-09-05';
+    const a = await sync(key, 0, [put(p, { meals: ['a'] }, T)]); /* device A */
+    expect(a.rejected).toEqual([]);
+    /* device B never pulled A's copy (cursor 0): its newer copy is refused and A's comes back to merge */
+    const b = await sync(key, 0, [put(p, { meals: ['b'] }, T + 1000)]);
+    expect(b.rejected).toEqual([p]);
+    expect(b.changes).toMatchObject([{ path: p, doc: { meals: ['a'] }, seq: 1 }]);
+    /* with that version seen, the merged copy goes in */
+    const merged = await sync(key, b.cursor, [put(p, { meals: ['a', 'b'] }, T + 2000)]);
+    expect(merged.rejected).toEqual([]);
+    expect((await pullAll(key)).changes).toMatchObject([{ path: p, doc: { meals: ['a', 'b'] } }]);
+    /* deletes are never refused */
+    const gone = await sync(key, 0, [del(p, T + 3000)]);
+    expect(gone.rejected).toEqual([]);
+    expect((await pullAll(key)).changes).toMatchObject([{ path: p, deleted: true }]);
   });
 
   it('push then pull, from the same and another device', async () => {
@@ -135,9 +155,9 @@ describe('sync', () => {
     await sync(key, 0, [put(p, { name: 'Gone' }, T)]);
     await sync(key, 0, [del(p, T + 1000)]);
     expect((await pullAll(key)).changes).toEqual([{ path: p, updatedAt: T + 1000, deleted: true, seq: 2, doc: null }]);
-    await sync(key, 0, [put(p, { name: 'Stale copy' }, T + 500)]);
+    await sync(key, 2, [put(p, { name: 'Stale copy' }, T + 500)]);
     expect((await pullAll(key)).changes).toMatchObject([{ path: p, deleted: true, doc: null }]);
-    await sync(key, 0, [put(p, { name: 'Recreated' }, T + 2000)]);
+    await sync(key, 2, [put(p, { name: 'Recreated' }, T + 2000)]);
     expect((await pullAll(key)).changes).toMatchObject([{ path: p, deleted: false, doc: { name: 'Recreated' } }]);
   });
 

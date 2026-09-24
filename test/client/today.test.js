@@ -197,6 +197,8 @@ describe('Today: the day in time order', () => {
     expect(JSON.parse(tab.window.localStorage.getItem('tally:open'))).toMatchObject({ long: true });
     tab.$('#cl-long .cl-head').click();
     expect(body().classList.contains('hidden')).toBe(true);
+    /* the plan card shows the whole day after a tap when the day is long */
+    if (!tab.$$('#c-plan .tl-row').some(r => r.textContent.includes('Long list'))) tab.$('#c-plan .tl-more').click();
     tab.$$('#c-plan .tl-row').find(r => r.textContent.includes('Long list')).click();
     expect(body().classList.contains('hidden')).toBe(false);
     expect(tab.$('.sheet')).toBeNull();

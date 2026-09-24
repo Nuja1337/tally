@@ -33,7 +33,7 @@ MB.i18n.add('zh', {
   "f.category": "分类", "f.csv": "导出 CSV", "f.count": "{n} / {m}", "f.noMatch": "没有匹配的食物。", "f.empty": "表格为空。添加食物或加载示例档案。",
   "f.logTo": "记录到{date}", "f.logIt": "记录", "f.editFood": "编辑食物", "f.note": "备注", "f.added": "已添加 {name}", "f.updated": "已更新 {name}", "f.deleted": "已删除 {name}",
   "f.servingPh": "如 100 g、1 杯、1 勺", "f.all": "全部",
-  "s.title": "设置", "s.profile": "档案", "s.unit": "体重单位", "s.lb": "磅 (lb)", "s.kg": "千克 (kg)", "s.targets": "每日目标", "s.calories": "热量 (kcal)",
+  "s.title": "设置", "s.profile": "档案", "s.targets": "每日目标", "s.calories": "热量 (kcal)",
   "s.proteinG": "蛋白质 (g)", "s.carbsG": "碳水 (g)，可选", "s.fatG": "脂肪 (g)，可选", "s.goal": "目标", "s.goalWeight": "目标体重 ({u})", "s.goalBf": "目标体脂 (%)",
   "s.goalNote": "备注", "s.slots": "每日餐次", "s.slotName": "名称", "s.addSlot": "添加餐次", "s.habits": "每日习惯", "s.habit": "习惯", "s.target": "次数", "s.habitUnit": "单位",
   "s.habitsSub": "喝水、步数等可设定次数", "s.addHabit": "添加习惯", "s.routines": "例程", "s.routinesSub": "每日清单：热身、康复、活动度",
@@ -42,13 +42,12 @@ MB.i18n.add('zh', {
   "s.schedule": "每周安排", "s.addTypesFirst": "请先添加训练项目",
 
 
-
   "s.app": "应用", "s.language": "语言", "s.theme": "主题", "s.followDevice": "跟随设备", "s.light": "浅色", "s.dark": "深色",
   "s.profiles": "档案", "s.profilesSub": "在本设备上分开记录", "s.addProfile": "添加档案", "s.rename": "重命名", "s.switch": "切换", "s.current": "当前",
   "s.deleteProfile": "删除档案", "s.deleteProfileConfirm": "删除“{name}”及其中的所有记录？", "s.profileName": "档案名称",
   "s.data": "你的数据", "s.storedIn": "保存在此浏览器中（{kind}）。除非导出，数据不会离开设备。", "s.export": "导出", "s.import": "导入",
   "s.erase": "清除此档案", "s.eraseConfirm": "删除此档案的设置、食物、已保存的餐和所有记录的日子？如需副本，请先导出。", "s.eraseBtn": "清除",
-  "s.erased": "已清除", "s.unsaved": "有未保存的更改", "s.converted": "已将 {n} 条体重换算为 {u}",
+  "s.erased": "已清除", "s.unsaved": "有未保存的更改",
   "e.title": "导出", "e.scope": "导出内容", "e.everything": "全部", "e.setup": "设置、食物和已保存的餐", "e.since": "某日起", "e.file": "下载文件",
   "e.share": "分享", "e.copy": "复制 JSON", "e.copied": "已复制到剪贴板", "e.copyFailed": "无法复制", "e.summary": "{days} 天 · {foods} 种食物 · {templates} 个已保存的餐",
   "i.title": "导入", "i.mode": "模式", "i.merge": "合并", "i.replace": "替换", "i.remove": "移除",
@@ -239,8 +238,8 @@ MB.i18n.add('zh', {
   "pk.fatlossSub": "热量上限、蛋白质、步数、蔬菜、称重和腰围。", "pk.recovery": "恢复", "pk.stepsUnit": "步",
   "pk.soreness": "酸痛", "pk.energy": "精力", "pk.restingHr": "静息心率",
   "pk.bpm": "bpm", "pk.veggies": "蔬菜", "pk.servings": "份",
-  "pk.noLate": "不吃夜宵", "pk.in": "cm", "pk.distance": "距离",
-  "pk.dist": "km", "pk.bjjKind": "BJJ", "pk.rounds": "回合",
+  "pk.noLate": "不吃夜宵", "pk.distance": "距离",
+  "pk.bjjKind": "BJJ", "pk.rounds": "回合",
   "pk.focus": "重点", "pk.running": "跑步", "pk.pace": "配速",
   "pk.class": "巴西柔术课", "pk.openMat": "自由练习", "pk.easyRun": "轻松跑",
   "pk.intervals": "间歇跑", "pk.longRun": "长距离跑", "pk.fullA": "全身 A",
@@ -313,4 +312,34 @@ MB.i18n.add('zh', {
   "sec.events": "事件",
   "p.now": "现在",
   "p.leanFat": "瘦体重 / 脂肪({u})"
+});
+
+/* 2.4: units, day start, workout logging, quick add, workout fields */
+MB.i18n.add('zh', {
+  "s.units": "单位",
+  "s.sys.us": "美制 (lb, in, mi)",
+  "s.sys.metric": "公制 (kg, cm, km)",
+  "s.unitsHelp": "切换时会换算体重、负重,以及以 lb、in、mi、fl oz 或 °F 记录的追踪项和字段。",
+  "s.dayStart": "一天开始于",
+  "s.dayStartHelp": "午夜后到此时间前的记录都算前一天。",
+  "s.midnight": "午夜",
+  "s.convertedSys": "已将 {n} 天换算为{u}",
+  "t.repeat": "同上次",
+  "t.fillAll": "按上次填写",
+  "t.startRest": "开始休息计时",
+  "t.restLeft": "休息 {t} · 点按停止",
+  "t.restDone": "休息结束",
+  "pl.logSets": "记录组数",
+  "pl.logSetsHelp": "热身和放松可关闭:保留在训练中,但不进入记录。",
+  "pl.notLogged": "不记录",
+  "t.wholeDay": "全天({n})",
+  "t.showLess": "收起",
+  "q.title": "快速添加",
+  "q.note": "备注",
+  "p.card.fields": "训练字段",
+  "p.fieldsTitle": "训练字段",
+  "p.totalV": "合计 {v}",
+  "p.sessionsN": "{n} 次",
+  "p.noValues": "暂无记录。",
+  "p.effortShort": "强度"
 });

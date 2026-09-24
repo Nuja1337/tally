@@ -33,7 +33,7 @@ MB.i18n.add('pt', {
   "f.category": "Categoria", "f.csv": "Exportar CSV", "f.count": "{n} de {m}", "f.noMatch": "Nenhum alimento encontrado.", "f.empty": "A tabela está vazia. Adicione um alimento ou carregue o perfil de exemplo.",
   "f.logTo": "Registrar em {date}", "f.logIt": "Registrar", "f.editFood": "Editar alimento", "f.note": "Nota", "f.added": "Adicionado: {name}", "f.updated": "Atualizado: {name}", "f.deleted": "Excluído: {name}",
   "f.servingPh": "ex.: 100 g, 1 xícara, 1 scoop", "f.all": "Todos",
-  "s.title": "Ajustes", "s.profile": "Perfil", "s.unit": "Unidade de peso", "s.lb": "Libras (lb)", "s.kg": "Quilogramas (kg)", "s.targets": "Metas diárias", "s.calories": "Calorias (kcal)",
+  "s.title": "Ajustes", "s.profile": "Perfil", "s.targets": "Metas diárias", "s.calories": "Calorias (kcal)",
   "s.proteinG": "Proteína (g)", "s.carbsG": "Carbos (g), opcional", "s.fatG": "Gordura (g), opcional", "s.goal": "Meta", "s.goalWeight": "Peso meta ({u})", "s.goalBf": "Gordura corporal meta (%)",
   "s.goalNote": "Nota", "s.slots": "Refeições do dia", "s.slotName": "Nome", "s.addSlot": "Adicionar refeição", "s.habits": "Hábitos diários", "s.habit": "Hábito", "s.target": "Quantidade", "s.habitUnit": "Unidade",
   "s.habitsSub": "Adicione uma quantidade para coisas como água ou passos", "s.addHabit": "Adicionar hábito", "s.routines": "Rotinas", "s.routinesSub": "Listas diárias: aquecimento, fisio, mobilidade",
@@ -42,13 +42,12 @@ MB.i18n.add('pt', {
   "s.schedule": "Agenda semanal", "s.addTypesFirst": "Adicione sessões primeiro",
 
 
-
   "s.app": "App", "s.language": "Idioma", "s.theme": "Tema", "s.followDevice": "Seguir o aparelho", "s.light": "Claro", "s.dark": "Escuro",
   "s.profiles": "Perfis", "s.profilesSub": "Registros separados neste aparelho", "s.addProfile": "Adicionar perfil", "s.rename": "Renomear", "s.switch": "Trocar", "s.current": "Atual",
   "s.deleteProfile": "Excluir perfil", "s.deleteProfileConfirm": "Excluir \"{name}\" e tudo o que foi registrado nele?", "s.profileName": "Nome do perfil",
   "s.data": "Seus dados", "s.storedIn": "Guardados neste navegador ({kind}). Nada sai do seu aparelho a menos que você exporte.", "s.export": "Exportar", "s.import": "Importar",
   "s.erase": "Apagar este perfil", "s.eraseConfirm": "Excluir os ajustes, alimentos, refeições salvas e todos os dias registrados deste perfil? Exporte antes se quiser uma cópia.", "s.eraseBtn": "Apagar",
-  "s.erased": "Apagado", "s.unsaved": "Alterações não salvas", "s.converted": "{n} pesos convertidos para {u}",
+  "s.erased": "Apagado", "s.unsaved": "Alterações não salvas",
   "e.title": "Exportar", "e.scope": "O que exportar", "e.everything": "Tudo", "e.setup": "Ajustes, alimentos e refeições salvas", "e.since": "Dias desde", "e.file": "Baixar arquivo",
   "e.share": "Compartilhar", "e.copy": "Copiar JSON", "e.copied": "Copiado para a área de transferência", "e.copyFailed": "Não foi possível copiar", "e.summary": "{days} dias · {foods} alimentos · {templates} refeições salvas",
   "i.title": "Importar", "i.mode": "Modo", "i.merge": "Mesclar", "i.replace": "Substituir", "i.remove": "Remover",
@@ -239,8 +238,8 @@ MB.i18n.add('pt', {
   "pk.fatlossSub": "Um limite de calorias, proteína, passos, vegetais, pesagens e cintura.", "pk.recovery": "Recuperação", "pk.stepsUnit": "passos",
   "pk.soreness": "Dor muscular", "pk.energy": "Energia", "pk.restingHr": "Frequência cardíaca em repouso",
   "pk.bpm": "bpm", "pk.veggies": "Vegetais", "pk.servings": "porções",
-  "pk.noLate": "Sem lanche à noite", "pk.in": "cm", "pk.distance": "Distância",
-  "pk.dist": "km", "pk.bjjKind": "BJJ", "pk.rounds": "Rounds",
+  "pk.noLate": "Sem lanche à noite", "pk.distance": "Distância",
+  "pk.bjjKind": "BJJ", "pk.rounds": "Rounds",
   "pk.focus": "Foco", "pk.running": "Corrida", "pk.pace": "Ritmo",
   "pk.class": "Aula de jiu-jitsu", "pk.openMat": "Treino livre", "pk.easyRun": "Corrida leve",
   "pk.intervals": "Intervalado", "pk.longRun": "Corrida longa", "pk.fullA": "Corpo inteiro A",
@@ -313,4 +312,34 @@ MB.i18n.add('pt', {
   "sec.events": "Eventos",
   "p.now": "Agora",
   "p.leanFat": "Magra / gordura ({u})"
+});
+
+/* 2.4: units, day start, workout logging, quick add, workout fields */
+MB.i18n.add('pt', {
+  "s.units": "Unidades",
+  "s.sys.us": "EUA (lb, in, mi)",
+  "s.sys.metric": "Métrico (kg, cm, km)",
+  "s.unitsHelp": "Mudar converte pesos, cargas e qualquer registro ou campo em lb, in, mi, fl oz ou °F.",
+  "s.dayStart": "O dia começa às",
+  "s.dayStartHelp": "O que você registra depois da meia-noite conta para o dia anterior até esse horário.",
+  "s.midnight": "Meia-noite",
+  "s.convertedSys": "{n} dias convertidos para {u}",
+  "t.repeat": "Igual à última vez",
+  "t.fillAll": "Preencher com a última vez",
+  "t.startRest": "Iniciar descanso",
+  "t.restLeft": "Descanso {t} · toque para parar",
+  "t.restDone": "Descanso concluído",
+  "pl.logSets": "Registrar séries",
+  "pl.logSetsHelp": "Desmarque para aquecimento e desaquecimento: ficam no treino, mas não no registro.",
+  "pl.notLogged": "não registrado",
+  "t.wholeDay": "Dia inteiro ({n})",
+  "t.showLess": "Mostrar menos",
+  "q.title": "Adicionar rápido",
+  "q.note": "Nota",
+  "p.card.fields": "Campos de treino",
+  "p.fieldsTitle": "Campos de treino",
+  "p.totalV": "total {v}",
+  "p.sessionsN": "{n} sessões",
+  "p.noValues": "Nada registrado ainda.",
+  "p.effortShort": "Esforço"
 });

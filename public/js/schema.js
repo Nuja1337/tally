@@ -2,7 +2,7 @@
 window.MB = window.MB || {};
 (() => {
   'use strict';
-  MB.APP = { id: 'tally', name: 'Tally', version: '2.3.0' };
+  MB.APP = { id: 'tally', name: 'Tally', version: '2.4.0' };
   const { uid, clone, num, slug, isDate } = MB.ui;
   const VERSION = 5;
   const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
@@ -23,10 +23,28 @@ window.MB = window.MB || {};
   /* colors a session kind or tag can take; kinds without one get the next unused color in this order */
   const KIND_COLORS = ['blue', 'violet', 'teal', 'orange', 'pink', 'gold', 'slate', 'olive'];
   /* Progress cards a profile can hide ('body' is the goal card) */
-  const PROGRESS_CARDS = ['nutrition', 'weight', 'training', 'habits', 'trackers', 'tags', 'events', 'body'];
+  const PROGRESS_CARDS = ['nutrition', 'weight', 'training', 'fields', 'habits', 'trackers', 'tags', 'events', 'body'];
+  /* Units: US (lb, in, mi, fl oz, °F) or metric (kg, cm, km, ml, °C). Bodyweight and set loads follow the system; a tracker
+     or category field whose unit names one of these converts with it. [US, metric, factor, decimals to metric, decimals to US] */
+  const SYSTEMS = ['us', 'metric'];
+  const UNIT_PAIRS = [['lb', 'kg', 0.45359237, 1, 1], ['in', 'cm', 2.54, 1, 1], ['mi', 'km', 1.609344, 2, 2], ['fl oz', 'ml', 29.5735, 0, 1]];
+  const roundTo = (x, dp) => { const k = Math.pow(10, dp); return Math.round(x * k) / k; };
+  /* the device's region: US, Liberia and Myanmar use US units; plain English counts as US too */
+  const defaultSystem = () => { try { const l = String((navigator.languages && navigator.languages[0]) || navigator.language || 'en'); return /-(US|LR|MM)\b/i.test(l) || /^en$/i.test(l) ? 'us' : 'metric'; } catch (e) { return 'us'; } };
+  /* a value in a unit, moved to the other system: { unit, v }, or null when the unit is not one that converts */
+  function convertUnit(v, unit, to) {
+    const lu = String(unit || '').trim().toLowerCase(), val = x => x == null || x === '' || !Number.isFinite(+x) ? x : null;
+    for (const [us, m, k, dm, du] of UNIT_PAIRS) {
+      if (to === 'metric' && lu === us) return { unit: m, v: val(v) !== null ? v : roundTo(+v * k, dm) };
+      if (to === 'us' && lu === m) return { unit: us, v: val(v) !== null ? v : roundTo(+v / k, du) };
+    }
+    if (to === 'metric' && (lu === '°f' || lu === 'f')) return { unit: '°C', v: val(v) !== null ? v : roundTo((+v - 32) * 5 / 9, 1) };
+    if (to === 'us' && (lu === '°c' || lu === 'c')) return { unit: '°F', v: val(v) !== null ? v : roundTo(+v * 9 / 5 + 32, 1) };
+    return null;
+  }
 
   const DEFAULT_SETTINGS = {
-    name: '', units: { weight: 'lb' },
+    name: '', units: { system: 'us', weight: 'lb' }, dayStart: '00:00',
     targets: { kcal: 2000, protein: 150, carbs: 0, fat: 0, aim: { ...DEFAULT_AIM } },
     nutrients: [],
     goal: { weight: null, bodyFat: null, note: '', band: null, milestones: [] },
@@ -162,7 +180,11 @@ window.MB = window.MB || {};
     d = isObj(d) ? d : {};
     const s = clone(DEFAULT_SETTINGS);
     if (typeof d.name === 'string') s.name = d.name;
-    if (isObj(d.units) && (d.units.weight === 'kg' || d.units.weight === 'lb')) s.units.weight = d.units.weight;
+    /* the system; files from before it had only a weight unit */
+    const sys = isObj(d.units) && SYSTEMS.includes(d.units.system) ? d.units.system : isObj(d.units) && (d.units.weight === 'kg' || d.units.weight === 'lb') ? (d.units.weight === 'kg' ? 'metric' : 'us') : defaultSystem();
+    s.units = { system: sys, weight: sys === 'metric' ? 'kg' : 'lb' };
+    /* when a new day begins: logging after midnight still counts for the day before until then (up to 6:00) */
+    if (isTime(d.dayStart) && hm(padT(d.dayStart)) <= 360) s.dayStart = padT(d.dayStart);
     if (isObj(d.targets)) {
       for (const k of ['kcal', 'protein', 'carbs', 'fat']) if (d.targets[k] != null) s.targets[k] = num(d.targets[k]);
       if (isObj(d.targets.aim)) for (const k of Object.keys(DEFAULT_AIM)) if (AIMS.includes(d.targets.aim[k])) s.targets.aim[k] = d.targets.aim[k];
@@ -190,7 +212,7 @@ window.MB = window.MB || {};
       fields: ensureIds(named(k.fields)).map(f => ({ id: f.id, name: f.name, type: FIELD_TYPES.includes(f.type) ? f.type : 'number', unit: f.type === 'number' || !FIELD_TYPES.includes(f.type) ? String(f.unit || '') : '' })) }));
     if (Array.isArray(d.sessionTypes)) s.sessionTypes = ensureIds(named(d.sessionTypes)).map(t => ({ id: t.id, name: t.name,
       kind: t.kind ? String(t.kind) : (s.sessionKinds[0] ? s.sessionKinds[0].id : ''), minutes: num(t.minutes), kcal: num(t.kcal), note: String(t.note || ''),
-      plan: Array.isArray(t.plan) ? ensureIds(t.plan.filter(isObj).map(b => ({ ...b, name: b.label || b.name || 'block' })), 'name').map(b => ({ id: b.id, label: String(b.label || b.name || ''), note: String(b.note || ''),
+      plan: Array.isArray(t.plan) ? ensureIds(t.plan.filter(isObj).map(b => ({ ...b, name: b.label || b.name || 'block' })), 'name').map(b => ({ id: b.id, label: String(b.label || b.name || ''), note: String(b.note || ''), log: b.log !== false,
         items: ensureIds((Array.isArray(b.items) ? b.items : []).filter(isObj).map(it => { const ex = resolveExercise(it.exerciseId || it.exercise, s.exercises); const name = String(it.name || (ex ? ex.name : it.exercise || '')).trim(); return { ...it, name }; }).filter(it => it.name), 'name')
           .map(it => { const ex = resolveExercise(it.exerciseId || it.exercise, s.exercises); return { id: it.id, exerciseId: ex ? ex.id : '', name: it.name, sets: Math.max(0, Math.round(num(it.sets))), reps: String(it.reps == null ? '' : it.reps), perSide: it.perSide == null ? !!(ex && ex.perSide) : !!it.perSide, rir: String(it.rir == null ? '' : it.rir), rest: String(it.rest || ''), note: String(it.note || '') }; }) })) : [] }));
     for (const t of s.sessionTypes) if (t.kind && !s.sessionKinds.some(k => k.id === t.kind)) s.sessionKinds.push({ id: t.kind, name: t.kind.charAt(0).toUpperCase() + t.kind.slice(1), color: '', fields: [] });
@@ -319,6 +341,47 @@ window.MB = window.MB || {};
       ...snap.calendar.filter(b => byId(cur.sessionTypes, b.typeId)).map(b => ({ ...b, kind: 'session', title: '', note: '', routineId: '', slotId: '' }))];
     return out;
   }
+  /* ---------- two edits of one document (sync) ---------- */
+  /* A day or the setup changed on two devices since they last synced: merge them against that last synced copy (base).
+     Per key and per list item (by id): a side that left it as it was takes the other side's; both changed it, the newer
+     document's value wins (remoteWins); removed on one side and untouched on the other, it goes. Lists of plain strings merge as sets.
+     No base (never synced): the union. */
+  const same = (a, b) => JSON.stringify(a === undefined ? null : a) === JSON.stringify(b === undefined ? null : b);
+  const isIdList = a => Array.isArray(a) && a.every(x => isObj(x) && x.id != null);
+  const isStrList = a => Array.isArray(a) && a.every(x => typeof x === 'string');
+  function merge3(b, l, r, remoteWins) {
+    if (same(l, r)) return l;
+    if (b !== undefined && same(l, b)) return r;
+    if (b !== undefined && same(r, b)) return l;
+    /* added on one side only, with nothing to compare against: keep it */
+    if (b === undefined) { if (l === undefined) return r; if (r === undefined) return l; }
+    if (isIdList(l) && isIdList(r) && (b == null || isIdList(b))) {
+      const bm = new Map((b || []).map(x => [String(x.id), x])), lm = new Map(l.map(x => [String(x.id), x])), rm = new Map(r.map(x => [String(x.id), x])), out = [];
+      const one = id => { const bx = bm.get(id), lx = lm.get(id), rx = rm.get(id);
+        if (bx !== undefined && (!lx || !rx)) { const kept = lx || rx; return kept && !same(kept, bx) ? kept : null; }
+        return !lx ? rx : !rx ? lx : merge3(bx, lx, rx, remoteWins); };
+      for (const x of l) { const v = one(String(x.id)); if (v) out.push(v); }
+      for (const x of r) if (!lm.has(String(x.id))) { const v = one(String(x.id)); if (v) out.push(v); }
+      return out;
+    }
+    if (isStrList(l) && isStrList(r) && (b == null || isStrList(b))) {
+      const bs = new Set(b || []), ls = new Set(l), rs = new Set(r);
+      return [...new Set([...l, ...r])].filter(x => (ls.has(x) && rs.has(x)) || (ls.has(x) && !bs.has(x)) || (rs.has(x) && !bs.has(x)));
+    }
+    if (isObj(l) && isObj(r) && (b == null || isObj(b))) {
+      const out = {}, bb = b || {};
+      for (const k of new Set([...Object.keys(l), ...Object.keys(r)])) { const v = merge3(b == null ? undefined : bb[k], l[k], r[k], remoteWins); if (v !== undefined) out[k] = v; }
+      return out;
+    }
+    return remoteWins ? r : l;
+  }
+  const mergeable = path => path === 'settings/main' || /^days\//.test(path);
+  function mergeDoc(path, base, local, remote) {
+    const newer = !!remote && !!local && String(remote.updatedAt || '') > String(local.updatedAt || '');
+    if (/^days\//.test(path)) { const date = path.slice(5), n = x => x == null ? x : normalizeDay(x, date); return merge3(n(base), n(local), n(remote), newer); }
+    const n = x => x == null ? x : upgradeSettings(x);
+    return merge3(n(base), n(local), n(remote), newer);
+  }
   const gateOpen = (s, gate) => !gate || !gate.id || ((s.gates.find(g => g.id === gate.id) || { current: 1 }).current >= gate.at);
 
   const emptyDay = date => ({ date, values: {}, checks: {}, meals: [], sessions: [], weight: null, tags: [], note: '', updatedAt: null });
@@ -336,6 +399,10 @@ window.MB = window.MB || {};
       const out = { id: String(m.id || uid()), slot: String(m.slot || m.window || ''), name: String(m.name || 'Meal'),
         kcal: num(m.kcal), p: num(m.p != null ? m.p : m.protein), c: num(m.c != null ? m.c : m.carbs), f: num(m.f != null ? m.f : m.fat) };
       const n = numMap(m.n); if (Object.keys(n).length) out.n = n;
+      /* where it came from: a food and how many servings, or a saved meal */
+      if (m.foodId) out.foodId = String(m.foodId);
+      if (m.qty != null && num(m.qty) > 0) out.qty = num(m.qty);
+      if (m.tplId) out.tplId = String(m.tplId);
       return out;
     });
     if (Array.isArray(d.sessions)) e.sessions = d.sessions.filter(isObj).map(s => {
@@ -595,9 +662,11 @@ window.MB = window.MB || {};
      categories with fields, workouts, a week, targets and tags for one kind of person. */
   const PACKS = ['general', 'bjj', 'runner', 'fatloss'];
   const addMin = (hhmm, n) => { const m = (hm(hhmm) + n) % 1440; return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'); };
-  function starterProfile(pack) {
+  function starterProfile(pack, system) {
     const { t } = MB.i18n;
     pack = PACKS.includes(pack) ? pack : 'general';
+    system = SYSTEMS.includes(system) ? system : defaultSystem();
+    const US = system === 'us', LEN = US ? 'in' : 'cm', DIST = US ? 'mi' : 'km';
     const ex = (id, key, extra) => ({ id, name: t('ex.' + key), image: demoImage(t('ex.' + key)), video: demoVideo(t('ex.' + key)), ...(extra || {}) });
     const T = (id, name, type, group, extra) => ({ id, name, type, group, ...(extra || {}) });
     const B = (id, days, start, end, kind, extra) => ({ id, days, start, end, kind, ...(extra || {}) });
@@ -617,15 +686,15 @@ window.MB = window.MB || {};
       veggies: T('veggies', t('pk.veggies'), 'count', 'habits', { target: 5, unit: t('pk.servings') }),
       noLate: T('no-late-snacks', t('pk.noLate'), 'check', 'habits'),
       weight: extra => T('weight', t('m.weight'), 'weight', 'body', extra),
-      waist: extra => T('m_waist', t('m.waist'), 'number', 'body', { unit: t('pk.in'), freq: 'any', ...(extra || {}) }),
+      waist: extra => T('m_waist', t('m.waist'), 'number', 'body', { unit: LEN, freq: 'any', ...(extra || {}) }),
       bodyFat: T('bodyFat', t('m.bodyFat'), 'number', 'body', { unit: '%', freq: 'any' })
     };
     const kinds = {
       strength: { id: 'strength', name: t('st.strength') },
-      cardio: { id: 'cardio', name: t('st.cardio'), fields: [{ id: 'distance', name: t('pk.distance'), type: 'number', unit: t('pk.dist') }] },
+      cardio: { id: 'cardio', name: t('st.cardio'), fields: [{ id: 'distance', name: t('pk.distance'), type: 'number', unit: DIST }] },
       mobility: { id: 'mobility', name: t('st.mobility') },
       bjj: { id: 'bjj', name: t('pk.bjjKind'), fields: [{ id: 'rounds', name: t('pk.rounds'), type: 'number' }, { id: 'focus', name: t('pk.focus'), type: 'text' }] },
-      run: { id: 'run', name: t('pk.running'), fields: [{ id: 'distance', name: t('pk.distance'), type: 'number', unit: t('pk.dist') }, { id: 'pace', name: t('pk.pace'), type: 'text' }] }
+      run: { id: 'run', name: t('pk.running'), fields: [{ id: 'distance', name: t('pk.distance'), type: 'number', unit: DIST }, { id: 'pace', name: t('pk.pace'), type: 'text' }] }
     };
     const types = {
       upper: { id: 'upper', name: t('st.upper'), kind: 'strength', minutes: 45, kcal: 300, plan: upperPlan },
@@ -672,7 +741,7 @@ window.MB = window.MB || {};
     return {
       app: MB.APP.id, version: VERSION, profile: { name: '' },
       settings: {
-        name: '', units: { weight: 'lb' },
+        name: '', units: { system, weight: US ? 'lb' : 'kg' }, dayStart: '00:00',
         targets: { kcal: P.targets.kcal, protein: P.targets.protein, carbs: P.targets.carbs || 0, fat: 0, aim: { ...DEFAULT_AIM, ...(P.targets.aim || {}) } },
         nutrients: [], goal: { weight: null, bodyFat: null, note: '', band: null, milestones: [] },
         mealSlots: [{ id: 'breakfast', name: t('st.breakfast') }, { id: 'lunch', name: t('st.lunch') }, { id: 'dinner', name: t('st.dinner') }, { id: 'snacks', name: t('st.snacks') }],
@@ -691,8 +760,8 @@ window.MB = window.MB || {};
 
   /* Field reference shown on Get started (English; the README has the same) */
   const DOCS = [
-    { key: 'settings', fields: ['name', 'units.weight', 'targets', 'targets.aim', 'nutrients', 'goal', 'goal.milestones', 'mealSlots', 'groups', 'trackers', 'exercises', 'routines', 'sessionKinds', 'sessionKinds.fields', 'sessionTypes', 'calendar', 'gates', 'wave', 'tags', 'progress.hide'],
-      sample: { units: { weight: 'kg' }, targets: { kcal: 2600, protein: 170, aim: { kcal: 'near', protein: 'min' } }, nutrients: [{ name: 'Fiber', unit: 'g', target: 30, aim: 'min' }],
+    { key: 'settings', fields: ['name', 'units.system', 'dayStart', 'targets', 'targets.aim', 'nutrients', 'goal', 'goal.milestones', 'mealSlots', 'groups', 'trackers', 'exercises', 'routines', 'sessionKinds', 'sessionKinds.fields', 'sessionTypes', 'calendar', 'gates', 'wave', 'tags', 'progress.hide'],
+      sample: { units: { system: 'metric' }, dayStart: '03:00', targets: { kcal: 2600, protein: 170, aim: { kcal: 'near', protein: 'min' } }, nutrients: [{ name: 'Fiber', unit: 'g', target: 30, aim: 'min' }],
         goal: { weight: 78, bodyFat: 12, band: [77, 79], milestones: [{ label: 'Month 4', date: '2027-01-15', weight: 78, bodyFat: 13.5 }] }, mealSlots: ['Breakfast', 'Lunch', 'Dinner'],
         groups: [{ id: 'habits', name: 'Habits' }, { id: 'recovery', name: 'Recovery' }],
         trackers: [{ id: 'water', name: 'Water', type: 'count', target: 8, unit: 'glasses', group: 'habits' }, { name: 'Stretch', type: 'check', freq: 'days', days: ['mon', 'wed', 'fri'], group: 'habits' },
@@ -701,7 +770,7 @@ window.MB = window.MB || {};
         exercises: [{ id: 'push-up', name: 'Push-up', image: 'https://example.com/push-up.gif', video: 'https://youtube.com/...', cues: 'Elbows 45°', perSide: false, gate: { id: 'wrist', at: 3 } }],
         routines: [{ id: 'morning', name: 'Morning mobility', days: ['mon', 'wed', 'fri'], items: [{ name: 'Cat-cow', target: '10' }] }],
         sessionKinds: [{ id: 'bjj', name: 'BJJ', color: 'blue', fields: [{ id: 'rounds', name: 'Rounds', type: 'number' }, { name: 'Focus', type: 'text' }] }, 'Strength'],
-        sessionTypes: [{ id: 'upper', name: 'Upper body', kind: 'strength', minutes: 45, kcal: 300, plan: [{ label: 'A', items: [{ exerciseId: 'push-up', sets: 4, reps: '8-12', rir: '1', rest: '60 s' }] }] }],
+        sessionTypes: [{ id: 'upper', name: 'Upper body', kind: 'strength', minutes: 45, kcal: 300, plan: [{ label: 'Warm-up', log: false, items: [{ exerciseId: 'cat-cow', sets: 1, reps: '10' }] }, { label: 'A', items: [{ exerciseId: 'push-up', sets: 4, reps: '8-12', rir: '1', rest: '60 s' }] }] }],
         calendar: [{ days: ['mon'], start: '07:15', end: '08:00', kind: 'session', typeId: 'upper' }, { days: ['mon', 'tue'], start: '23:00', end: '07:00', kind: 'sleep', title: 'Sleep' }],
         gates: [{ id: 'wrist', name: 'Wrist', stages: ['Phase 1', 'Phase 2', 'Phase 3'], current: 1 }, { id: 'belt', name: 'BJJ belt', stages: ['White', 'Blue', 'Purple', 'Brown', 'Black'], current: 1 }],
         wave: { start: '2026-09-21', pattern: ['ramp', 'ramp', 'full', 'deload'] },
@@ -710,7 +779,7 @@ window.MB = window.MB || {};
     { key: 'templates', fields: ['name', 'slot', 'kcal', 'p', 'c', 'f', 'n'], sample: [{ name: 'Oats and whey', slot: 'breakfast', kcal: 420, p: 34, c: 55, f: 6, n: { fiber: 6 } }] },
     { key: 'days', fields: ['date', 'values', 'checks', 'meals', 'sessions', 'sessions.effort', 'sessions.fields', 'weight', 'tags', 'note'],
       sample: [{ date: '2026-09-01', values: { water: 6, stretch: true, sleep: 450, soreness: 2, m_waist: 84 }, checks: { morning: ['cat-cow'] },
-        meals: [{ slot: 'breakfast', name: 'Oats and whey', kcal: 420, p: 34, c: 55, f: 6, n: { fiber: 6 } }],
+        meals: [{ slot: 'breakfast', name: 'Oats and whey', kcal: 420, p: 34, c: 55, f: 6, n: { fiber: 6 }, tplId: 'oats-and-whey' }, { slot: 'lunch', name: 'Banana ×2', kcal: 210, p: 2.6, c: 54, f: 0.8, foodId: 'banana', qty: 2 }],
         sessions: [{ typeId: 'upper', name: 'Upper body', kind: 'strength', minutes: 45, kcal: 300, effort: 7, sets: [{ ex: 'Push-up', wt: null, reps: 12 }, { ex: 'One-arm row', wt: 50, reps: 10, reps2: 9 }] },
           { name: 'BJJ class', kind: 'bjj', minutes: 90, effort: 8, fields: { rounds: 6, focus: 'Guard retention' } }], weight: 79.4, tags: ['competition'] }] },
     { key: 'events', fields: ['id', 'date', 'end', 'time', 'title', 'tag', 'big', 'offPlan', 'result', 'note'],
@@ -723,7 +792,7 @@ window.MB = window.MB || {};
   ];
   const REMOVE_SAMPLE = { foods: ['banana'], days: ['2026-09-01'], events: ['fall-open'], settings: { trackers: ['water'], exercises: ['plank'], routineItems: { morning: ['cat-cow'] } } };
 
-  MB.schema = { VERSION, DAYS, KINDS, PROGRESS_CARDS, AIMS, DEFAULT_AIM, KIND_COLORS, kindColors, WAVE, UNITS, MEASURES, MEASURE_IDS, CAT_KEYS, DEFAULT_SETTINGS,
+  MB.schema = { VERSION, DAYS, KINDS, PROGRESS_CARDS, SYSTEMS, UNIT_PAIRS, defaultSystem, convertUnit, merge3, mergeable, mergeDoc, AIMS, DEFAULT_AIM, KIND_COLORS, kindColors, WAVE, UNITS, MEASURES, MEASURE_IDS, CAT_KEYS, DEFAULT_SETTINGS,
     TRACKER_TYPES, FREQS, FIELD_TYPES, GRADES, GRADE_VALUE, gradeOf, rateGrade, targetStatus, trackerValue, hasValue, expectedOn, judged, trackerGrade, trackerDone, routineRatio,
     snapshot, normalizeHistory, settingsOn, normalizeSettings, upgradeSettings, isV4Settings, unarchiveUsed, normalizeTracker, normalizeEvent, eventOn, rankToProgression, rankEvents, emptyDay, normalizeDay, normalizeFood, normalizeTemplate,
     isLegacy, migrateLegacy, planImport, exportProfile, convertWeight, TARGETS, DOCS, REMOVE_SAMPLE, PACKS, starterProfile, FOODS, isObj, isTime, blockTitle, hm, duration, blocksFor, plannedFor, waveWeek, gateOpen, resolveExercise, demoImage, demoVideo };

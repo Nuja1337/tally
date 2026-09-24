@@ -698,3 +698,26 @@ ul.facts{margin:10px 0 0}
 .chip:disabled{cursor:default;opacity:.85}
 /* phones: the language picker lives in Settings, so the save status has room next to a profile name */
 @media (max-width:480px){.topbar-actions select.lang{display:none}}
+/* 2.4: small-chart tiles, quick add, rest timer, the plan card's whole-day toggle, bigger small chips */
+.spks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:640px){.spks{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.spk{display:flex;flex-direction:column;align-items:flex-start;gap:1px;min-width:0;padding:10px 12px 8px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--surface2);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.spk:hover{border-color:var(--track2)}
+.spk-name{display:flex;align-items:center;gap:6px;max-width:100%;font-size:12px;font-weight:700;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spk-name .kdot{flex:0 0 8px;width:8px;height:8px}
+.spk b{font-size:17px;font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.spk small{font-size:12px;color:var(--muted)}
+.spk-line{display:block;width:100%;height:34px;margin-top:4px}
+.spk-line svg{display:block;width:100%;height:100%}
+.page.today{padding-bottom:72px}
+.fab{position:fixed;right:16px;bottom:calc(var(--nav-h) + 16px + env(safe-area-inset-bottom));z-index:30;width:56px;height:56px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);font-size:30px;line-height:1;box-shadow:0 6px 18px rgba(0,0,0,.28);cursor:pointer}
+@media (min-width:900px){.fab{right:28px;bottom:28px}}
+.quickw{display:flex;align-items:flex-end;gap:10px;margin-top:12px}
+.quickw .field{flex:1;margin:0}
+.restpill{position:fixed;left:50%;transform:translateX(-50%);white-space:nowrap;bottom:calc(var(--nav-h) + 76px + env(safe-area-inset-bottom));z-index:60;padding:11px 20px;border-radius:999px;border:0;background:var(--ink);color:var(--bg);font:inherit;font-weight:800;font-size:15px;font-variant-numeric:tabular-nums;box-shadow:0 6px 18px rgba(0,0,0,.3);cursor:pointer}
+.restpill.done{background:var(--green);color:#fff}
+.restbtn{margin-left:auto;min-height:30px;font-variant-numeric:tabular-nums}
+.lastline .linkbtn{margin-left:8px;font-size:12px}
+.subhead .fillall{margin-left:10px;font-size:12px;text-transform:none;letter-spacing:0}
+.tl-more{display:block;margin:8px auto 2px;font-size:13px}
+.chip.small{min-height:36px}

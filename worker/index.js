@@ -1,10 +1,13 @@
 /* Tally API. Files in public/ are served as static assets and never reach this code; only /api/* and POST /share do.
    Auth: one random sync key per vault, sent as a bearer token; the server stores only its SHA-256. Creating a vault needs the
    INVITE_CODE secret. Sync: the client pushes changed documents, then pulls every row with seq > cursor. Per document, the
-   newest updatedAt wins; deletes are tombstones. Free-plan budget: at most 42 D1 queries and one SHA-256 per request. */
+   newest updatedAt wins, and a copy is refused when the row changed after the client's cursor (the client has not seen that
+   version yet; it merges and sends again). Refused paths come back in rejected. Deletes are tombstones and are never refused. Free-plan budget: at most 42 D1 queries and one SHA-256 per request. */
 
 /* data format the app must speak to sync; older apps get 426 until they reload */
 const FORMAT = 5;
+/* sync protocol the app must speak: 2 = copies can be refused and the app merges */
+const PROTOCOL = 2;
 const LIMITS = { body: 1024 * 1024, doc: 512 * 1024, changes: 40, page: 200, pageBytes: 2 * 1024 * 1024, path: 300, skewMs: 2 * 60 * 1000 };
 const B32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const PATH_RE = /^[a-z][a-z0-9_-]*\/[^/\u0000-\u001f\u007f]+$/;
@@ -12,7 +15,7 @@ const PATH_RE = /^[a-z][a-z0-9_-]*\/[^/\u0000-\u001f\u007f]+$/;
 const UPSERT = `INSERT INTO docs (vault, path, body, updated_at, deleted, seq)
   VALUES (?1, ?2, ?3, ?4, ?5, (SELECT COALESCE(MAX(seq), 0) + 1 FROM docs WHERE vault = ?1))
   ON CONFLICT (vault, path) DO UPDATE SET body = excluded.body, updated_at = excluded.updated_at, deleted = excluded.deleted, seq = excluded.seq
-  WHERE excluded.updated_at > docs.updated_at`;
+  WHERE excluded.updated_at > docs.updated_at AND (excluded.deleted = 1 OR docs.seq <= ?6)`;
 const PULL = 'SELECT path, body, updated_at, deleted, seq FROM docs WHERE vault = ?1 AND seq > ?2 ORDER BY seq LIMIT ?3';
 
 class HttpError extends Error { constructor(status, message) { super(message); this.status = status; } }
@@ -74,7 +77,7 @@ async function createVault(request, env) {
 }
 
 async function sync(request, env, vault) {
-  if (!(Number(request.headers.get('x-tally-format')) >= FORMAT)) throw new HttpError(426, 'update the app to keep syncing');
+  if (!(Number(request.headers.get('x-tally-format')) >= FORMAT) || !(Number(request.headers.get('x-tally-sync')) >= PROTOCOL)) throw new HttpError(426, 'update the app to keep syncing');
   const body = await readJson(request);
   if (!isObj(body)) throw new HttpError(400, 'expected an object');
   const cursor = body.cursor == null ? 0 : body.cursor;
@@ -87,15 +90,16 @@ async function sync(request, env, vault) {
     if (!isObj(c) || typeof c.path !== 'string' || c.path.length > LIMITS.path || !PATH_RE.test(c.path)) throw new HttpError(400, `change ${i}: invalid path`);
     if (typeof c.updatedAt !== 'number' || !Number.isFinite(c.updatedAt) || c.updatedAt < 0) throw new HttpError(400, `change ${i}: invalid updatedAt`);
     const at = c.updatedAt > now + LIMITS.skewMs ? now : Math.round(c.updatedAt);
-    if (c.deleted === true) return upsert.bind(vault, c.path, null, at, 1);
+    if (c.deleted === true) return upsert.bind(vault, c.path, null, at, 1, cursor);
     if (!isObj(c.doc)) throw new HttpError(400, `change ${i}: doc must be an object`);
     const text = JSON.stringify({ ...c.doc, updatedAt: new Date(at).toISOString() });
     if (text.length > LIMITS.doc || (text.length * 3 > LIMITS.doc && new TextEncoder().encode(text).byteLength > LIMITS.doc)) throw new HttpError(413, `${c.path} is larger than 512 KB`);
-    return upsert.bind(vault, c.path, text, at, 0);
+    return upsert.bind(vault, c.path, text, at, 0, cursor);
   });
   /* one transaction: every write, then the pull, so the page is a consistent snapshot */
   const results = await env.DB.batch([...writes, env.DB.prepare(PULL).bind(vault, cursor, LIMITS.page + 1)]);
   const rows = results[results.length - 1].results;
+  const rejected = changes.map((c, i) => results[i] && results[i].meta && results[i].meta.changes === 0 ? c.path : null).filter(Boolean);
   let more = rows.length > LIMITS.page, bytes = 0;
   const page = [];
   for (const r of rows.slice(0, LIMITS.page)) {
@@ -106,7 +110,7 @@ async function sync(request, env, vault) {
   /* bodies are stored as JSON text; splice them in instead of parsing and re-serializing */
   const items = page.map(r => `{"path":${JSON.stringify(r.path)},"updatedAt":${r.updated_at},"deleted":${r.deleted ? 'true' : 'false'},"seq":${r.seq},"doc":${r.deleted ? 'null' : (r.body || 'null')}}`);
   const next = page.length ? page[page.length - 1].seq : cursor;
-  return json(200, `{"cursor":${next},"more":${more},"serverTime":${now},"changes":[${items.join(',')}]}`);
+  return json(200, `{"cursor":${next},"more":${more},"serverTime":${now},"rejected":${JSON.stringify(rejected)},"changes":[${items.join(',')}]}`);
 }
 
 /* a normal Tally export (format v5), importable as-is */

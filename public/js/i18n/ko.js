@@ -33,7 +33,7 @@ MB.i18n.add('ko', {
   "f.category": "분류", "f.csv": "CSV 내보내기", "f.count": "{n} / {m}", "f.noMatch": "일치하는 음식이 없습니다.", "f.empty": "표가 비어 있습니다. 음식을 추가하거나 예시 프로필을 불러오세요.",
   "f.logTo": "{date}에 기록", "f.logIt": "기록하기", "f.editFood": "음식 편집", "f.note": "메모", "f.added": "{name} 추가됨", "f.updated": "{name} 수정됨", "f.deleted": "{name} 삭제됨",
   "f.servingPh": "예: 100 g, 1컵, 1스쿱", "f.all": "전체",
-  "s.title": "설정", "s.profile": "프로필", "s.unit": "체중 단위", "s.lb": "파운드 (lb)", "s.kg": "킬로그램 (kg)", "s.targets": "일일 목표", "s.calories": "칼로리 (kcal)",
+  "s.title": "설정", "s.profile": "프로필", "s.targets": "일일 목표", "s.calories": "칼로리 (kcal)",
   "s.proteinG": "단백질 (g)", "s.carbsG": "탄수화물 (g), 선택", "s.fatG": "지방 (g), 선택", "s.goal": "목표", "s.goalWeight": "목표 체중 ({u})", "s.goalBf": "목표 체지방 (%)",
   "s.goalNote": "메모", "s.slots": "하루 식사", "s.slotName": "이름", "s.addSlot": "식사 추가", "s.habits": "매일 습관", "s.habit": "습관", "s.target": "횟수", "s.habitUnit": "단위",
   "s.habitsSub": "물이나 걸음 수 같은 항목은 횟수를 설정", "s.addHabit": "습관 추가", "s.routines": "루틴", "s.routinesSub": "매일 체크리스트: 워밍업, 재활, 가동성",
@@ -42,13 +42,12 @@ MB.i18n.add('ko', {
   "s.schedule": "주간 일정", "s.addTypesFirst": "먼저 세션을 추가하세요",
 
 
-
   "s.app": "앱", "s.language": "언어", "s.theme": "테마", "s.followDevice": "기기 설정 따르기", "s.light": "라이트", "s.dark": "다크",
   "s.profiles": "프로필", "s.profilesSub": "이 기기에서 기록을 따로 관리", "s.addProfile": "프로필 추가", "s.rename": "이름 변경", "s.switch": "전환", "s.current": "현재",
   "s.deleteProfile": "프로필 삭제", "s.deleteProfileConfirm": "\"{name}\" 프로필과 그 기록을 모두 삭제할까요?", "s.profileName": "프로필 이름",
   "s.data": "내 데이터", "s.storedIn": "이 브라우저에 저장됩니다 ({kind}). 내보내지 않는 한 기기 밖으로 나가지 않습니다.", "s.export": "내보내기", "s.import": "가져오기",
   "s.erase": "이 프로필 지우기", "s.eraseConfirm": "이 프로필의 설정, 음식, 저장한 식사와 기록한 모든 날을 삭제할까요? 사본이 필요하면 먼저 내보내세요.", "s.eraseBtn": "지우기",
-  "s.erased": "지워졌습니다", "s.unsaved": "저장되지 않은 변경 사항", "s.converted": "체중 {n}건을 {u}로 변환했습니다",
+  "s.erased": "지워졌습니다", "s.unsaved": "저장되지 않은 변경 사항",
   "e.title": "내보내기", "e.scope": "내보낼 항목", "e.everything": "전체", "e.setup": "설정, 음식, 저장한 식사", "e.since": "특정 날짜 이후", "e.file": "파일 다운로드",
   "e.share": "공유", "e.copy": "JSON 복사", "e.copied": "클립보드에 복사됨", "e.copyFailed": "복사할 수 없습니다", "e.summary": "{days}일 · 음식 {foods}개 · 저장한 식사 {templates}개",
   "i.title": "가져오기", "i.mode": "모드", "i.merge": "병합", "i.replace": "교체", "i.remove": "제거",
@@ -239,8 +238,8 @@ MB.i18n.add('ko', {
   "pk.fatlossSub": "칼로리 상한, 단백질, 걸음 수, 채소, 체중 측정, 허리.", "pk.recovery": "회복", "pk.stepsUnit": "걸음",
   "pk.soreness": "근육통", "pk.energy": "에너지", "pk.restingHr": "안정 시 심박수",
   "pk.bpm": "bpm", "pk.veggies": "채소", "pk.servings": "회",
-  "pk.noLate": "야식 안 먹기", "pk.in": "cm", "pk.distance": "거리",
-  "pk.dist": "km", "pk.bjjKind": "BJJ", "pk.rounds": "라운드",
+  "pk.noLate": "야식 안 먹기", "pk.distance": "거리",
+  "pk.bjjKind": "BJJ", "pk.rounds": "라운드",
   "pk.focus": "중점", "pk.running": "달리기", "pk.pace": "페이스",
   "pk.class": "주짓수 수업", "pk.openMat": "오픈 매트", "pk.easyRun": "가벼운 달리기",
   "pk.intervals": "인터벌", "pk.longRun": "장거리 달리기", "pk.fullA": "전신 A",
@@ -313,4 +312,34 @@ MB.i18n.add('ko', {
   "sec.events": "이벤트",
   "p.now": "현재",
   "p.leanFat": "제지방 / 지방({u})"
+});
+
+/* 2.4: units, day start, workout logging, quick add, workout fields */
+MB.i18n.add('ko', {
+  "s.units": "단위",
+  "s.sys.us": "미국식 (lb, in, mi)",
+  "s.sys.metric": "미터법 (kg, cm, km)",
+  "s.unitsHelp": "바꾸면 체중, 중량, lb·in·mi·fl oz·°F 단위의 기록과 항목이 변환됩니다.",
+  "s.dayStart": "하루 시작 시각",
+  "s.dayStartHelp": "자정 이후 기록도 이 시각 전까지는 전날로 계산됩니다.",
+  "s.midnight": "자정",
+  "s.convertedSys": "{n}일을 {u}(으)로 변환했습니다",
+  "t.repeat": "지난번과 같게",
+  "t.fillAll": "지난번 기록으로 채우기",
+  "t.startRest": "휴식 타이머 시작",
+  "t.restLeft": "휴식 {t} · 눌러서 중지",
+  "t.restDone": "휴식 끝",
+  "pl.logSets": "세트 기록",
+  "pl.logSetsHelp": "워밍업과 쿨다운은 끄세요. 운동에는 남고 기록에는 나오지 않습니다.",
+  "pl.notLogged": "기록 안 함",
+  "t.wholeDay": "하루 전체({n})",
+  "t.showLess": "간단히 보기",
+  "q.title": "빠른 추가",
+  "q.note": "메모",
+  "p.card.fields": "운동 항목",
+  "p.fieldsTitle": "운동 항목",
+  "p.totalV": "합계 {v}",
+  "p.sessionsN": "{n}회",
+  "p.noValues": "아직 기록이 없습니다.",
+  "p.effortShort": "강도"
 });

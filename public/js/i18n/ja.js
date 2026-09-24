@@ -33,7 +33,7 @@ MB.i18n.add('ja', {
   "f.category": "カテゴリ", "f.csv": "CSVをエクスポート", "f.count": "{n} / {m}", "f.noMatch": "該当する食品はありません。", "f.empty": "表は空です。食品を追加するかサンプルを読み込んでください。",
   "f.logTo": "{date}に記録", "f.logIt": "記録する", "f.editFood": "食品を編集", "f.note": "メモ", "f.added": "{name}を追加しました", "f.updated": "{name}を更新しました", "f.deleted": "{name}を削除しました",
   "f.servingPh": "例: 100 g、1カップ、1スクープ", "f.all": "すべて",
-  "s.title": "設定", "s.profile": "プロフィール", "s.unit": "体重の単位", "s.lb": "ポンド (lb)", "s.kg": "キログラム (kg)", "s.targets": "1日の目標", "s.calories": "カロリー (kcal)",
+  "s.title": "設定", "s.profile": "プロフィール", "s.targets": "1日の目標", "s.calories": "カロリー (kcal)",
   "s.proteinG": "タンパク質 (g)", "s.carbsG": "炭水化物 (g)、任意", "s.fatG": "脂質 (g)、任意", "s.goal": "目標", "s.goalWeight": "目標体重 ({u})", "s.goalBf": "目標体脂肪率 (%)",
   "s.goalNote": "メモ", "s.slots": "1日の食事", "s.slotName": "名前", "s.addSlot": "食事を追加", "s.habits": "毎日の習慣", "s.habit": "習慣", "s.target": "回数", "s.habitUnit": "単位",
   "s.habitsSub": "水や歩数などは回数を設定", "s.addHabit": "習慣を追加", "s.routines": "ルーティン", "s.routinesSub": "毎日のチェックリスト: ウォームアップ、リハビリ、可動域",
@@ -42,13 +42,12 @@ MB.i18n.add('ja', {
   "s.schedule": "週間スケジュール", "s.addTypesFirst": "先にセッションを追加してください",
 
 
-
   "s.app": "アプリ", "s.language": "言語", "s.theme": "テーマ", "s.followDevice": "端末に合わせる", "s.light": "ライト", "s.dark": "ダーク",
   "s.profiles": "プロフィール", "s.profilesSub": "この端末で別々の記録を管理", "s.addProfile": "プロフィールを追加", "s.rename": "名前を変更", "s.switch": "切り替え", "s.current": "現在",
   "s.deleteProfile": "プロフィールを削除", "s.deleteProfileConfirm": "「{name}」とその記録をすべて削除しますか？", "s.profileName": "プロフィール名",
   "s.data": "あなたのデータ", "s.storedIn": "このブラウザに保存されています ({kind})。エクスポートしない限り端末の外には出ません。", "s.export": "エクスポート", "s.import": "インポート",
   "s.erase": "このプロフィールを消去", "s.eraseConfirm": "このプロフィールの設定、食品、保存した食事、記録したすべての日を削除しますか？コピーが必要なら先にエクスポートしてください。", "s.eraseBtn": "消去",
-  "s.erased": "消去しました", "s.unsaved": "未保存の変更があります", "s.converted": "{n}件の体重を{u}に換算しました",
+  "s.erased": "消去しました", "s.unsaved": "未保存の変更があります",
   "e.title": "エクスポート", "e.scope": "対象", "e.everything": "すべて", "e.setup": "設定、食品、保存した食事", "e.since": "指定日以降", "e.file": "ファイルをダウンロード",
   "e.share": "共有", "e.copy": "JSONをコピー", "e.copied": "クリップボードにコピーしました", "e.copyFailed": "コピーできませんでした", "e.summary": "{days}日 · 食品{foods}件 · 保存した食事{templates}件",
   "i.title": "インポート", "i.mode": "モード", "i.merge": "統合", "i.replace": "置き換え", "i.remove": "削除",
@@ -239,8 +238,8 @@ MB.i18n.add('ja', {
   "pk.fatlossSub": "カロリー上限、タンパク質、歩数、野菜、体重測定、ウエスト。", "pk.recovery": "回復", "pk.stepsUnit": "歩",
   "pk.soreness": "筋肉痛", "pk.energy": "元気", "pk.restingHr": "安静時心拍数",
   "pk.bpm": "bpm", "pk.veggies": "野菜", "pk.servings": "皿",
-  "pk.noLate": "夜食なし", "pk.in": "cm", "pk.distance": "距離",
-  "pk.dist": "km", "pk.bjjKind": "BJJ", "pk.rounds": "ラウンド",
+  "pk.noLate": "夜食なし", "pk.distance": "距離",
+  "pk.bjjKind": "BJJ", "pk.rounds": "ラウンド",
   "pk.focus": "テーマ", "pk.running": "ランニング", "pk.pace": "ペース",
   "pk.class": "柔術クラス", "pk.openMat": "オープンマット", "pk.easyRun": "イージーラン",
   "pk.intervals": "インターバル", "pk.longRun": "ロング走", "pk.fullA": "全身A",
@@ -313,4 +312,34 @@ MB.i18n.add('ja', {
   "sec.events": "イベント",
   "p.now": "現在",
   "p.leanFat": "除脂肪 / 脂肪({u})"
+});
+
+/* 2.4: units, day start, workout logging, quick add, workout fields */
+MB.i18n.add('ja', {
+  "s.units": "単位",
+  "s.sys.us": "米国 (lb, in, mi)",
+  "s.sys.metric": "メートル法 (kg, cm, km)",
+  "s.unitsHelp": "切り替えると、体重、重量、lb・in・mi・fl oz・°F の記録と項目が換算されます。",
+  "s.dayStart": "1日の始まり",
+  "s.dayStartHelp": "深夜0時を過ぎても、この時刻までの記録は前日に入ります。",
+  "s.midnight": "午前0時",
+  "s.convertedSys": "{n}日分を{u}に換算しました",
+  "t.repeat": "前回と同じ",
+  "t.fillAll": "前回の内容で埋める",
+  "t.startRest": "休憩タイマーを開始",
+  "t.restLeft": "休憩 {t} · タップで停止",
+  "t.restDone": "休憩終了",
+  "pl.logSets": "セットを記録",
+  "pl.logSetsHelp": "ウォームアップやクールダウンはオフに。ワークアウトには残り、記録には出ません。",
+  "pl.notLogged": "記録しない",
+  "t.wholeDay": "1日全体({n})",
+  "t.showLess": "折りたたむ",
+  "q.title": "クイック追加",
+  "q.note": "メモ",
+  "p.card.fields": "ワークアウト項目",
+  "p.fieldsTitle": "ワークアウト項目",
+  "p.totalV": "合計 {v}",
+  "p.sessionsN": "{n}回",
+  "p.noValues": "まだ記録がありません。",
+  "p.effortShort": "強度"
 });

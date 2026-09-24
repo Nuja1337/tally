@@ -35,7 +35,11 @@ window.MB = window.MB || {};
   /* dates */
   const pad2 = n => String(n).padStart(2, '0');
   const dstr = d => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
-  const today = () => dstr(new Date());
+  /* the day starts at dayStart minutes past midnight (the profile's setting): before then, today is still yesterday */
+  let dayStart = 0;
+  const setDayStart = min => { dayStart = Math.max(0, Math.min(360, Math.round(Number(min) || 0))); };
+  const dayStartMin = () => dayStart;
+  const today = () => dstr(new Date(Date.now() - dayStart * 60000));
   const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
   const parseD = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
   const addDays = (s, n) => { const d = parseD(s); d.setDate(d.getDate() + n); return dstr(d); };
@@ -251,6 +255,17 @@ window.MB = window.MB || {};
   <text x="${x(last.date).toFixed(1)}" y="${(y(avg[avg.length - 1]) - 8).toFixed(1)}" text-anchor="end" font-size="11" font-weight="700" fill="var(--ink)">${vf(last.v)}</text>
   <text x="${pl}" y="${H - 6}" font-size="10" fill="var(--muted)">${fmtShort(points[0].date)}</text><text x="${W - pr}" y="${H - 6}" text-anchor="end" font-size="10" fill="var(--muted)">${fmtShort(last.date)}</text></svg>`;
   }
+  /* a tiny line for a tile: points [{date, v}] (dates may repeat), an optional goal as a dashed line */
+  function spark(points, opts) {
+    opts = opts || {};
+    const W = 120, H = 34, p = 3, vals = points.map(q => q.v), extra = opts.goal != null ? [opts.goal] : [];
+    let lo = Math.min(...vals, ...extra), hi = Math.max(...vals, ...extra); if (hi - lo < 1e-9) { hi += 1; lo -= 1; }
+    const tt = d => parseD(d).getTime(), t0 = tt(points[0].date), t1 = tt(points[points.length - 1].date);
+    const x = (q, i) => p + (t1 > t0 ? (tt(q.date) - t0) / (t1 - t0) : (points.length > 1 ? i / (points.length - 1) : 0.5)) * (W - 2 * p), y = v => p + (hi - v) / (hi - lo) * (H - 2 * p);
+    const pts = points.map((q, i) => `${x(q, i).toFixed(1)},${y(q.v).toFixed(1)}`).join(' '), last = points[points.length - 1];
+    const goal = opts.goal == null ? '' : `<line x1="0" x2="${W}" y1="${y(opts.goal).toFixed(1)}" y2="${y(opts.goal).toFixed(1)}" stroke="var(--green)" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/>`;
+    return `<svg class="spark" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${opts.label || ''}">${goal}<polyline points="${pts}" fill="none" stroke="var(--kc, var(--accent))" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/><circle cx="${x(last, points.length - 1).toFixed(1)}" cy="${y(last.v).toFixed(1)}" r="2.4" fill="var(--kc, var(--accent))"/></svg>`;
+  }
   function heat(map, weeks, endDate, color, marks) {
     /* map: {date: ratio 0..1, or a grade name}; grid of weeks columns, Mon..Sun rows; marks: {date: color} rings a day (big events) */
     const start = weekStart(addDays(endDate, -7 * (weeks - 1)));
@@ -267,6 +282,6 @@ window.MB = window.MB || {};
     return `<svg class="heat" viewBox="0 0 ${W} ${H}" role="img">${months.join('')}${rects}</svg>`;
   }
 
-  MB.ui = { dragHandle, sortable, moveItem, $, uid, clone, deepEq, fmt, fmt1, num, byName, slug, h, svg, today, isDate, parseD, addDays, diffDays, DOW, DAYS, dow, dayName, fmtLong, fmtShort, fmtDay, fmtMonth, weekStart, fmtTime, isImageUrl, thumb,
+  MB.ui = { dragHandle, sortable, moveItem, $, uid, clone, deepEq, fmt, fmt1, num, byName, slug, h, svg, today, setDayStart, dayStartMin, spark, isDate, parseD, addDays, diffDays, DOW, DAYS, dow, dayName, fmtLong, fmtShort, fmtDay, fmtMonth, weekStart, fmtTime, isImageUrl, thumb,
     openSheet, closeSheet, sheetOpen, onSheetClosed, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, stacked, trend, heat };
 })();

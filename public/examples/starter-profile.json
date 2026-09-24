@@ -4,8 +4,10 @@
  "settings": {
   "name": "",
   "units": {
+   "system": "us",
    "weight": "lb"
   },
+  "dayStart": "00:00",
   "targets": {
    "kcal": 2400,
    "protein": 160,

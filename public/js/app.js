@@ -45,9 +45,17 @@
   function flashSaved() { setStatus(t('c.saved'), 'ok'); clearTimeout(statusTimer); statusTimer = setTimeout(() => setStatus(storageLabel(), ''), 1400); }
   /* stored v4 settings are upgraded on read; the first save writes them as v5 */
   const readSettings = () => { const raw = store.get('settings/main'); return raw && SC.isV4Settings(raw) ? SC.upgradeSettings(raw, allDays()) : SC.normalizeSettings(raw); };
+  /* The profile's day start moves "today" (ui.today): until then, the day before is still going. True when the shown day changed. */
+  function applyDayStart() {
+    const was = today(); U.setDayStart(SC.hm(S.settings.dayStart) || 0);
+    const now = today(); if (now === was) return false;
+    if (S.openedOn === was) S.openedOn = now; if (S.pDate === was) S.pDate = now;
+    if (S.date === was) { S.date = now; return true; }
+    return false;
+  }
   function hydrate() {
     const raw = store.get('settings/main');
-    S.settings = readSettings();
+    S.settings = readSettings(); applyDayStart();
     S.foods = store.list('foods').sort(byName);
     S.templates = store.list('templates');
     loadHistory(); loadEvents();
@@ -106,6 +114,7 @@
   function saveSettingsNow(next) {
     const prev = S.settings;
     S.settings = SC.normalizeSettings(next); S.settings.updatedAt = store.stamp();
+    if (applyDayStart()) loadDay(S.date);
     const ups = [['settings/main', S.settings], ...historyWrites(prev, S.settings)];
     store.bulk({ upserts: ups });
     if (ups.length > 1) loadHistory();
@@ -215,7 +224,19 @@
     if (S.refs.wide) wrap.append(h('div', { class: 'cols' }, h('div', null, c.plan, c.checklists, c.training), h('div', null, c.meals, ...groups, c.day)));
     else wrap.append(...[c.plan, c.meals, ...groups, c.checklists, c.training, c.day].filter(Boolean));
     updateCounts();
+    wrap.append(h('button', { class: 'fab', type: 'button', 'aria-label': t('q.title'), title: t('q.title'), onclick: quickSheet }, '+'));
     return wrap;
+  }
+  /* quick add: a meal, a workout, an event, a note, the weight, without scrolling to their cards */
+  function quickSheet() {
+    const st = S.settings, w = { v: S.day.weight };
+    const row = (label, onclick) => h('button', { class: 'row pick', type: 'button', onclick }, h('span', { class: 'row-name' }, label), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›'));
+    openSheet(t('q.title'), h('div', null,
+      st.mealSlots.length ? h('div', null, h('div', { class: 'subhead' }, t('t.meals')), h('div', { class: 'chips small-gap' }, st.mealSlots.map(ms => h('button', { class: 'chip small', type: 'button', onclick: () => addMealSheet(ms) }, ms.name)))) : null,
+      h('div', { class: 'list' }, row(t('t.addSession'), addSessionSheet), row(t('ev.add'), () => eventSheet(null)),
+        row(t('q.note'), () => { closeSheet(); scrollToCard('day'); setTimeout(() => { const n = document.querySelector('#c-day textarea'); if (n) n.focus(); }, 350); })),
+      st.trackers.some(x => x.type === 'weight' && !x.archived) ? h('div', { class: 'quickw' }, numField(`${t('m.weight')} (${unit()})`, w, 'v'),
+        h('button', { class: 'btn primary', onclick: () => { S.day.weight = w.v == null ? null : num(w.v); saveDay(); closeSheet(); render(); toast(t('c.saved')); } }, t('c.save'))) : null));
   }
 
   /* totals: rings for calories and protein (tap to edit targets), other macros and nutrients, and how much of the day is done */
@@ -277,7 +298,8 @@
   const BLOCK_COLOR = { routine: 'var(--kc-teal)', meal: 'var(--kc-gold)', sleep: 'var(--kc-slate)', work: 'var(--track2)', rest: 'var(--kc-blue)', other: 'var(--track2)' };
   const kindColor = id => { const c = SC.kindColors(S.settings.sessionKinds)[id]; return c ? `var(--kc-${c})` : 'var(--accent)'; };
   const blockColor = b => b.kind === 'session' ? kindColor((S.settings.sessionTypes.find(x => x.id === b.typeId) || {}).kind) : BLOCK_COLOR[b.kind];
-  const nowMin = () => { const n = new Date(); return n.getHours() * 60 + n.getMinutes(); };
+  /* minutes into the day; before the day start it is still the day before, so past midnight counts on (24:30 is 1470) */
+  const nowMin = () => { const n = new Date(), m = n.getHours() * 60 + n.getMinutes(); return m < U.dayStartMin() ? m + 1440 : m; };
   function blockDone(b, d) {
     if (b.kind === 'session') { const done = d.sessions.some(s => s.typeId === b.typeId && s.done !== false); return done || !offPlanOn(d.date) ? done : null; }
     if (b.kind === 'routine') { const r = S.settings.routines.find(x => x.id === b.routineId); return r && r.items.length && !r.alertAt ? routineDone(r, d) : null; }
@@ -301,7 +323,15 @@
     const st = S.settings, d = S.day, blocks = SC.blocksFor(st, dow(S.date));
     const isToday = S.date === today(), past = S.date < today(), now = nowMin();
     const next = isToday ? blocks.findIndex(b => SC.hm(b.start) != null && SC.hm(b.start) > now) : -1;
-    el.replaceChildren(...blocks.map((b, i) => {
+    /* a long day, today: from the last block that ended to the next few (untimed ones always); the whole day is a tap away */
+    const long = isToday && blocks.length > 7, whole = !long || pref('planAll', '0') === '1';
+    let from = 0, to = blocks.length;
+    if (!whole) {
+      let i = blocks.findIndex(b => { const a = SC.hm(b.start); return a != null && a + (SC.duration(b) || 0) > now; }); if (i < 0) i = blocks.length;
+      from = Math.max(0, i - 1); to = Math.min(blocks.length, from + 5); from = Math.max(0, Math.min(from, to - 5));
+    }
+    const shown = blocks.map((b, i) => [b, i]).filter(([b, i]) => whole || !b.start || (i >= from && i < to));
+    el.replaceChildren(...shown.map(([b, i]) => {
       const a = SC.hm(b.start), end = a == null ? null : a + (SC.duration(b) || 0);
       const current = isToday && a != null && a <= now && now < end, ended = past || (isToday && a != null && end <= now);
       const done = blockDone(b, d), missed = done === false && ended, late = missed && !past;
@@ -311,7 +341,7 @@
         h('span', { class: 'tl-time' }, b.start ? fmtTime(b.start) : '·'), h('span', { class: 'tl-dot' }),
         h('span', { class: 'tl-title' }, title, dur ? h('small', null, ' ' + fmtDur(dur)) : null), tag,
         done != null ? h('span', { class: 'tl-check', 'aria-label': done ? t('c.done') : missed ? (late ? t('t.notLogged') : t('t.missed')) : '' }, done ? '✓' : missed ? '✕' : '') : null);
-    }));
+    }), ...(long ? [h('button', { class: 'linkbtn tl-more', type: 'button', onclick: () => { setPref('planAll', whole ? '0' : '1'); drawTimeline(); } }, whole ? t('t.showLess') : t('t.wholeDay', { n: blocks.length }))] : []));
   }
   function blockTap(b) {
     const st = S.settings;
@@ -685,6 +715,7 @@
   const scaleN = (n, k) => { const out = {}; for (const key of Object.keys(n || {})) out[key] = Math.round(num(n[key]) * k * 10) / 10; return out; };
   function addMeal(slotId, m) {
     const meal = { id: uid(), slot: slotId, name: m.name, kcal: num(m.kcal), p: num(m.p), c: num(m.c), f: num(m.f) };
+    if (m.foodId) meal.foodId = m.foodId; if (m.qty) meal.qty = num(m.qty); if (m.tplId) meal.tplId = m.tplId;
     const n = scaleN(m.n, 1); if (Object.keys(n).length) meal.n = n;
     S.day.meals.push(meal);
     saveDay(); closeSheet(); render(); toast(t('t.logged', { name: m.name }));
@@ -719,7 +750,7 @@
           list.replaceChildren(...rows.map(f => {
             const qty = h('input', { type: 'number', class: 'qty', value: 1, min: 0, step: 0.5, inputmode: 'decimal', 'aria-label': t('t.servings') });
             return h('div', { class: 'row pick' }, h('div', { class: 'row-name' }, h('div', null, f.name), h('div', { class: 'muted small' }, `${f.serving || ''}${f.serving ? ' · ' : ''}${fmt(f.kcal)} kcal · ${fmt(f.p)} g`)),
-              qty, h('button', { class: 'btn small primary', onclick: () => { const k = num(qty.value) || 1; addMeal(w.id, { name: k === 1 ? f.name : `${f.name} ×${k}`, kcal: f.kcal * k, p: f.p * k, c: f.c * k, f: f.f * k, n: scaleN(f.n, k) }); } }, t('c.add')));
+              qty, h('button', { class: 'btn small primary', onclick: () => { const k = num(qty.value) || 1; addMeal(w.id, { name: k === 1 ? f.name : `${f.name} ×${k}`, kcal: f.kcal * k, p: f.p * k, c: f.c * k, f: f.f * k, n: scaleN(f.n, k), foodId: f.id, qty: k }); } }, t('c.add')));
           }));
           if (!rows.length) list.append(h('p', { class: 'empty' }, S.foods.length ? t('t.noMatches') : t('t.noFoods')));
         };
@@ -729,7 +760,7 @@
         pane.append(tpls.length ? h('div', { class: 'list' }, tpls.map(tp => h('div', { class: 'row pick' },
           h('div', { class: 'row-name' }, h('div', null, tp.name), h('div', { class: 'muted small' }, `${fmt(tp.kcal)} kcal · ${fmt(tp.p)} g`)),
           h('button', { class: 'btn ghost icon', 'aria-label': t('c.delete'), onclick: () => { deleteTemplate(tp); draw('templates'); } }, '×'),
-          h('button', { class: 'btn small primary', onclick: () => addMeal(w.id, tp) }, t('t.log'))))) : h('p', { class: 'empty' }, t('t.noTemplates')));
+          h('button', { class: 'btn small primary', onclick: () => addMeal(w.id, { ...tp, tplId: tp.id }) }, t('t.log'))))) : h('p', { class: 'empty' }, t('t.noTemplates')));
       } else {
         const m = { name: '', kcal: null, p: null, c: null, f: null, n: {} };
         pane.append(textField(t('t.whatAte'), m, 'name'), h('div', { class: 'grid4' }, numField(t('c.kcal'), m, 'kcal'), numField(t('c.protein'), m, 'p'), numField(t('c.carbs'), m, 'c'), numField(t('c.fat'), m, 'f')), nutFields(m),
@@ -818,27 +849,23 @@
         sessionSheet({ id: uid(), typeId: '', name: pick.name, kind: pick.kind, minutes: num(pick.minutes), kcal: num(pick.kcal), done: true, notes: '', effort: null, fields: {}, sets: [] }, true);
       } }, t('c.next')))));
   }
-  /* what you did last time with an exercise, before this day */
-  function lastSets(key, name, beforeDate, skipId) {
-    for (const d of allDays().reverse()) {
-      if (d.date > beforeDate) continue;
-      for (const s of d.sessions) {
-        if (s.id === skipId) continue;
-        const rows = s.sets.filter(r => (key && r.exerciseId === key) || (name && r.ex === name));
-        if (rows.length) return { date: d.date, rows };
-      }
-    }
-    return null;
-  }
   const setText = r => [r.wt != null ? `${fmt1(r.wt)} ${unit()}` : null, r.reps2 != null ? `${r.reps == null ? '–' : r.reps}/${r.reps2}` : r.reps != null ? String(r.reps) : null].filter(Boolean).join(' × ');
   /* session sheet: effort, the category's fields, plan-driven rows (per exercise, per set, per side) plus free rows; isNew adds it on save */
   function sessionSheet(s, isNew) {
     const d = clone(s); d.sets = d.sets || []; d.fields = d.fields || {};
     const type = S.settings.sessionTypes.find(x => x.id === d.typeId), plan = type ? type.plan : [];
     const groups = [];
-    for (const b of plan) for (const it of b.items) { const ex = exById(it.exerciseId) || SC.resolveExercise(it.name, S.settings.exercises); groups.push({ key: it.exerciseId || it.name, block: b.label, item: it, ex, perSide: it.perSide, rows: [] }); }
+    /* blocks marked not logged (warm-ups, cool-downs) stay out */
+    for (const b of plan) { if (b.log === false) continue; for (const it of b.items) { const ex = exById(it.exerciseId) || SC.resolveExercise(it.name, S.settings.exercises); groups.push({ key: it.exerciseId || it.name, block: b.label, item: it, ex, perSide: it.perSide, rows: [] }); } }
     d.sets.forEach(r => { const g = groups.find(x => (r.exerciseId && x.key === r.exerciseId) || x.item.name === r.ex); if (g) g.rows.push(r); else { let f = groups.find(x => x.free && x.key === (r.exerciseId || r.ex)); if (!f) { f = { key: r.exerciseId || r.ex, free: true, item: { name: r.ex, sets: 0, reps: '', perSide: false }, ex: exById(r.exerciseId), perSide: !!(exById(r.exerciseId) || {}).perSide, rows: [] }; groups.push(f); } f.rows.push(r); } });
     for (const g of groups) if (!g.free && !g.rows.length) for (let i = 0; i < Math.max(1, g.item.sets); i++) g.rows.push({ ex: g.item.name, exerciseId: g.ex ? g.ex.id : '', wt: null, reps: null, reps2: null });
+    /* what each exercise was last time, found in one pass over the days */
+    const lastOf = new Map(), pastDays = allDays().filter(x => x.date <= S.date).reverse();
+    for (const g of groups) { const key = g.ex ? g.ex.id : '', name = g.item.name;
+      find: for (const x of pastDays) for (const ss of x.sessions) { if (ss.id === d.id) continue; const rows = ss.sets.filter(r => (key && r.exerciseId === key) || (name && r.ex === name)); if (rows.length) { lastOf.set(g, { date: x.date, rows }); break find; } } }
+    const repeat = g => { const last = lastOf.get(g); if (last) g.rows = last.rows.map(r => ({ ex: g.item.name, exerciseId: g.ex ? g.ex.id : '', wt: r.wt, reps: r.reps, reps2: r.reps2 })); };
+    const blank = g => g.rows.every(r => r.wt == null && r.reps == null && r.reps2 == null);
+    const repWord = g => g.ex && g.ex.unit && g.ex.unit !== 'reps' ? t('u.' + g.ex.unit) : t('t.reps');
     const box = h('div');
     const rowEl = (g, r, i) => {
       const gap = () => { if (!g.perSide || r.reps == null || r.reps2 == null || !Math.max(r.reps, r.reps2)) return ''; const p = Math.round(Math.abs(r.reps - r.reps2) / Math.max(r.reps, r.reps2) * 100); return p + '%'; };
@@ -846,7 +873,7 @@
       const upd = () => { gapEl.textContent = gap(); gapEl.classList.toggle('bad', parseInt(gapEl.textContent, 10) > 10); };
       return h('div', { class: 'setrow' }, h('span', { class: 'setno' }, i + 1),
         h('input', { type: 'number', placeholder: unit(), inputmode: 'decimal', 'aria-label': unit(), value: r.wt == null ? '' : r.wt, oninput: e => r.wt = e.target.value === '' ? null : num(e.target.value) }),
-        h('input', { type: 'number', placeholder: g.perSide ? t('t.left') : t('t.reps'), inputmode: 'numeric', value: r.reps == null ? '' : r.reps, oninput: e => { r.reps = e.target.value === '' ? null : num(e.target.value); upd(); } }),
+        h('input', { type: 'number', placeholder: g.perSide ? t('t.left') : repWord(g), inputmode: 'numeric', value: r.reps == null ? '' : r.reps, oninput: e => { r.reps = e.target.value === '' ? null : num(e.target.value); upd(); } }),
         g.perSide ? h('input', { type: 'number', placeholder: t('t.right'), inputmode: 'numeric', value: r.reps2 == null ? '' : r.reps2, oninput: e => { r.reps2 = e.target.value === '' ? null : num(e.target.value); upd(); } }) : null,
         g.perSide ? gapEl : null,
         h('button', { class: 'btn ghost icon', 'aria-label': t('c.remove'), onclick: () => { g.rows.splice(i, 1); draw(); } }, '×'));
@@ -854,12 +881,14 @@
     const draw = () => box.replaceChildren(...groups.map(g => {
       const locked = g.ex && g.ex.gate && !SC.gateOpen(S.settings, g.ex.gate);
       const target = [g.item.sets ? `${g.item.sets} ×` : '', g.item.reps, g.perSide ? t('t.perSide') : '', g.item.rir ? `${g.item.rir} RIR` : '', g.item.rest].filter(Boolean).join(' · ');
-      const last = lastSets(g.ex ? g.ex.id : '', g.item.name, S.date, d.id);
+      const last = lastOf.get(g), rest = restSec(g.item.rest);
       return h('div', { class: 'exgroup' + (locked ? ' locked' : '') },
         h('div', { class: 'exhead' }, g.block ? h('span', { class: 'blocklab' }, g.block) : null,
           g.ex ? h('button', { class: 'linkish', onclick: () => exerciseCard(g.ex) }, g.item.name) : h('span', null, g.item.name),
-          h('span', { class: 'muted small' }, target), locked ? h('span', { class: 'lock' }, t('t.locked', { gate: gateLabel(g.ex.gate) })) : null),
-        last ? h('div', { class: 'lastline' }, t('t.lastTime', { d: fmtShort(last.date), sets: last.rows.map(setText).filter(Boolean).join(', ') })) : null,
+          h('span', { class: 'muted small' }, target), locked ? h('span', { class: 'lock' }, t('t.locked', { gate: gateLabel(g.ex.gate) })) : null,
+          rest ? h('button', { class: 'btn ghost small restbtn', type: 'button', title: t('t.startRest'), 'aria-label': t('t.startRest'), onclick: () => startRest(rest) }, '⏱ ' + fmtRest(rest)) : null),
+        last ? h('div', { class: 'lastline' }, t('t.lastTime', { d: fmtShort(last.date), sets: last.rows.map(setText).filter(Boolean).join(', ') }),
+          h('button', { class: 'linkbtn', type: 'button', onclick: () => { repeat(g); draw(); } }, t('t.repeat'))) : null,
         g.item.note ? h('div', { class: 'muted small' }, g.item.note) : null,
         g.rows.map((r, i) => rowEl(g, r, i)),
         h('button', { class: 'btn ghost small', onclick: () => { const lastRow = g.rows[g.rows.length - 1]; g.rows.push({ ex: g.item.name, exerciseId: g.ex ? g.ex.id : '', wt: lastRow ? lastRow.wt : null, reps: null, reps2: null }); draw(); } }, t('t.addSet')));
@@ -877,7 +906,7 @@
     const open = () => openSheet(d.name, h('div', null, h('div', { class: 'grid2' }, numField(t('t.minutes'), d, 'minutes'), numField(t('t.kcalBurned'), d, 'kcal')),
       h('div', { class: 'field' }, h('span', null, t('t.effort'), ' ', helpTip(t('t.effortHelp'))), effortRow),
       fieldInputs,
-      h('div', { class: 'subhead' }, t('t.sets')), box,
+      h('div', { class: 'subhead' }, t('t.sets'), lastOf.size ? h('button', { class: 'linkbtn fillall', type: 'button', onclick: () => { groups.filter(blank).forEach(repeat); draw(); } }, t('t.fillAll')) : null), box,
       h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: addFree }, t('t.addExercise'))),
       h('label', { class: 'field' }, h('span', null, t('t.notes')), h('textarea', { value: d.notes || '', oninput: e => d.notes = e.target.value })),
       h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => {
@@ -889,6 +918,27 @@
         saveDay(); closeSheet(); render();
       } }, t('c.save')))), { wide: true });
     open();
+  }
+  /* rest between sets: "60 s", "90", "2 min" or "1:30" in seconds */
+  function restSec(v) {
+    const s = String(v || '').trim(), mmss = /^(\d+):(\d{2})$/.exec(s); if (mmss) return +mmss[1] * 60 + +mmss[2];
+    const m = /(\d+(?:[.,]\d+)?)\s*(min|mins|minutes|m(?![a-z])|')?/i.exec(s); if (!m) return 0;
+    const n = parseFloat(m[1].replace(',', '.')); return Math.round(m[2] ? n * 60 : n);
+  }
+  const fmtRest = sec => sec >= 60 ? `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}` : `${sec} s`;
+  /* the rest timer: a pill over everything, tap to stop; at zero it buzzes and says so */
+  let restTimer = null;
+  function startRest(sec) {
+    clearInterval(restTimer); const old = document.querySelector('.restpill'); if (old) old.remove();
+    const end = Date.now() + sec * 1000, pill = h('button', { class: 'restpill', type: 'button', 'aria-live': 'polite', onclick: () => { clearInterval(restTimer); pill.remove(); } });
+    const tick = () => {
+      const left = Math.max(0, Math.round((end - Date.now()) / 1000));
+      if (left > 0) { pill.textContent = t('t.restLeft', { t: fmtRest(left) }); return; }
+      clearInterval(restTimer); pill.classList.add('done'); pill.textContent = t('t.restDone');
+      try { if (navigator.vibrate) navigator.vibrate([200, 100, 200]); } catch (e) {}
+      setTimeout(() => pill.remove(), 4000);
+    };
+    document.body.append(pill); tick(); restTimer = setInterval(tick, 250);
   }
   function exercisePicker(obj) {
     const inp = h('input', { type: 'text', list: 'exlist', placeholder: t('t.exercise'), value: obj.name || '', oninput: e => obj.name = e.target.value });
@@ -1084,7 +1134,7 @@
   }
   function workoutSheet(type) {
     const body = h('div', null, h('p', { class: 'muted small' }, `${kindName(type.kind)} · ${num(type.minutes)} ${t('c.min')} · ${fmt(type.kcal)} kcal`), type.note ? h('p', null, type.note) : null,
-      type.plan.map(b => h('div', { class: 'wblock' }, h('div', { class: 'subhead' }, b.label, b.note ? h('small', { class: 'muted' }, ' ' + b.note) : null),
+      type.plan.map(b => h('div', { class: 'wblock' }, h('div', { class: 'subhead' }, b.label, b.log === false ? h('small', { class: 'muted' }, ' · ' + t('pl.notLogged')) : null, b.note ? h('small', { class: 'muted' }, ' ' + b.note) : null),
         h('div', { class: 'list' }, b.items.map(it => { const ex = exById(it.exerciseId) || SC.resolveExercise(it.name, S.settings.exercises); const locked = ex && ex.gate && !SC.gateOpen(S.settings, ex.gate);
           const target = [it.sets ? `${it.sets} ×` : '', it.reps, it.perSide ? t('t.perSide') : '', it.rir ? `${it.rir} RIR` : '', it.rest].filter(Boolean).join(' · ');
           return h('div', { class: 'row pick' + (locked ? ' locked' : '') }, ex ? thumb(ex.image, 'thumb sm') : null, h('span', { class: 'row-name' }, ex ? h('button', { class: 'linkish', onclick: () => exerciseCard(ex) }, it.name) : it.name, h('div', { class: 'muted small' }, target, locked ? ' · ' + t('t.locked', { gate: gateLabel(ex.gate) }) : '', it.note ? ' · ' + it.note : ''))); })))),
@@ -1114,6 +1164,7 @@
       sortable(items, (from, to) => { moveItem(b.items, from, to); draw(); });
       return h('div', { class: 'routine', 'data-sort': '' },
         h('div', { class: 'editor-row' }, dragHandle(), h('input', { type: 'text', placeholder: t('pl.blockLabel'), value: b.label, oninput: e => b.label = e.target.value }), h('input', { type: 'text', placeholder: t('f.note'), value: b.note || '', oninput: e => b.note = e.target.value }),
+          h('label', { class: 'chk', title: t('pl.logSetsHelp') }, h('input', { type: 'checkbox', checked: b.log !== false, onchange: e => { b.log = e.target.checked; } }), t('pl.logSets')),
           h('button', { class: 'btn ghost icon', 'aria-label': t('c.remove'), onclick: () => { plan.splice(bi, 1); draw(); } }, '×')),
         items,
         h('button', { class: 'btn ghost small', onclick: () => { b.items.push({ id: uid(), exerciseId: '', name: '', sets: 3, reps: '8-12', perSide: false, rir: '', rest: '', note: '' }); draw(); } }, t('s.addExercise')));
@@ -1677,31 +1728,72 @@
         top ? h('li', null, t('p.bestMonth', { m: monthLabel(top.m), p: pct(top.x.rate) })) : null,
         low && low !== top ? h('li', null, t('p.worstMonth', { m: monthLabel(low.m), p: pct(low.x.rate) })) : null,
         slip ? h('li', null, t('p.slips', { day: dayName(slip, 'long'), n: miss[slip], of: tot[slip] })) : null),
-      vals.length > 1 ? h('div', null, h('div', { class: 'subhead' }, t('p.values')), valueChart(x, vals)) : null,
+      vals.length ? h('div', null, vals.length > 1 ? [h('div', { class: 'subhead' }, t('p.values')), valueChart(x, vals)] : null, h('p', { class: 'muted small' }, valueFacts(x, vals))) : null,
       x ? h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => trackerForm(x, x.group) }, t('c.edit'))) : null), { wide: true });
   }
   /* big events in a stretch, as {date: color}, to ring those days on a calendar */
   function bigMarks(a, b) { const out = {}; for (const e of S.events) if (e.big) for (let d = e.date; d <= (e.end || e.date) && d <= b; d = addDays(d, 1)) if (d >= a) out[d] = evColor(e); return out; }
-  /* a tracker's values as a line; times of day are drawn around their target (or their middle) so midnight does not break the line */
-  function valueChart(x, vals) {
+  /* a tracker's values on logged days */
+  const valuesOf = (x, days) => days.map(d => ({ date: d.date, v: SC.trackerValue(x, d) })).filter(p => SC.hasValue(x, p.v));
+  /* points for a line; times of day are drawn around their target (or their middle) so midnight does not break it */
+  function valuePoints(x, vals) {
     let pts = vals.map(p => ({ date: p.date, v: x.type === 'time' ? SC.hm(String(p.v)) : num(p.v) }));
-    let f = x.type === 'duration' ? v => fmtDur(Math.round(v)) : x.type === 'time' ? v => fmtTime(`${pad2(Math.floor(((Math.round(v) % 1440) + 1440) % 1440 / 60))}:${pad2(((Math.round(v) % 60) + 60) % 60)}`) : fmt1;
     if (x.type === 'time') { const c = x.target ? SC.hm(x.target) : pts.map(p => p.v).sort((a, b) => a - b)[Math.floor(pts.length / 2)]; pts = pts.map(p => ({ ...p, v: c + (((p.v - c + 720 + 1440) % 1440) - 720) })); }
-    const goal = x.target == null ? null : x.type === 'time' ? SC.hm(x.target) : num(x.target);
+    return { pts, goal: x.target == null ? null : x.type === 'time' ? SC.hm(x.target) : num(x.target) };
+  }
+  function valueChart(x, vals) {
+    const { pts, goal } = valuePoints(x, vals);
+    const f = x.type === 'duration' ? v => fmtDur(Math.round(v)) : x.type === 'time' ? v => fmtTime(`${pad2(Math.floor(((Math.round(v) % 1440) + 1440) % 1440 / 60))}:${pad2(((Math.round(v) % 60) + 60) % 60)}`) : fmt1;
     return svg(trend(pts, { goal, goalLabel: goal == null ? '' : goalText(x), label: x.name, fmt: f }));
   }
-  /* numbers, ratings, durations and times: a line each, with the average and the change */
+  const avgText = (x, nums) => valueText(x, x.type === 'rating' ? Math.round(avgOf(nums) * 10) / 10 : avgOf(nums));
+  /* latest, average and the change since the first */
+  function valueFacts(x, vals) {
+    const nums = vals.map(p => x.type === 'time' ? null : num(p.v)).filter(v => v != null), first = vals[0], last = vals[vals.length - 1];
+    return [t('p.latestV', { v: valueText(x, last.v) }), nums.length > 1 ? t('p.avgV', { v: avgText(x, nums) }) : null,
+      nums.length > 1 && x.type !== 'rating' ? t('p.changeV', { d: x.type === 'duration' ? signed(num(last.v) - num(first.v), v => fmtDur(Math.round(v))) : signed(Math.round((num(last.v) - num(first.v)) * 10) / 10, fmt1) + (x.unit ? ' ' + x.unit : '') }) : null].filter(Boolean).join(' · ');
+  }
+  /* a small line with many points (a year of days) draws weekly averages, so it shows the trend instead of the noise */
+  const thin = pts => { if (pts.length <= 60) return pts; const wk = new Map(); for (const p of pts) { const w = weekStart(p.date); if (!wk.has(w)) wk.set(w, []); wk.get(w).push(p.v); } return [...wk].map(([date, vs]) => ({ date, v: sum(vs, v => v) / vs.length })); };
+  /* numbers, ratings, durations and times: a small tile each (latest, average, a line); a tap opens the whole year */
   function trackersCard(dates, byDate) {
-    const list = S.settings.trackers.filter(x => ['number', 'rating', 'duration', 'time'].includes(x.type));
-    const blocks = list.map(x => {
-      const vals = dates.map(d => byDate[d]).filter(Boolean).map(d => ({ date: d.date, v: SC.trackerValue(x, d) })).filter(p => SC.hasValue(x, p.v));
-      if (!vals.length) return null;
-      const nums = vals.map(p => x.type === 'time' ? null : num(p.v)).filter(v => v != null), first = vals[0], last = vals[vals.length - 1];
-      const facts = [t('p.latestV', { v: valueText(x, last.v) }), nums.length > 1 ? t('p.avgV', { v: valueText(x, x.type === 'rating' ? Math.round(avgOf(nums) * 10) / 10 : avgOf(nums)) }) : null, nums.length > 1 && x.type !== 'rating' ? t('p.changeV', { d: x.type === 'duration' ? signed(num(last.v) - num(first.v), v => fmtDur(Math.round(v))) : signed(Math.round((num(last.v) - num(first.v)) * 10) / 10, fmt1) + (x.unit ? ' ' + x.unit : '') }) : null];
-      return h('div', { class: 'tkchart' }, h('button', { class: 'subhead linkish plain', type: 'button', onclick: () => { const r = consistencyRows().find(y => y.id === x.id); if (r) rowDetail(r); else trackerForm(x, x.group); } }, x.name),
-        vals.length > 1 ? valueChart(x, vals) : null, h('p', { class: 'muted small' }, facts.filter(Boolean).join(' · ')));
+    const days = dates.map(d => byDate[d]).filter(Boolean);
+    const tiles = S.settings.trackers.filter(x => ['number', 'rating', 'duration', 'time'].includes(x.type)).map(x => {
+      const vals = valuesOf(x, days); if (!vals.length) return null;
+      const nums = vals.map(p => x.type === 'time' ? null : num(p.v)).filter(v => v != null), { pts, goal } = valuePoints(x, vals);
+      return h('button', { class: 'spk', type: 'button', onclick: () => trackerDetail(x) }, h('span', { class: 'spk-name' }, x.name), h('b', null, valueText(x, vals[vals.length - 1].v)),
+        h('small', null, nums.length > 1 ? t('p.avgV', { v: avgText(x, nums) }) : fmtShort(vals[vals.length - 1].date)), pts.length > 1 ? h('span', { class: 'spk-line', html: U.spark(thin(pts), { goal, label: x.name }) }) : null);
     }).filter(Boolean);
-    return blocks.length ? pcard('trackers', t('p.trackers'), null, h('div', null, blocks)) : null;
+    return tiles.length ? pcard('trackers', t('p.trackers'), null, h('div', { class: 'spks' }, tiles), { summary: () => String(tiles.length) }) : null;
+  }
+  /* a tracker in full: its consistency detail when it is expected, else its line over the last year */
+  function trackerDetail(x) {
+    const r = consistencyRows().find(y => y.id === x.id); if (r) { rowDetail(r); return; }
+    const end = today(), vals = valuesOf(x, allDays().filter(d => d.date > addDays(end, -365) && d.date <= end));
+    openSheet(x.name, h('div', null, vals.length > 1 ? valueChart(x, vals) : null, h('p', { class: 'muted small' }, vals.length ? valueFacts(x, vals) : t('p.noValues')),
+      h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => trackerForm(x, x.group) }, t('c.edit')))), { wide: true });
+  }
+  /* What workouts log beyond time: each category's number, rating and duration fields, and effort, session by session.
+     Numbers with a unit (distance) show their total. */
+  function fieldsCard(dates, byDate) {
+    const sess = dates.map(d => byDate[d]).filter(Boolean).flatMap(d => d.sessions.filter(x => x.done !== false).map(x => ({ ...x, date: d.date }))), tiles = [];
+    for (const k of S.settings.sessionKinds) {
+      const ks = sess.filter(x => x.kind === k.id); if (!ks.length) continue;
+      for (const def of [...k.fields.filter(fd => fd.type !== 'text').map(fd => ({ key: fd.id, name: fd.name, fd })), { key: '', name: t('p.effortShort'), fd: null }]) {
+        const pts = ks.map(x => ({ date: x.date, v: def.fd ? x.fields && x.fields[def.key] : x.effort })).filter(p => p.v != null && p.v !== '' && Number.isFinite(+p.v)).map(p => ({ date: p.date, v: num(p.v) }));
+        if (!pts.length) continue;
+        const show = v => def.fd ? fieldText(def.fd, def.fd.type === 'rating' ? Math.round(v * 10) / 10 : Math.round(v * 10) / 10) : fmt1(v) + '/10';
+        const total = def.fd && def.fd.type === 'number' && def.fd.unit ? sum(pts, p => p.v) : null;
+        tiles.push(h('button', { class: 'spk', type: 'button', style: { '--kc': kindColor(k.id) }, onclick: () => fieldSheet(k, def, pts, show) },
+          h('span', { class: 'spk-name' }, h('i', { class: 'kdot' }), `${k.name} · ${def.name}`), h('b', null, show(pts[pts.length - 1].v)),
+          h('small', null, total != null ? t('p.totalV', { v: show(total) }) : t('p.avgV', { v: show(avgOf(pts.map(p => p.v))) })), pts.length > 1 ? h('span', { class: 'spk-line', html: U.spark(thin(pts), { label: def.name }) }) : null));
+      }
+    }
+    return tiles.length ? pcard('fields', t('p.fieldsTitle'), null, h('div', { class: 'spks' }, tiles), { icon: 'training', summary: () => String(tiles.length) }) : null;
+  }
+  function fieldSheet(k, def, pts, show) {
+    openSheet(`${k.name} · ${def.name}`, h('div', null, pts.length > 1 ? svg(trend(pts, { label: def.name, fmt: show })) : null,
+      h('p', { class: 'muted small' }, [t('p.latestV', { v: show(pts[pts.length - 1].v) }), t('p.avgV', { v: show(avgOf(pts.map(p => p.v))) }), t('p.sessionsN', { n: pts.length })].join(' · '))), { wide: true });
   }
   /* days with each tag against the other days: calories, protein, training and how much got done */
   function tagsCard(days, rows) {
@@ -1809,6 +1901,7 @@
     if (shown('nutrition') && cur.fed.length) wrap.append(nutritionCard(dates, byDate, d => { const n = +d.slice(8); return n === 1 || n % 5 === 0 ? String(n) : ''; }));
     if (shown('weight')) wrap.append(weightCard(cur.weights, prev.weights, ctx));
     if (shown('training')) wrap.append(trainingMonth(ctx));
+    if (shown('fields')) { const c = fieldsCard(datesIn(per.start, through), byDate); if (c) wrap.append(c); }
     if (shown('habits')) { const rr = rateRows(rows, datesIn(per.start, through), byDate); if (rr.children.length) wrap.append(pcard('consistency', t('p.consistency'), null, h('div', null, rr, h('p', { class: 'muted small mt' }, t('p.tapRow'))))); }
     if (shown('trackers')) { const c = trackersCard(datesIn(per.start, through), byDate); if (c) wrap.append(c); }
     if (shown('tags')) { const c = tagsCard(cur.days, rows); if (c) wrap.append(c); }
@@ -1856,6 +1949,7 @@
         h('p', { class: 'muted small' }, t('p.daysLoggedByMonth') + ' ' + months.map(m => `${monthLabel(m, 'short')} ${inMonth(m, cur.fed).length}`).join(' · ')), legend())));
     }
     if (shown('training')) wrap.append(trainingYear(ctx, months));
+    if (shown('fields')) { const c = fieldsCard(datesIn(from, through), byDate); if (c) wrap.append(c); }
     if (shown('habits') && months.length) { const g = yearGrid(rows, months, byDate, through); if (g) wrap.append(pcard('consistency', t('p.consistency'), null, h('div', null, g, legend(), h('p', { class: 'muted small mt' }, t('p.tapRow'))))); }
     if (shown('trackers')) { const c = trackersCard(datesIn(from, through), byDate); if (c) wrap.append(c); }
     if (shown('tags')) { const c = tagsCard(cur.days, rows); if (c) wrap.append(c); }
@@ -1887,6 +1981,10 @@
       ...st.routines.filter(r => r.items.length).map(r => ({ key: 'r.' + r.id, label: r.name, get: d => { const n = r.items.filter(i => (d.checks[r.id] || {})[i.id]).length; return n || null; }, show: v => `${v}/${r.items.length}` })),
       { key: 'min', label: t('p.minCol'), get: d => { const m = sum(d.sessions.filter(s => s.done !== false), s => num(s.minutes)); return m || null; }, fmt },
       { key: 'load', label: t('p.loadCol'), get: d => { const l = sum(d.sessions.filter(s => s.done !== false), load); return l || null; }, fmt },
+      { key: 'effort', label: t('p.effortShort'), get: d => { const e = d.sessions.filter(s => s.done !== false && s.effort).map(s => num(s.effort)); return e.length ? Math.max(...e) : null; }, fmt },
+      /* each category's number and duration fields, summed over the day's sessions of that category */
+      ...st.sessionKinds.flatMap(k => k.fields.filter(fd => fd.type === 'number' || fd.type === 'duration').map(fd => ({ key: `f.${k.id}.${fd.id}`, label: `${k.name} · ${fd.name}` + (fd.unit ? ` (${fd.unit})` : ''),
+        get: d => { const vs = d.sessions.filter(s => s.done !== false && s.kind === k.id).map(s => s.fields && s.fields[fd.id]).filter(v => v != null && v !== '' && Number.isFinite(+v)); return vs.length ? sum(vs, v => num(v)) : null; }, fmt: fmt1 }))),
       { key: 'sessions', label: t('w.sessions'), get: d => d.sessions.filter(s => s.done !== false).map(s => s.name).join(', ') || null, text: true },
       { key: 'tags', label: t('dy.tags'), get: d => tagIdsOn(d.date, d).map(id => (st.tags.find(x => x.id === id) || {}).name).filter(Boolean).join(', ') || null, text: true },
       { key: 'events', label: t('ev.title'), get: d => eventsOn(d.date).map(e => e.title).join(', ') || null, text: true },
@@ -1960,11 +2058,13 @@
       h('button', { class: 'btn danger', onclick: () => confirmSheet(t('s.erase'), t('s.eraseConfirm') + cloudNote(), t('s.eraseBtn'), async () => { await store.eraseProfile(); hydrate(); location.hash = '#start'; render(); updateSyncUI(); toast(t('s.erased')); }, t('c.cancel')) }, t('s.erase')))));
     return wrap;
   }
-  /* this profile's name and weight unit, then the other profiles on this device */
+  /* this profile's name, units and day start, then the other profiles on this device */
   function profileBlock() {
     const prof = store.currentProfile(), list = h('div', { class: 'list' });
     const name = h('input', { type: 'text', value: prof.name || '', placeholder: t('c.optional'), onchange: e => { store.renameProfile(prof.id, e.target.value.trim()); refreshProfileButton(); drawList(); flashSaved(); } });
-    const unitSel = h('select', { onchange: e => changeUnit(e.target.value) }, [['lb', t('s.lb')], ['kg', t('s.kg')]].map(([v, l]) => h('option', { value: v, selected: v === unit() }, l)));
+    const unitSel = h('select', { onchange: e => changeSystem(e.target.value) }, SC.SYSTEMS.map(v => h('option', { value: v, selected: v === S.settings.units.system }, t('s.sys.' + v))));
+    const startSel = h('select', { onchange: e => { const s = latest(); s.dayStart = e.target.value; saveSettingsNow(s); render(); } },
+      [0, 1, 2, 3, 4, 5, 6].map(n => { const v = pad2(n) + ':00'; return h('option', { value: v, selected: v === S.settings.dayStart }, n ? fmtTime(v) : t('s.midnight')); }));
     const drawList = () => {
       const profs = store.profiles(), cur = store.currentProfile().id;
       list.replaceChildren(...profs.map(p => h('div', { class: 'row pick' },
@@ -1974,21 +2074,37 @@
     };
     drawList();
     return h('div', null,
-      h('div', { class: 'grid2' }, h('label', { class: 'field' }, h('span', null, t('s.profileName')), name), h('label', { class: 'field' }, h('span', null, t('s.unit')), unitSel)),
+      h('div', { class: 'grid2' }, h('label', { class: 'field' }, h('span', null, t('s.profileName')), name), h('label', { class: 'field' }, h('span', null, t('s.units')), unitSel)),
+      h('p', { class: 'muted small' }, t('s.unitsHelp')),
+      h('div', { class: 'grid2' }, h('label', { class: 'field' }, h('span', null, t('s.dayStart')), startSel), h('p', { class: 'muted small' }, t('s.dayStartHelp'))),
       h('div', { class: 'subhead' }, t('s.profiles')), h('p', { class: 'muted small' }, t('s.profilesSub')), list,
       h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => newProfileSheet() }, t('s.addProfile'))));
   }
-  /* switching units converts the goal and every logged weight, so the numbers keep meaning the same */
-  function changeUnit(to) {
-    const from = unit(); if (to === from) return;
-    const s = latest(); s.units.weight = to;
-    if (s.goal.weight != null) s.goal.weight = SC.convertWeight(s.goal.weight, from, to);
-    if (s.goal.band) s.goal.band = s.goal.band.map(v => SC.convertWeight(v, from, to));
-    s.goal.milestones = s.goal.milestones.map(m => ({ ...m, weight: SC.convertWeight(m.weight, from, to) }));
-    const ups = store.list('days').filter(d => d.weight != null).map(d => { const { id, ...rest } = d; return ['days/' + (d.date || id), { ...rest, weight: SC.convertWeight(num(d.weight), from, to), updatedAt: store.stamp() }]; });
-    if (ups.length) store.bulk({ upserts: ups });
-    saveSettingsNow(s); loadDay(S.date);
-    toast(ups.length ? t('s.converted', { n: ups.length, u: to }) : t('c.saved'));
+  /* Switching US and metric converts everything kept in those units, so the numbers keep their meaning: the goal, logged
+     weights and set loads, number trackers and category fields in lb, in, mi, fl oz or °F (their values, targets and past
+     targets), and back. */
+  function changeSystem(to) {
+    if (to === S.settings.units.system || !SC.SYSTEMS.includes(to)) return;
+    const s = latest(), wFrom = s.units.weight, wTo = to === 'metric' ? 'kg' : 'lb', cw = v => v == null || v === '' ? v : SC.convertWeight(num(v), wFrom, wTo);
+    s.units = { system: to, weight: wTo };
+    s.goal.weight = cw(s.goal.weight); if (s.goal.band) s.goal.band = s.goal.band.map(cw);
+    s.goal.milestones = s.goal.milestones.map(m => ({ ...m, weight: cw(m.weight) }));
+    const conv = {}, fconv = {};
+    s.trackers = s.trackers.map(x => { if (x.type !== 'number') return x; const c = SC.convertUnit(x.target, x.unit, to); if (!c) return x; const u = x.unit; conv[x.id] = v => SC.convertUnit(v, u, to).v; return { ...x, unit: c.unit, target: c.v }; });
+    s.sessionKinds = s.sessionKinds.map(k => ({ ...k, fields: k.fields.map(fd => { if (fd.type !== 'number') return fd; const c = SC.convertUnit(null, fd.unit, to); if (!c) return fd; const u = fd.unit; fconv[k.id + '/' + fd.id] = v => SC.convertUnit(v, u, to).v; return { ...fd, unit: c.unit }; }) }));
+    const ups = []; let n = 0;
+    for (const raw of store.list('days')) {
+      const d = SC.normalizeDay(raw, raw.date || raw.id); let hit = false;
+      if (d.weight != null) { d.weight = cw(d.weight); hit = true; }
+      for (const k of Object.keys(conv)) if (d.values[k] != null && Number.isFinite(+d.values[k])) { d.values[k] = conv[k](d.values[k]); hit = true; }
+      for (const x of d.sessions) { for (const r of x.sets) if (r.wt != null) { r.wt = cw(r.wt); hit = true; } for (const fk of Object.keys(x.fields || {})) { const c = fconv[x.kind + '/' + fk]; if (c && Number.isFinite(+x.fields[fk])) { x.fields[fk] = c(x.fields[fk]); hit = true; } } }
+      if (hit) { n++; ups.push(['days/' + d.date, { ...d, updatedAt: store.stamp() }]); }
+    }
+    /* past setups judge past days: their targets move too */
+    for (const hx of S.history) { let hit = false; const trs = hx.trackers.map(y => conv[y.id] && y.target != null ? (hit = true, { ...y, target: conv[y.id](y.target) }) : y); if (hit) ups.push(['history/' + hx.date, { ...hx, trackers: trs, updatedAt: store.stamp() }]); }
+    if (ups.length) { store.bulk({ upserts: ups }); loadHistory(); }
+    saveSettingsNow(s); loadDay(S.date); render();
+    toast(n ? t('s.convertedSys', { n, u: t('s.sys.' + to) }) : t('c.saved'));
   }
   function gatesEditor(draft, dirty) {
     const box = h('div', { class: 'editor' }), rows = h('div', { class: 'editor' });
@@ -2145,7 +2261,7 @@
   function applyPending() {
     if (!pendingPaths.size || U.sheetOpen() || editing()) return;
     const paths = [...pendingPaths]; pendingPaths.clear();
-    if (paths.includes('settings/main')) S.settings = readSettings();
+    if (paths.includes('settings/main')) { S.settings = readSettings(); if (applyDayStart()) loadDay(S.date); }
     if (paths.some(p => p.startsWith('history/'))) loadHistory();
     if (paths.some(p => p.startsWith('events/'))) loadEvents();
     if (paths.some(p => p.startsWith('foods/'))) S.foods = store.list('foods').sort(byName);
@@ -2166,7 +2282,7 @@
     const wrap = h('div', { class: 'page start' });
     wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('g.title')), h('div', { class: 'sub' }, t('g.tagline')))));
     const hasData = !!(S.foods.length || S.settings.sessionTypes.length || S.settings.mealSlots.length || S.settings.trackers.some(x => x.type !== 'weight' && !x.archived));
-    const loadPack = async pack => { const r = SC.planImport(SC.starterProfile(pack), { mode: 'replace', current: current() }); if (!r.ok) return; await applyPlan(r.plan); toast(t('g.packLoaded', { name: t('pk.' + pack) })); location.hash = '#today'; };
+    const loadPack = async pack => { const r = SC.planImport(SC.starterProfile(pack, S.settings.units.system), { mode: 'replace', current: current() }); if (!r.ok) return; await applyPlan(r.plan); toast(t('g.packLoaded', { name: t('pk.' + pack) })); location.hash = '#today'; };
     const packTile = pack => h('button', { class: 'tile pack', onclick: () => hasData ? confirmSheet(t('pk.' + pack), t('g.replaceExample'), t('g.usePack'), () => loadPack(pack), t('c.cancel')) : loadPack(pack) }, h('b', null, t('pk.' + pack)), h('span', null, t('pk.' + pack + 'Sub')));
     wrap.append(h('div', { class: 'subhead' }, t('g.packs')), h('div', { class: 'tiles' }, SC.PACKS.map(packTile),
       h('button', { class: 'tile', onclick: () => { const p = $('#importpanel'); if (p) p.scrollIntoView({ behavior: 'smooth' }); } }, h('b', null, t('g.import')), h('span', null, t('i.helpMerge'))),

@@ -6,6 +6,9 @@ A local-first training and nutrition log: meals and nutrients, trackers for anyt
 - Five pages: Today, Plan (what is coming up and the ideal week), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, exercises, foods and saved meals), Settings (profile, language, theme, status colors, folding, sync, data). Targets, nutrients, tracker sections, meals of the day and tags are edited on Today; the goal and its checkpoints on Progress.
 - Five-step status colors from missed to met (with a color-blind option); past days keep the colors their setup gave them
 - Cards fold, finished ones by themselves; everything you create drags into order; deletes can be undone
+- US or metric units (switching converts what you logged); a day can start after midnight
+- Workouts: repeat last time with a tap, a rest timer, warm-up blocks that stay out of the log; category fields charted on Progress
+- Quick add on Today: a meal, a workout, an event, a note or your weight
 - Starter packs: General, BJJ athlete, Runner, Fat loss
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
 - Light and dark themes
@@ -27,11 +30,11 @@ The app is plain HTML, CSS and JavaScript with no build step, no framework and n
 
 Sync is optional and per profile. Settings › Sync › **Create cloud vault** asks for the server's invite code and returns a sync key (`tly-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX`). On another device, Settings › Sync › **Link this device** with that key. The key is the only credential: the server keeps just its SHA-256 hash, and anyone with the key can read and change the profile, so keep it in a password manager. The invite code only stops strangers from creating vaults on your free quota.
 
-Every edit is saved to IndexedDB first and queued in an outbox. The app uploads the queue a few seconds after edits, on start, when back online or in the foreground, and on Sync now, and pulls other devices' changes in the same request. Per document (settings, each food, template and day) the copy with the newer `updatedAt` wins, the same rule as import; deletes travel as tombstones. Offline nothing is lost; the outbox waits. Linking a device that already has data merges both sides by the same rule. Open tabs share data live; only the active profile syncs. Unlinking or erasing a profile never deletes the cloud copy; Settings › Sync › **Delete cloud copy** does.
+Every edit is saved to IndexedDB first and queued in an outbox. The app uploads the queue a few seconds after edits, on start, when back online or in the foreground, and on Sync now, and pulls other devices' changes in the same request. Each document (the settings, each food, template, event and day) syncs on its own; deletes travel as tombstones. The server refuses a copy from a device that has not seen that document's latest version; the device merges and sends again. A day or the settings edited on two devices are merged entry by entry against the last synced copy (the device keeps it while an edit waits to upload): meals, sessions and other listed things by id, values and checks by key, tags as a set. What one side changed wins over what the other left alone, something removed on one side and untouched on the other stays removed, and a value changed on both takes the newer copy's. Any other document keeps the newer copy. Offline nothing is lost; the outbox waits. Linking a device that already has data merges both sides the same way. Open tabs share data live; only the active profile syncs. Unlinking or erasing a profile never deletes the cloud copy; Settings › Sync › **Delete cloud copy** does.
 
 The dot next to the name shows the state: green synced, amber waiting to upload (with a count), gray offline, red error (tap for the message).
 
-Keep in mind: a day is one document, so if the same day is edited on two devices while both are offline, the later edit replaces the whole day. On iPhone the home-screen app has its own storage, separate from Safari, so link inside the installed app.
+On iPhone the home-screen app has its own storage, separate from Safari, so link inside the installed app.
 
 ## Set up
 
@@ -122,7 +125,8 @@ One JSON object with optional sections. Paste just the part you are changing.
   "profile": { "name": "Sam" },
   "settings": {
     "name": "Sam",
-    "units": { "weight": "lb" },
+    "units": { "system": "us" },
+    "dayStart": "00:00",
     "targets": { "kcal": 2600, "protein": 170, "carbs": 0, "fat": 0, "aim": { "kcal": "near", "protein": "min", "carbs": "near", "fat": "near" } },
     "nutrients": [{ "id": "fiber", "name": "Fiber", "unit": "g", "target": 30, "aim": "min" }],
     "goal": { "weight": 180, "bodyFat": 12, "note": "", "band": [178, 182],
@@ -144,7 +148,8 @@ One JSON object with optional sections. Paste just the part you are changing.
     "sessionKinds": [{ "id": "bjj", "name": "BJJ", "color": "blue", "fields": [{ "id": "rounds", "name": "Rounds", "type": "number" }, { "id": "focus", "name": "Focus", "type": "text" }] },
                      { "name": "Strength" }],
     "sessionTypes": [{ "id": "upper", "name": "Upper body", "kind": "strength", "minutes": 45, "kcal": 300,
-                       "plan": [{ "label": "A", "items": [{ "exerciseId": "push-up", "sets": 4, "reps": "8-12", "rir": "1", "rest": "60 s" },
+                       "plan": [{ "label": "Warm-up", "log": false, "items": [{ "exerciseId": "cat-cow", "sets": 1, "reps": "10" }] },
+                                { "label": "A", "items": [{ "exerciseId": "push-up", "sets": 4, "reps": "8-12", "rir": "1", "rest": "60 s" },
                                                           { "exerciseId": "one-arm-row", "sets": 4, "reps": "10-12", "perSide": true }] }] }],
     "calendar": [{ "days": ["mon", "fri"], "start": "17:30", "end": "18:15", "kind": "session", "typeId": "upper" },
                  { "days": ["mon", "tue", "wed", "thu", "fri"], "start": "09:00", "end": "17:00", "kind": "work", "title": "Work" },
@@ -185,6 +190,8 @@ Notes:
 - **goal**: target `weight` and `bodyFat`, a `band` to stay in, a `note`, and `milestones` (checkpoints with `label`, `date`, `weight`, `bodyFat`). Progress works out lean and fat mass from weight and body fat; older files' `lean` and `fat` are ignored.
 - **events** are one-off things on a date: a tournament, a trip, an appointment, an injury, a test, a promotion. `end` (inclusive) makes one span days, `time` is `HH:MM`, `result` and `note` are free text. `tag` is a tag id: the event's days count as tagged (a `skip` tag leaves them out of averages). `big` makes it stand out on calendars with a countdown on Today. `offPlan` means planned training on those days is not expected. Moving a progression up adds an event.
 - **Status colors** have five steps: met (green), close (light green), halfway (yellow), started (orange), missed (red). A day that is still going stays neutral while it is short; going over counts at once. Rates over weeks and months: 95% met, 75% close, 50% halfway, 25% started.
+- **units.system** is `us` (lb, in, mi, fl oz, °F) or `metric` (kg, cm, km, ml, °C); bodyweight and set loads follow it. A number tracker or category field whose `unit` is one of these converts with it when you switch in Settings (values, targets and past targets). Files with only `units.weight` read `kg` as metric and `lb` as US; files with neither take the device's region.
+- **dayStart** (`HH:MM`, up to `06:00`): until then, logging counts for the day before, so a meal at 00:30 lands on the evening it belongs to.
 - `targets.aim` works the same for calories and macros. Missing aims default to `near` for calories, carbs and fat and `min` for protein. `nutrients` adds more (fiber, sodium…); foods, saved meals and logged meals carry them in `n`.
 - `sessionKinds[].fields` are what a session of that category logs: `number` (with `unit`), `text`, `rating` or `duration`. Sessions keep them in `fields`, plus `effort` (1–10). Effort × minutes is the session load.
 - `tags` mark days; `skip: true` leaves those days out of averages and rates. `day.tags` lists tag ids; an event's tag counts on its days too.
@@ -194,7 +201,8 @@ Notes:
 - `sessionKinds[].color` and `tags[].color` are one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.
 - `routines[].days` limits a routine to those weekdays; empty or missing means every day. `alertAt` turns a routine into a check-in: when that many items are ticked, Today shows `alertText`.
 - `exercises[].image` can be a direct image or GIF link (shown inline) or any page (opened in a tab). `video` is a link. `perSide` logs left and right reps and flags a gap over 10%. `gate` hides nothing but marks the exercise locked until that gate reaches the stage `at`.
-- `sessionTypes[].plan` is a list of blocks (supersets); `items` reference exercises by `exerciseId` or by `name`. Logging a session of that type pre-fills the sets and shows what you did last time.
+- `sessionTypes[].plan` is a list of blocks (supersets); `items` reference exercises by `exerciseId` or by `name`. Logging a session of that type pre-fills the sets and shows what you did last time, with a tap to repeat it; an item's `rest` (`60 s`, `2 min`, `1:30`) starts a rest timer. A block with `log: false` (a warm-up, a cool-down) stays in the workout but out of the log. A set's `reps` holds seconds or meters for exercises whose `unit` is `sec` or `m`.
+- A logged meal can say where it came from: `foodId` and `qty` (servings) when added from a food, `tplId` when added from a saved meal.
 - `calendar` blocks build the ideal week: `kind` is `session`, `routine`, `meal`, `sleep`, `work`, `rest` or `other`, with `typeId`, `routineId` or `slotId` for the linked thing. Times are `HH:MM`, optional; a block that ends before it starts runs overnight. A session block with times scales the type's calories to the block length. The old `schedule` object is still accepted and becomes untimed session blocks.
 - `wave.pattern` repeats from `wave.start`; values are `ramp`, `full` or `deload`. `gates[].current` is 1-based. A progression is any ladder: rehab phases, a belt, a grade.
 - `p`, `c`, `f` also accept `protein`, `carbs`, `fat`. `slot` also accepts `window`.
@@ -218,11 +226,11 @@ Same origin as the app, JSON in and out, errors as `{ "error": "..." }`.
 | Route | Auth | Body | Result |
 |---|---|---|---|
 | `POST /api/vault` | invite code | `{ invite }` | `201 { key }`, `403` on a wrong code |
-| `POST /api/sync` | `Authorization: Bearer <key>`, `x-tally-format: 5` | `{ cursor, changes: [{ path, doc, updatedAt, deleted }] }` | `200 { cursor, changes, more, serverTime }` |
+| `POST /api/sync` | `Authorization: Bearer <key>`, `x-tally-format: 5`, `x-tally-sync: 2` | `{ cursor, changes: [{ path, doc, updatedAt, deleted }] }` | `200 { cursor, changes, more, serverTime, rejected }` |
 | `GET /api/export` | Bearer | | `200` a v5 export |
 | `DELETE /api/vault` | Bearer | | `204`, the vault and all its documents are gone |
 
-An unknown key is `401`. `updatedAt` is milliseconds; more than 2 minutes in the future is clamped to server time. A sync without `x-tally-format: 5` (an app that has not reloaded since the update) gets `426`, so old copies of the app cannot overwrite v5 documents; the app asks you to reload.
+An unknown key is `401`. `updatedAt` is milliseconds; more than 2 minutes in the future is clamped to server time. A write is applied when its `updatedAt` is newer and, unless it is a delete, the row has not changed since the request's `cursor`; otherwise its path is listed in `rejected` and the newer row comes back in `changes` to be merged. A sync without `x-tally-format: 5` and `x-tally-sync: 2` (an app that has not reloaded since an update) gets `426`, so old copies of the app cannot overwrite newer documents; the app asks you to reload.
 
 ## Languages
 

@@ -33,7 +33,7 @@ MB.i18n.add('en', {
   "f.category": "Category", "f.csv": "Export CSV", "f.count": "{n} of {m}", "f.noMatch": "No foods match.", "f.empty": "The table is empty. Add a food or load the example profile.",
   "f.logTo": "Log to {date}", "f.logIt": "Log it", "f.editFood": "Edit food", "f.note": "Note", "f.added": "Added {name}", "f.updated": "Updated {name}", "f.deleted": "Deleted {name}",
   "f.servingPh": "e.g. 100 g, 1 cup, 1 scoop", "f.all": "All",
-  "s.title": "Settings", "s.profile": "Profile", "s.unit": "Weight unit", "s.lb": "Pounds (lb)", "s.kg": "Kilograms (kg)", "s.targets": "Daily targets", "s.calories": "Calories (kcal)",
+  "s.title": "Settings", "s.profile": "Profile", "s.targets": "Daily targets", "s.calories": "Calories (kcal)",
   "s.proteinG": "Protein (g)", "s.carbsG": "Carbs (g), optional", "s.fatG": "Fat (g), optional", "s.goal": "Goal", "s.goalWeight": "Goal weight ({u})", "s.goalBf": "Goal body fat (%)",
   "s.goalNote": "Note", "s.slots": "Meals of the day", "s.slotName": "Name", "s.addSlot": "Add meal", "s.habits": "Daily habits", "s.habit": "Habit", "s.target": "Count", "s.habitUnit": "Unit",
   "s.habitsSub": "Add a count for things like water or steps", "s.addHabit": "Add habit", "s.routines": "Routines", "s.routinesSub": "Daily checklists: warm-ups, PT, mobility",
@@ -42,13 +42,12 @@ MB.i18n.add('en', {
   "s.schedule": "Weekly schedule", "s.addTypesFirst": "Add session types first",
 
 
-
   "s.app": "App", "s.language": "Language", "s.theme": "Theme", "s.followDevice": "Follow device", "s.light": "Light", "s.dark": "Dark",
   "s.profiles": "Profiles", "s.profilesSub": "Separate logs on this device", "s.addProfile": "Add profile", "s.rename": "Rename", "s.switch": "Switch", "s.current": "Current",
   "s.deleteProfile": "Delete profile", "s.deleteProfileConfirm": "Delete \"{name}\" and everything logged in it?", "s.profileName": "Profile name",
   "s.data": "Your data", "s.storedIn": "Stored in this browser ({kind}). Nothing leaves your device unless you export it.", "s.export": "Export", "s.import": "Import",
   "s.erase": "Erase this profile", "s.eraseConfirm": "Delete the settings, foods, saved meals and every logged day in this profile? Export first if you want a copy.", "s.eraseBtn": "Erase",
-  "s.erased": "Erased", "s.unsaved": "Unsaved changes", "s.converted": "Converted {n} weights to {u}",
+  "s.erased": "Erased", "s.unsaved": "Unsaved changes",
   "e.title": "Export", "e.scope": "What to export", "e.everything": "Everything", "e.setup": "Settings, foods and saved meals", "e.since": "Days since", "e.file": "Download file",
   "e.share": "Share", "e.copy": "Copy JSON", "e.copied": "Copied to clipboard", "e.copyFailed": "Could not copy", "e.summary": "{days} days · {foods} foods · {templates} saved meals",
   "i.title": "Import", "i.mode": "Mode", "i.merge": "Merge", "i.replace": "Replace", "i.remove": "Remove",
@@ -234,8 +233,8 @@ MB.i18n.add('en', {
   "pk.fatlossSub": "A calorie cap, protein, steps, vegetables, weigh-ins and waist.", "pk.recovery": "Recovery", "pk.stepsUnit": "steps",
   "pk.soreness": "Soreness", "pk.energy": "Energy", "pk.restingHr": "Resting heart rate",
   "pk.bpm": "bpm", "pk.veggies": "Vegetables", "pk.servings": "servings",
-  "pk.noLate": "No late snacks", "pk.in": "in", "pk.distance": "Distance",
-  "pk.dist": "mi", "pk.bjjKind": "BJJ", "pk.rounds": "Rounds",
+  "pk.noLate": "No late snacks", "pk.distance": "Distance",
+  "pk.bjjKind": "BJJ", "pk.rounds": "Rounds",
   "pk.focus": "Focus", "pk.running": "Running", "pk.pace": "Pace",
   "pk.class": "BJJ class", "pk.openMat": "Open mat", "pk.easyRun": "Easy run",
   "pk.intervals": "Intervals", "pk.longRun": "Long run", "pk.fullA": "Full body A",
@@ -313,4 +312,34 @@ MB.i18n.add('en', {
   "sec.events": "Events",
   "p.now": "Now",
   "p.leanFat": "Lean / fat ({u})"
+});
+
+/* 2.4: units, day start, workout logging, quick add, workout fields */
+MB.i18n.add('en', {
+  "s.units": "Units",
+  "s.sys.us": "US (lb, in, mi)",
+  "s.sys.metric": "Metric (kg, cm, km)",
+  "s.unitsHelp": "Switching converts weights, set loads, and any tracker or field in lb, in, mi, fl oz or °F.",
+  "s.dayStart": "Day starts at",
+  "s.dayStartHelp": "Logs after midnight count for the day before until then.",
+  "s.midnight": "Midnight",
+  "s.convertedSys": "Converted {n} days to {u}",
+  "t.repeat": "Same as last time",
+  "t.fillAll": "Fill in from last time",
+  "t.startRest": "Start rest timer",
+  "t.restLeft": "Rest {t} · tap to stop",
+  "t.restDone": "Rest done",
+  "pl.logSets": "Log sets",
+  "pl.logSetsHelp": "Off for warm-ups and cool-downs: they stay in the workout but not in the log.",
+  "pl.notLogged": "not logged",
+  "t.wholeDay": "Whole day ({n})",
+  "t.showLess": "Show less",
+  "q.title": "Quick add",
+  "q.note": "Note",
+  "p.card.fields": "Workout fields",
+  "p.fieldsTitle": "Workout fields",
+  "p.totalV": "total {v}",
+  "p.sessionsN": "{n} sessions",
+  "p.noValues": "Nothing logged yet.",
+  "p.effortShort": "Effort"
 });
