@@ -3,12 +3,13 @@
 A local-first training and nutrition log: meals and nutrients, trackers for anything (checks, counts, numbers, ratings, durations, times, notes, bodyweight), routines, workouts with per-side logging, effort and custom fields, an ideal-week calendar, one-off events (tournaments, trips, appointments), an exercise library with history and records, progressions and day tags. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
 
 - Works offline once opened, installs to the home screen like an app
-- Five pages: Today, Plan (what is coming up and the ideal week), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, exercises, foods and saved meals), Settings (profile, language, theme, status colors, folding, sync, data). Targets, nutrients, tracker sections, meals of the day and tags are edited on Today; the goal and its checkpoints on Progress.
+- Five pages: Today, Plan (what is coming up, the training cycle and the ideal week with its training total), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, exercises, foods and saved meals), Settings (profile, language, theme, status colors, folding, sync, data). Targets, nutrients, tracker sections, meals of the day and tags are edited on Today; the goal and its checkpoints on Progress.
 - Five-step status colors from missed to met (with a color-blind option); past days keep the colors their setup gave them
 - Cards fold, finished ones by themselves; everything you create drags into order; deletes can be undone
 - US or metric units (switching converts what you logged); a day can start after midnight
 - Workouts: repeat last time with a tap, a rest timer, warm-up blocks that stay out of the log; category fields charted on Progress
 - Quick add on Today: a meal, a workout, an event, a note or your weight
+- Calm by default: one highlighted action per card, a workout that ended without a log gets a Log tag instead of a mark, and a new profile starts clean (days before it are not counted)
 - Starter packs: General, BJJ athlete, Runner, Fat loss
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
 - Light and dark themes
@@ -195,7 +196,7 @@ Notes:
 - `targets.aim` works the same for calories and macros. Missing aims default to `near` for calories, carbs and fat and `min` for protein. `nutrients` adds more (fiber, sodium…); foods, saved meals and logged meals carry them in `n`.
 - `sessionKinds[].fields` are what a session of that category logs: `number` (with `unit`), `text`, `rating` or `duration`. Sessions keep them in `fields`, plus `effort` (1–10). Effort × minutes is the session load.
 - `tags` mark days; `skip: true` leaves those days out of averages and rates. `day.tags` lists tag ids; an event's tag counts on its days too.
-- **history** keeps the setup each stretch of days is judged by: an entry holds what judging needs (targets, nutrient targets, trackers' targets and frequencies, routines, planned sessions) from its `date` on. The app writes one whenever setup changes, so changing a target today leaves last month's colors alone. Days before the first entry use the first one.
+- **history** keeps the setup each stretch of days is judged by: an entry holds what judging needs (targets, nutrient targets, trackers' targets and frequencies, routines, planned sessions) from its `date` on. The app writes one whenever setup changes, so changing a target today leaves last month's colors alone. Days before the first entry use the first one, except days before the profile's first day (its first entry or its first logged day, whichever is earlier): nothing was expected then, so they are not counted as missed.
 - Names in the app: `mealSlots` are "Meals of the day", `templates` are "Saved meals", `groups` are "Sections", `sessionKinds` are "Categories", `sessionTypes` are "Workouts", `gates` are "Progressions", `wave` is the "Training cycle" (`ramp` shows as Build, `full` as Peak), `calendar` blocks are plan items.
 - `progress.hide` lists Progress cards the profile hides: `nutrition`, `weight`, `training`, `habits` (consistency), `trackers`, `tags`, `events`, `body` (the goal).
 - `sessionKinds[].color` and `tags[].color` are one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.

@@ -80,7 +80,7 @@ describe('Library', () => {
   it('workouts: categories with colors, the training cycle and progressions edit in their own sheets', async () => {
     const tab = await withExample('#workouts');
     const t = tab.t;
-    const editIn = title => tab.$$('#main .card').find(c => c.querySelector('h2') && c.querySelector('h2').textContent === title).querySelector('.card-head button');
+    const editIn = title => tab.$$('#main .setup .row.pick').find(r => r.querySelector('.row-name div').textContent === title);
     editIn(t('s.kinds')).click();
     tab.button(t('s.addKind'), '.sheet').click();
     typeIn(tab, tab.$$('.sheet .kind-row input').at(-1), 'Climbing');
@@ -104,7 +104,7 @@ describe('Library', () => {
     typeIn(tab, name, 'Wrist'); typeIn(tab, stages, 'Phase 1, Phase 2');
     tab.button(t('c.save'), '.sheet').click();
     expect(settings(tab).gates).toMatchObject([{ name: 'Wrist', stages: ['Phase 1', 'Phase 2'], current: 1 }]);
-    expect(tab.text('#main')).toContain('Wrist · Phase 1');
+    expect(tab.text('#main .setup')).toContain('Wrist');
     await tab.go('#plan');
     tab.$$('#main .prog').find(b => b.textContent.includes('Wrist')).click();
     tab.$$('.sheet button.row.pick')[1].click(); /* on to phase 2 */

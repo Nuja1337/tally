@@ -57,7 +57,6 @@ input:focus,select:focus,textarea:focus,button:focus-visible,.tile:focus-visible
 .status[data-state="ok"]{color:var(--green)}
 .status[data-state="error"]{color:var(--red)}
 .topbar-actions{display:flex;align-items:center;gap:4px}
-.topbar-actions select.lang{width:auto;min-height:36px;padding:6px 26px 6px 10px;border-radius:999px;font-size:13px;background:var(--surface)}
 .profile-btn{gap:6px;font-size:13px;max-width:140px}
 .profile-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .profile-btn svg{width:18px;height:18px}
@@ -109,6 +108,8 @@ details.card[open] summary::after{content:"–"}
 details.card[open] summary{margin-bottom:12px}
 .notice{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px 10px 14px;border:1px solid var(--accent);border-radius:var(--radius);margin-bottom:12px;background:var(--surface)}
 .nudge{display:flex;gap:10px;align-items:center;justify-content:space-between;font-size:13px;color:var(--muted);padding:6px 4px 10px}
+.nudge-acts{display:flex;gap:16px;flex:0 0 auto}
+.linkbtn.quiet{color:var(--muted);font-weight:500}
 .empty{color:var(--faint);font-size:14px;margin:0}
 .empty.pad{padding:14px}
 .subhead{font-weight:700;font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin:14px 0 6px}
@@ -320,8 +321,9 @@ pre.code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-s
 .exgroup:last-child{border-bottom:0}
 .exhead{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px;margin-bottom:6px;font-weight:600}
 .blocklab{display:inline-block;padding:1px 7px;border-radius:6px;background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700}
-.setrow{display:grid;grid-template-columns:22px 1fr 1fr auto auto;gap:6px;align-items:center;margin-bottom:6px}
-.setrow input{min-height:38px;padding:6px 8px}
+.setrow{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(0,1fr) auto;gap:6px;align-items:center;margin-bottom:6px}
+.setrow.sides{grid-template-columns:22px repeat(3,minmax(0,1fr)) 34px auto}
+.setrow input{min-height:38px;padding:6px 8px;min-width:0;width:100%}
 .setno{font-size:12px;color:var(--faint);text-align:center;font-variant-numeric:tabular-nums}
 .gap{font-size:12px;color:var(--muted);min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
 .gap.bad{color:var(--red);font-weight:700}
@@ -396,6 +398,7 @@ table.plain td.n{text-align:right;font-variant-numeric:tabular-nums}
 .st-met{--st:var(--g-met)}.st-good{--st:var(--g-good)}.st-half{--st:var(--g-half)}.st-low{--st:var(--g-low)}.st-miss{--st:var(--g-miss)}.st-progress{--st:var(--accent)}.st-none{--st:var(--muted)}
 .st-met,.st-good,.st-half,.st-low,.st-miss,.st-progress,.st-none{--st-ink:color-mix(in srgb,var(--st) 78%,var(--ink))}
 .g-met{--g:var(--g-met)}.g-good{--g:var(--g-good)}.g-half{--g:var(--g-half)}.g-low{--g:var(--g-low)}.g-miss{--g:var(--g-miss)}
+.tag.first{margin:0 6px 0 0}
 .tag{display:inline-block;margin-left:8px;font-size:11px;font-weight:700;padding:1px 8px;border-radius:999px;vertical-align:middle;color:var(--st-ink,var(--st));background:color-mix(in srgb,var(--st) 16%,transparent)}
 .notice.bad{border-color:var(--red);background:color-mix(in srgb,var(--red) 7%,var(--surface))}
 .actions.center{justify-content:center}
@@ -434,6 +437,7 @@ table.plain td.n{text-align:right;font-variant-numeric:tabular-nums}
 .tl-row.now{background:color-mix(in srgb,var(--accent) 9%,transparent);border-radius:10px;border-bottom-color:transparent;padding-left:8px;padding-right:8px}
 .tl-tag{flex:0 0 auto;font-size:11px;font-weight:700;color:var(--muted);background:var(--surface2);border-radius:999px;padding:2px 8px;white-space:nowrap}
 .tl-tag.now{background:var(--accent);color:var(--accent-ink)}
+.tl-tag.log{background:none;box-shadow:inset 0 0 0 1px var(--accent);color:var(--accent)}
 .tl-row.miss .tl-check{color:var(--red)}
 .tl-row.late .tl-check{color:var(--amber)}
 /* checklists: one row per routine that opens in place */
@@ -485,7 +489,7 @@ table.plain td.n{text-align:right;font-variant-numeric:tabular-nums}
 .kchip i,.kdot{display:inline-block;flex:0 0 9px;width:9px;height:9px;border-radius:50%;background:var(--kc)}
 .kchip b{color:var(--ink);font-weight:700}
 .chip.kchip{color:var(--ink);font-size:13px}
-.missline{margin:8px 0 0;color:var(--st-ink);font-weight:600}
+.missline{margin:8px 0 0;color:var(--muted)}
 .notice.good{border-color:var(--green);color:var(--ink)}
 table.plain tr.hit td:first-child{color:var(--green);font-weight:700}
 /* week: a row per day */
@@ -591,6 +595,10 @@ button.mx-row{width:100%;padding:0;border:0;background:none;color:var(--ink);fon
 .editor-rows{display:flex;flex-direction:column;gap:6px}
 .sortrow{gap:6px;padding-left:0}
 .linkish.plain{text-decoration:none;flex:1;min-width:0}
+.infobtn{flex:0 0 auto;width:30px;height:30px;margin:-4px -4px -4px 0;border-radius:50%;border:0;background:none;color:var(--faint);font:italic 700 15px/1 Georgia,'Times New Roman',serif;cursor:pointer;padding:0}
+.infobtn:hover{color:var(--ink);background:var(--surface2)}
+.goalnote{margin:10px 0 0}
+.kin{display:inline-flex;align-items:center;gap:5px;margin-right:12px;white-space:nowrap}
 .sortlist .row-name div{overflow:hidden;text-overflow:ellipsis}
 /* tracker tiles */
 .trackers .tk{cursor:default}
@@ -659,12 +667,12 @@ ul.facts{margin:10px 0 0}
 .tkchart:last-child{border-bottom:0}
 .tkchart .subhead{display:block;margin:10px 0 4px;padding:0;border:0;background:none;cursor:pointer}
 .tg{display:flex;flex-direction:column;gap:6px;overflow-x:auto}
-.tg-row{display:grid;grid-template-columns:minmax(110px,1.5fr) repeat(4,minmax(58px,1fr));gap:8px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums;min-width:380px}
+.tg-row{display:grid;grid-template-columns:minmax(84px,1.4fr) repeat(4,minmax(48px,1fr));gap:6px;align-items:center;font-size:13px;font-variant-numeric:tabular-nums;min-width:300px}
 .tg-row>span:not(.tg-name){text-align:right}
 .tg-head{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
 .tg-name{display:flex;align-items:center;gap:6px;font-weight:600;min-width:0}
 .tg-name i{width:9px;height:9px;border-radius:50%;background:var(--kc);flex:0 0 auto}
-.tg-name small{color:var(--muted);font-weight:500}
+.tg-name small{display:block;color:var(--muted);font-weight:500;font-size:12px}
 /* progress: the data table */
 .datatable td.txt{min-width:120px;color:var(--muted)}
 .datatable td.txt .clip{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -697,7 +705,6 @@ ul.facts{margin:10px 0 0}
 .goaltable tr.now td:first-child,.goaltable tr.target td:first-child{font-weight:700}
 .chip:disabled{cursor:default;opacity:.85}
 /* phones: the language picker lives in Settings, so the save status has room next to a profile name */
-@media (max-width:480px){.topbar-actions select.lang{display:none}}
 /* 2.4: small-chart tiles, quick add, rest timer, the plan card's whole-day toggle, bigger small chips */
 .spks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 @media (min-width:640px){.spks{grid-template-columns:repeat(3,minmax(0,1fr))}}

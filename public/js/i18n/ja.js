@@ -15,10 +15,10 @@ MB.i18n.add('ja', {
   "t.whatAte": "何を食べましたか？", "t.needName": "名前を入力してください", "t.logged": "{name}を記録しました", "t.removed": "{name}を削除しました",
   "t.saveTemplate": "食事として保存", "t.templateName": "名前", "t.templateSaved": "食事を保存しました", "t.noTemplates": "保存した食事はまだありません。食事を記録してから保存してください。",
   "t.noFoods": "食品がまだありません。食品ページで追加してください。", "t.noRecent": "最近の記録はありません。", "t.noMatches": "該当なし。",
-  "t.copyYesterday": "昨日をコピー", "t.copied": "昨日の食事{n}件をコピーしました", "t.editMeal": "食事を編集", "t.slot": "食事", "t.mealSaved": "食事を更新しました",
+  "t.copyYesterday": "昨日をコピー", "t.copied": ["昨日の食事{n}件をコピーしました","昨日の食事{n}件をコピーしました"], "t.editMeal": "食事を編集", "t.slot": "食事", "t.mealSaved": "食事を更新しました",
   "t.addTo": "{slot}に追加", "t.nothingLogged": "記録なし", "t.slotTotal": "{kcal} kcal · タンパク質 {p} g",
   "t.session": "ワークアウト", "t.somethingElse": "その他", "t.kind": "カテゴリー", "t.minutes": "分", "t.kcalBurned": "消費kcal", "t.sets": "セット", "t.addSet": "セットを追加",
-  "t.noSets": "セットの記録はありません。", "t.exercise": "種目", "t.reps": "回", "t.details": "詳細", "t.logSession": "ワークアウトを記録", "t.setsCount": "{n}セット",
+  "t.noSets": "セットの記録はありません。", "t.exercise": "種目", "t.reps": "回", "t.details": "詳細", "t.logSession": "ワークアウトを記録", "t.setsCount": ["{n}セット","{n}セット"],
   "t.backup": "最終バックアップ: {when}", "t.backupNever": "バックアップはまだありません", "t.backupHint": "最終バックアップから{n}日分を記録済みです。", "t.exportNow": "エクスポート",
   "w.thisWeek": "今週", "w.weekOf": "{d}の週", "w.prev": "前の週", "w.next": "次の週", "w.upcoming": "これから", "w.nothing": "記録なし",
   "w.noMeals": "食事なし", "w.noTraining": "トレーニングなし", "w.habits": "習慣 {a}/{b}", "w.avgKcal": "平均カロリー", "w.avgProtein": "平均タンパク質 (g)", "w.sessions": "セッション",
@@ -97,13 +97,13 @@ MB.i18n.add('ja', {
 MB.i18n.add('ja', {
   "nav.plan": "プラン", "nav.library": "ライブラリ",
   "t.plan": "今日の予定", "t.perSide": "片側ずつ", "t.left": "左", "t.right": "右", "t.addExercise": "種目を追加", "t.locked": "{gate}で解放", "t.unlocked": "{gate}で解放済み",
-  "t.measures": "サイズ計測", "t.measuresSub": "メジャー、月1回", "t.minusOne": "1つ減らす", "t.tapToDo": "完了したらタップ", "t.alertDefault": "今日は{n}件の注意サイン。無理をしないでください。",
+  "t.measures": "サイズ計測", "t.measuresSub": "メジャー、月1回", "t.minusOne": "1つ減らす", "t.tapToDo": "完了したらタップ", "t.alertDefault": ["今日は{n}件の注意サイン。無理をしないでください。","今日は{n}件の注意サイン。無理をしないでください。"],
   "pl.sub": "理想の1週間。目安であって、契約ではありません。", "pl.week": "{of}週中 第{n}週", "pl.ramp": "ビルド", "pl.full": "ピーク", "pl.deload": "回復", "pl.cycle": "サイクル {n}",
   "pl.deloadHint": "回復週: セット数半分、スプリントなし、バランスチェックを実施。", "pl.wave": "トレーニングサイクル", "pl.gatesSub": "種目を解放する段階", "pl.waveStarts": "{d}開始",
   "pl.calendar": "週間", "pl.addBlock": "週に追加", "pl.editBlock": "予定を編集", "pl.kind": "種類", "pl.title": "タイトル", "pl.start": "開始", "pl.end": "終了", "pl.needDay": "曜日を1つ以上選んでください",
   "pl.session": "ワークアウト", "pl.routine": "ルーティン", "pl.meal": "食事", "pl.sleep": "睡眠", "pl.work": "仕事", "pl.rest": "休息", "pl.other": "その他",
   "pl.empty": "まだ予定はありません。", "pl.nothingThatDay": "その日の予定はありません。", "pl.workouts": "ワークアウト", "pl.noWorkouts": "ワークアウトがありません。「編集」からセッションをもとに作成できます。",
-  "pl.editWorkout": "ワークアウトを編集", "pl.viewWorkout": "ワークアウトを見る", "pl.blocksCount": "{b}ブロック · {e}種目", "pl.noPlan": "ワークアウトなし", "pl.blockLabel": "ブロック", "pl.rest2": "休憩",
+  "pl.editWorkout": "ワークアウトを編集", "pl.viewWorkout": "ワークアウトを見る", "pl.noPlan": "ワークアウトなし", "pl.blockLabel": "ブロック", "pl.rest2": "休憩",
   "l.exercises": "種目", "l.exSub": "動作のライブラリ。タップでポイント、画像、動画を表示。", "l.addExercise": "種目を追加", "l.editExercise": "種目を編集", "l.search": "種目を検索",
   "l.cues": "ポイント", "l.unit": "単位", "l.imageUrl": "画像・GIFのURL", "l.imageHint": "画像への直接リンクはここに表示、それ以外は別タブで開きます", "l.videoUrl": "動画のURL", "l.images": "画像", "l.video": "動画",
   "l.gate": "解放の条件", "l.gateAt": "段階", "l.empty": "種目がありません。追加するかサンプルを読み込んでください。",
@@ -186,7 +186,7 @@ MB.i18n.add('ja', {
   "p.weightChange": "体重の変化", "p.highlights": "ハイライト", "p.clearGoal": "目標を消去",
   "pl.addWeek": "週を追加",
   "pl.removeWeek": "最後の週を削除", "pl.deleteBlock": "週の予定から外しますか？記録済みの日は変わりません。", "pl.editProgressions": "プログレッションを編集",
-  "pl.glance": "1週間のトレーニング", "pl.mealsN": ["食","食"], "pl.workoutsN": ["回","回"],
+  "pl.mealsN": ["食","食"], "pl.workoutsN": ["回","回"],
   "pl.noCycle": "サイクルを削除", "pl.sleepFor": "睡眠 {t}", "pl.stageHelp": "今いる段階をタップしてください。その段階で解放される種目はロック表示されなくなります。",
   "pl.stageOf": "段階 {n}/{of}", "pl.unlocks": "解放：{list}", "pl.until": "{t}まで",
   "s.kindsHelp": "ワークアウトにはカテゴリーがあり、その色が今日・予定・進捗に表示されます。色をタップで選択、もう一度タップで自動に戻ります。", "col.blue": "青", "col.violet": "紫",
@@ -224,7 +224,7 @@ MB.i18n.add('ja', {
   "p.hoursCol": "時間", "p.lastYear": "直近12か月", "p.latestV": "最新 {v}",
   "p.load": "負荷 {n}", "p.loadVs": "前の4週間比 {d}", "p.loadJump": "急増しています。徐々に慣らしましょう",
   "p.loadCol": "負荷", "p.minCol": "トレーニング（分）",
-  "p.nDays": "{n}日", "p.otherDays": "その他の日", "p.planCol": "予定",
+  "p.nDays": ["{n}日","{n}日"], "p.otherDays": "その他の日", "p.planCol": "予定",
   "p.records": "自己ベスト更新", "p.recordsSet": "自己ベスト更新",
   "p.skipped": "スキップ", "p.slips": "最も抜けやすいのは{day}：{of}回中{n}回未達成", "p.tagsTitle": "タグ付きの日",
   "p.tapRow": "行をタップするとカレンダーと連続記録を表示します。", "p.totals": "カテゴリー別の合計", "p.trackers": "トラッカーのグラフ",
@@ -308,7 +308,7 @@ MB.i18n.add('ja', {
   "ev.count": "合計{n}件",
   "ev.stageLogged": "{name} · イベントに追加しました",
   "p.card.events": "イベント",
-  "i.rankMoved": "ランクはプログレッションになりました。{n}件の昇格がイベントになりました。",
+  "i.rankMoved": ["ランクはプログレッションになりました。{n}件の昇格がイベントになりました。","ランクはプログレッションになりました。{n}件の昇格がイベントになりました。"],
   "sec.events": "イベント",
   "p.now": "現在",
   "p.leanFat": "除脂肪 / 脂肪({u})"
@@ -323,7 +323,7 @@ MB.i18n.add('ja', {
   "s.dayStart": "1日の始まり",
   "s.dayStartHelp": "深夜0時を過ぎても、この時刻までの記録は前日に入ります。",
   "s.midnight": "午前0時",
-  "s.convertedSys": "{n}日分を{u}に換算しました",
+  "s.convertedSys": ["{n}日分を{u}に換算しました","{n}日分を{u}に換算しました"],
   "t.repeat": "前回と同じ",
   "t.fillAll": "前回の内容で埋める",
   "t.startRest": "休憩タイマーを開始",
@@ -339,7 +339,15 @@ MB.i18n.add('ja', {
   "p.card.fields": "ワークアウト項目",
   "p.fieldsTitle": "ワークアウト項目",
   "p.totalV": "合計 {v}",
-  "p.sessionsN": "{n}回",
+  "p.sessionsN": ["{n}回","{n}回"],
   "p.noValues": "まだ記録がありません。",
   "p.effortShort": "強度"
+});
+
+/* 2.5: cleanup */
+MB.i18n.add('ja', {
+  "c.later": "あとで",
+  "t.exInfo": "やり方",
+  "pl.blocksN": ["{n}ブロック","{n}ブロック"],
+  "pl.exercisesN": ["{n}種目","{n}種目"]
 });

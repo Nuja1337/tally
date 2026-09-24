@@ -15,10 +15,10 @@ MB.i18n.add('de', {
   "t.whatAte": "Was hast du gegessen?", "t.needName": "Bitte einen Namen angeben", "t.logged": "Eingetragen: {name}", "t.removed": "Entfernt: {name}",
   "t.saveTemplate": "Als Mahlzeit speichern", "t.templateName": "Name", "t.templateSaved": "Mahlzeit gespeichert", "t.noTemplates": "Noch keine gespeicherten Mahlzeiten. Trag eine ein und speichere sie.",
   "t.noFoods": "Noch keine Lebensmittel. Leg welche unter Lebensmittel an.", "t.noRecent": "Zuletzt nichts eingetragen.", "t.noMatches": "Keine Treffer.",
-  "t.copyYesterday": "Gestern kopieren", "t.copied": "{n} Mahlzeiten von gestern kopiert", "t.editMeal": "Mahlzeit bearbeiten", "t.slot": "Mahlzeit", "t.mealSaved": "Mahlzeit aktualisiert",
+  "t.copyYesterday": "Gestern kopieren", "t.copied": ["{n} Mahlzeit von gestern kopiert","{n} Mahlzeiten von gestern kopiert"], "t.editMeal": "Mahlzeit bearbeiten", "t.slot": "Mahlzeit", "t.mealSaved": "Mahlzeit aktualisiert",
   "t.addTo": "Zu {slot} hinzufügen", "t.nothingLogged": "Nichts eingetragen", "t.slotTotal": "{kcal} kcal · {p} g Protein",
   "t.session": "Workout", "t.somethingElse": "Etwas anderes", "t.kind": "Kategorie", "t.minutes": "Minuten", "t.kcalBurned": "kcal verbrannt", "t.sets": "Sätze", "t.addSet": "Satz hinzufügen",
-  "t.noSets": "Keine Sätze eingetragen.", "t.exercise": "Übung", "t.reps": "Wdh.", "t.details": "Details", "t.logSession": "Workout eintragen", "t.setsCount": "{n} Sätze",
+  "t.noSets": "Keine Sätze eingetragen.", "t.exercise": "Übung", "t.reps": "Wdh.", "t.details": "Details", "t.logSession": "Workout eintragen", "t.setsCount": ["{n} Satz","{n} Sätze"],
   "t.backup": "Letzte Sicherung: {when}", "t.backupNever": "Noch keine Sicherung", "t.backupHint": "{n} Tage seit deiner letzten Sicherung eingetragen.", "t.exportNow": "Exportieren",
   "w.thisWeek": "Diese Woche", "w.weekOf": "Woche ab {d}", "w.prev": "Vorherige Woche", "w.next": "Nächste Woche", "w.upcoming": "Steht an", "w.nothing": "Nichts eingetragen",
   "w.noMeals": "Keine Mahlzeiten", "w.noTraining": "Kein Training", "w.habits": "Gewohnheiten {a}/{b}", "w.avgKcal": "Ø Kalorien", "w.avgProtein": "Ø Protein (g)", "w.sessions": "Einheiten",
@@ -97,13 +97,13 @@ MB.i18n.add('de', {
 MB.i18n.add('de', {
   "nav.plan": "Plan", "nav.library": "Bibliothek",
   "t.plan": "Plan für heute", "t.perSide": "pro Seite", "t.left": "links", "t.right": "rechts", "t.addExercise": "Übung hinzufügen", "t.locked": "Frei ab {gate}", "t.unlocked": "Frei ab {gate}",
-  "t.measures": "Maße", "t.measuresSub": "Maßband, monatlich", "t.minusOne": "Eins weniger", "t.tapToDo": "Antippen, wenn erledigt", "t.alertDefault": "{n} Warnzeichen heute. Ruhig angehen.",
+  "t.measures": "Maße", "t.measuresSub": "Maßband, monatlich", "t.minusOne": "Eins weniger", "t.tapToDo": "Antippen, wenn erledigt", "t.alertDefault": ["{n} Warnzeichen heute. Ruhig angehen.","{n} Warnzeichen heute. Ruhig angehen."],
   "pl.sub": "Deine ideale Woche. Ein Leitfaden, kein Vertrag.", "pl.week": "Woche {n} von {of}", "pl.ramp": "Aufbau", "pl.full": "Spitze", "pl.deload": "Deload", "pl.cycle": "Zyklus {n}",
   "pl.deloadHint": "Deload-Woche: halbe Sätze, keine Sprints, Balance-Check machen.", "pl.wave": "Trainingszyklus", "pl.gatesSub": "Stufen, die Übungen freischalten", "pl.waveStarts": "Beginnt am {d}",
   "pl.calendar": "Woche", "pl.addBlock": "Zur Woche hinzufügen", "pl.editBlock": "Eintrag bearbeiten", "pl.kind": "Art", "pl.title": "Titel", "pl.start": "Beginn", "pl.end": "Ende", "pl.needDay": "Mindestens einen Tag wählen",
   "pl.session": "Workout", "pl.routine": "Routine", "pl.meal": "Mahlzeit", "pl.sleep": "Schlaf", "pl.work": "Arbeit", "pl.rest": "Erholung", "pl.other": "Sonstiges",
   "pl.empty": "Noch nichts geplant.", "pl.nothingThatDay": "An dem Tag ist nichts geplant.", "pl.workouts": "Workouts", "pl.noWorkouts": "Noch keine Workouts. Tippe auf Bearbeiten, um eins aus deinen Einheiten zu bauen.",
-  "pl.editWorkout": "Workout bearbeiten", "pl.viewWorkout": "Workout ansehen", "pl.blocksCount": "{b} Blöcke · {e} Übungen", "pl.noPlan": "Kein Workout", "pl.blockLabel": "Block", "pl.rest2": "Pause",
+  "pl.editWorkout": "Workout bearbeiten", "pl.viewWorkout": "Workout ansehen", "pl.noPlan": "Kein Workout", "pl.blockLabel": "Block", "pl.rest2": "Pause",
   "l.exercises": "Übungen", "l.exSub": "Deine Übungsbibliothek. Antippen für Hinweise, Bilder und Video.", "l.addExercise": "Übung hinzufügen", "l.editExercise": "Übung bearbeiten", "l.search": "Übungen suchen",
   "l.cues": "Hinweise", "l.unit": "Gezählt in", "l.imageUrl": "Bild- oder GIF-URL", "l.imageHint": "Ein direkter Bildlink wird hier angezeigt; jeder andere Link öffnet einen Tab", "l.videoUrl": "Video-URL", "l.images": "Bilder", "l.video": "Video",
   "l.gate": "Frei durch", "l.gateAt": "Ab Stufe", "l.empty": "Noch keine Übungen. Leg eine an oder lade das Beispielprofil.",
@@ -186,7 +186,7 @@ MB.i18n.add('de', {
   "p.weightChange": "Gewichtsänderung", "p.highlights": "Highlights", "p.clearGoal": "Ziel löschen",
   "pl.addWeek": "Woche hinzufügen",
   "pl.removeWeek": "Letzte Woche entfernen", "pl.deleteBlock": "Aus deiner Woche entfernen? Eingetragene Tage bleiben, wie sie sind.", "pl.editProgressions": "Progressionen bearbeiten",
-  "pl.glance": "Training über die Woche", "pl.mealsN": ["Mahlzeit","Mahlzeiten"], "pl.workoutsN": ["Workout","Workouts"],
+  "pl.mealsN": ["Mahlzeit","Mahlzeiten"], "pl.workoutsN": ["Workout","Workouts"],
   "pl.noCycle": "Zyklus entfernen", "pl.sleepFor": "{t} Schlaf", "pl.stageHelp": "Tippe die Stufe an, auf der du gerade bist. Übungen, die dort frei werden, gelten nicht mehr als gesperrt.",
   "pl.stageOf": "Stufe {n} von {of}", "pl.unlocks": "Schaltet frei: {list}", "pl.until": "bis {t}",
   "s.kindsHelp": "Jedes Workout hat eine Kategorie. Ihre Farbe erscheint unter Heute, Plan und Fortschritt. Tippe eine Farbe zum Auswählen an, nochmal für automatisch.", "col.blue": "Blau", "col.violet": "Violett",
@@ -224,7 +224,7 @@ MB.i18n.add('de', {
   "p.hoursCol": "Stunden", "p.lastYear": "Letzte 12 Monate", "p.latestV": "zuletzt {v}",
   "p.load": "Belastung {n}", "p.loadVs": "{d} ggü. den 4 Wochen davor", "p.loadJump": "ein großer Sprung, also langsam steigern",
   "p.loadCol": "Belastung", "p.minCol": "Training (Min)",
-  "p.nDays": "{n} Tage", "p.otherDays": "Andere Tage", "p.planCol": "Plan",
+  "p.nDays": ["{n} Tag","{n} Tage"], "p.otherDays": "Andere Tage", "p.planCol": "Plan",
   "p.records": "Neue Rekorde", "p.recordsSet": "Neue Rekorde",
   "p.skipped": "Ausgelassen", "p.slips": "Schwächster Tag: {day}, {n} von {of} verpasst", "p.tagsTitle": "Markierte Tage",
   "p.tapRow": "Tippe eine Zeile an für Kalender und Serien.", "p.totals": "Summen nach Kategorie", "p.trackers": "Tracker-Diagramme",
@@ -308,7 +308,7 @@ MB.i18n.add('de', {
   "ev.count": "{n} insgesamt",
   "ev.stageLogged": "{name} · zu Ereignissen hinzugefügt",
   "p.card.events": "Ereignisse",
-  "i.rankMoved": "Der Rang ist jetzt eine Progression; {n} Beförderungen wurden zu Ereignissen.",
+  "i.rankMoved": ["Der Rang ist jetzt eine Progression; {n} Beförderung wurde zum Ereignis.","Der Rang ist jetzt eine Progression; {n} Beförderungen wurden zu Ereignissen."],
   "sec.events": "Ereignisse",
   "p.now": "Jetzt",
   "p.leanFat": "Mager / Fett ({u})"
@@ -323,7 +323,7 @@ MB.i18n.add('de', {
   "s.dayStart": "Tag beginnt um",
   "s.dayStartHelp": "Einträge nach Mitternacht zählen bis dahin zum Vortag.",
   "s.midnight": "Mitternacht",
-  "s.convertedSys": "{n} Tage in {u} umgerechnet",
+  "s.convertedSys": ["{n} Tag in {u} umgerechnet","{n} Tage in {u} umgerechnet"],
   "t.repeat": "Wie beim letzten Mal",
   "t.fillAll": "Vom letzten Mal übernehmen",
   "t.startRest": "Pausentimer starten",
@@ -339,7 +339,15 @@ MB.i18n.add('de', {
   "p.card.fields": "Workout-Felder",
   "p.fieldsTitle": "Workout-Felder",
   "p.totalV": "gesamt {v}",
-  "p.sessionsN": "{n} Einheiten",
+  "p.sessionsN": ["{n} Einheit","{n} Einheiten"],
   "p.noValues": "Noch nichts erfasst.",
   "p.effortShort": "Anstrengung"
+});
+
+/* 2.5: cleanup */
+MB.i18n.add('de', {
+  "c.later": "Später",
+  "t.exInfo": "So geht's",
+  "pl.blocksN": ["{n} Block","{n} Blöcke"],
+  "pl.exercisesN": ["{n} Übung","{n} Übungen"]
 });

@@ -153,8 +153,8 @@ describe('Plan', () => {
   it('shows planned training per weekday with the weekly total', async () => {
     const tab = await withExample('#plan');
     const planned = tab.MB.ui.DAYS.flatMap(d => tab.MB.schema.plannedFor(settings(tab), d));
-    expect(tab.text('#c-glance .count')).toContain(String(planned.length));
-    expect(tab.$$('#c-glance .kchip').length).toBeGreaterThan(0);
+    expect(tab.text('#c-plan .count')).toContain(String(planned.length));
+    expect(tab.$$('#c-plan .kchip').length).toBeGreaterThan(0);
     expect(tab.errors).toEqual([]);
   });
 });

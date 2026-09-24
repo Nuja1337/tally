@@ -15,10 +15,10 @@ MB.i18n.add('pt', {
   "t.whatAte": "O que você comeu?", "t.needName": "Dê um nome", "t.logged": "Registrado: {name}", "t.removed": "Removido: {name}",
   "t.saveTemplate": "Salvar refeição", "t.templateName": "Nome", "t.templateSaved": "Refeição salva", "t.noTemplates": "Nenhuma refeição salva ainda. Registre uma e salve.",
   "t.noFoods": "Sem alimentos. Adicione alguns em Alimentos.", "t.noRecent": "Nada registrado recentemente.", "t.noMatches": "Nenhum resultado.",
-  "t.copyYesterday": "Copiar ontem", "t.copied": "{n} refeições copiadas de ontem", "t.editMeal": "Editar refeição", "t.slot": "Refeição", "t.mealSaved": "Refeição atualizada",
+  "t.copyYesterday": "Copiar ontem", "t.copied": ["{n} refeição copiada de ontem","{n} refeições copiadas de ontem"], "t.editMeal": "Editar refeição", "t.slot": "Refeição", "t.mealSaved": "Refeição atualizada",
   "t.addTo": "Adicionar a {slot}", "t.nothingLogged": "Nada registrado", "t.slotTotal": "{kcal} kcal · {p} g de proteína",
   "t.session": "Treino", "t.somethingElse": "Outra coisa", "t.kind": "Categoria", "t.minutes": "Minutos", "t.kcalBurned": "kcal queimadas", "t.sets": "Séries", "t.addSet": "Adicionar série",
-  "t.noSets": "Sem séries.", "t.exercise": "Exercício", "t.reps": "reps", "t.details": "Detalhes", "t.logSession": "Registrar treino", "t.setsCount": "{n} séries",
+  "t.noSets": "Sem séries.", "t.exercise": "Exercício", "t.reps": "reps", "t.details": "Detalhes", "t.logSession": "Registrar treino", "t.setsCount": ["{n} série","{n} séries"],
   "t.backup": "Último backup: {when}", "t.backupNever": "Sem backup ainda", "t.backupHint": "{n} dias registrados desde o último backup.", "t.exportNow": "Exportar",
   "w.thisWeek": "Esta semana", "w.weekOf": "Semana de {d}", "w.prev": "Semana anterior", "w.next": "Próxima semana", "w.upcoming": "Em breve", "w.nothing": "Nada registrado",
   "w.noMeals": "Sem refeições", "w.noTraining": "Sem treino", "w.habits": "Hábitos {a}/{b}", "w.avgKcal": "Média de calorias", "w.avgProtein": "Média de proteína (g)", "w.sessions": "Sessões",
@@ -97,13 +97,13 @@ MB.i18n.add('pt', {
 MB.i18n.add('pt', {
   "nav.plan": "Plano", "nav.library": "Biblioteca",
   "t.plan": "Plano de hoje", "t.perSide": "por lado", "t.left": "esq.", "t.right": "dir.", "t.addExercise": "Adicionar exercício", "t.locked": "Libera em {gate}", "t.unlocked": "Liberado em {gate}",
-  "t.measures": "Medidas", "t.measuresSub": "fita métrica, mensal", "t.minusOne": "Menos um", "t.tapToDo": "Toque ao concluir", "t.alertDefault": "{n} sinais hoje. Pegue leve.",
+  "t.measures": "Medidas", "t.measuresSub": "fita métrica, mensal", "t.minusOne": "Menos um", "t.tapToDo": "Toque ao concluir", "t.alertDefault": ["{n} sinal hoje. Pegue leve.","{n} sinais hoje. Pegue leve."],
   "pl.sub": "Sua semana ideal. Um guia, não um contrato.", "pl.week": "Semana {n} de {of}", "pl.ramp": "Construção", "pl.full": "Pico", "pl.deload": "Deload", "pl.cycle": "Ciclo {n}",
   "pl.deloadHint": "Semana de deload: metade das séries, sem sprints, faça o teste de equilíbrio.", "pl.wave": "Ciclo de treino", "pl.gatesSub": "Etapas que liberam exercícios", "pl.waveStarts": "Começa em {d}",
   "pl.calendar": "Semana", "pl.addBlock": "Adicionar à semana", "pl.editBlock": "Editar item do plano", "pl.kind": "Tipo", "pl.title": "Título", "pl.start": "Início", "pl.end": "Fim", "pl.needDay": "Escolha pelo menos um dia",
   "pl.session": "Treino", "pl.routine": "Rotina", "pl.meal": "Refeição", "pl.sleep": "Sono", "pl.work": "Trabalho", "pl.rest": "Descanso", "pl.other": "Outro",
   "pl.empty": "Nada planejado ainda.", "pl.nothingThatDay": "Nada planejado nesse dia.", "pl.workouts": "Treinos", "pl.noWorkouts": "Sem treinos. Toque em Editar para montar um a partir das suas sessões.",
-  "pl.editWorkout": "Editar treino", "pl.viewWorkout": "Ver treino", "pl.blocksCount": "{b} blocos · {e} exercícios", "pl.noPlan": "Sem treino", "pl.blockLabel": "Bloco", "pl.rest2": "Descanso",
+  "pl.editWorkout": "Editar treino", "pl.viewWorkout": "Ver treino", "pl.noPlan": "Sem treino", "pl.blockLabel": "Bloco", "pl.rest2": "Descanso",
   "l.exercises": "Exercícios", "l.exSub": "Sua biblioteca de movimentos. Toque para ver dicas, imagens e vídeo.", "l.addExercise": "Adicionar exercício", "l.editExercise": "Editar exercício", "l.search": "Buscar exercícios",
   "l.cues": "Dicas", "l.unit": "Contado em", "l.imageUrl": "URL de imagem ou GIF", "l.imageHint": "Link direto de imagem aparece aqui; outro link abre em uma aba", "l.videoUrl": "URL do vídeo", "l.images": "Imagens", "l.video": "Vídeo",
   "l.gate": "Liberado por", "l.gateAt": "Na etapa", "l.empty": "Sem exercícios. Adicione um ou carregue o perfil de exemplo.",
@@ -186,7 +186,7 @@ MB.i18n.add('pt', {
   "p.weightChange": "Variação de peso", "p.highlights": "Destaques", "p.clearGoal": "Limpar meta",
   "pl.addWeek": "Adicionar semana",
   "pl.removeWeek": "Remover a última semana", "pl.deleteBlock": "Remover isto da sua semana? Os dias registrados não mudam.", "pl.editProgressions": "Editar progressões",
-  "pl.glance": "Treino ao longo da semana", "pl.mealsN": ["refeição","refeições"], "pl.workoutsN": ["treino","treinos"],
+  "pl.mealsN": ["refeição","refeições"], "pl.workoutsN": ["treino","treinos"],
   "pl.noCycle": "Remover ciclo", "pl.sleepFor": "{t} de sono", "pl.stageHelp": "Toque na etapa em que você está. Os exercícios liberados nela deixam de aparecer bloqueados.",
   "pl.stageOf": "Etapa {n} de {of}", "pl.unlocks": "Libera {list}", "pl.until": "até {t}",
   "s.kindsHelp": "Cada treino tem uma categoria. A cor dela aparece em Hoje, Plano e Progresso. Toque numa cor para escolher; toque de novo para voltar ao automático.", "col.blue": "Azul", "col.violet": "Violeta",
@@ -224,7 +224,7 @@ MB.i18n.add('pt', {
   "p.hoursCol": "Horas", "p.lastYear": "Últimos 12 meses", "p.latestV": "último {v}",
   "p.load": "Carga {n}", "p.loadVs": "{d} vs as 4 semanas anteriores", "p.loadJump": "um salto grande, pegue leve",
   "p.loadCol": "Carga", "p.minCol": "Min de treino",
-  "p.nDays": "{n} dias", "p.otherDays": "Outros dias", "p.planCol": "Plano",
+  "p.nDays": ["{n} dia","{n} dias"], "p.otherDays": "Outros dias", "p.planCol": "Plano",
   "p.records": "Novos recordes", "p.recordsSet": "Novos recordes",
   "p.skipped": "Pulado", "p.slips": "Dia com mais falhas: {day} ({n} de {of} sem fazer)", "p.tagsTitle": "Dias com etiqueta",
   "p.tapRow": "Toque em uma linha para ver o calendário e as sequências.", "p.totals": "Totais por categoria", "p.trackers": "Gráficos dos indicadores",
@@ -308,7 +308,7 @@ MB.i18n.add('pt', {
   "ev.count": "{n} no total",
   "ev.stageLogged": "{name} · adicionado aos eventos",
   "p.card.events": "Eventos",
-  "i.rankMoved": "A graduação agora é uma progressão; {n} promoções viraram eventos.",
+  "i.rankMoved": ["A graduação agora é uma progressão; {n} promoção virou evento.","A graduação agora é uma progressão; {n} promoções viraram eventos."],
   "sec.events": "Eventos",
   "p.now": "Agora",
   "p.leanFat": "Magra / gordura ({u})"
@@ -323,7 +323,7 @@ MB.i18n.add('pt', {
   "s.dayStart": "O dia começa às",
   "s.dayStartHelp": "O que você registra depois da meia-noite conta para o dia anterior até esse horário.",
   "s.midnight": "Meia-noite",
-  "s.convertedSys": "{n} dias convertidos para {u}",
+  "s.convertedSys": ["{n} dia convertido para {u}","{n} dias convertidos para {u}"],
   "t.repeat": "Igual à última vez",
   "t.fillAll": "Preencher com a última vez",
   "t.startRest": "Iniciar descanso",
@@ -339,7 +339,15 @@ MB.i18n.add('pt', {
   "p.card.fields": "Campos de treino",
   "p.fieldsTitle": "Campos de treino",
   "p.totalV": "total {v}",
-  "p.sessionsN": "{n} sessões",
+  "p.sessionsN": ["{n} sessão","{n} sessões"],
   "p.noValues": "Nada registrado ainda.",
   "p.effortShort": "Esforço"
+});
+
+/* 2.5: cleanup */
+MB.i18n.add('pt', {
+  "c.later": "Mais tarde",
+  "t.exInfo": "Como fazer",
+  "pl.blocksN": ["{n} bloco","{n} blocos"],
+  "pl.exercisesN": ["{n} exercício","{n} exercícios"]
 });

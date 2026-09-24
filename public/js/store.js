@@ -208,6 +208,8 @@ window.MB = window.MB || {};
 
   /* documents in the active profile */
   function get(path) { const k = full(path); return mem.has(k) ? clone(mem.get(k)) : null; }
+  /* the ids in a collection, without reading the documents */
+  function ids(coll) { const prefix = full(coll) + '/'; const out = []; for (const k of mem.keys()) if (k.startsWith(prefix) && !k.slice(prefix.length).includes('/')) out.push(k.slice(prefix.length)); return out; }
   function list(coll) { const prefix = full(coll) + '/'; const out = []; for (const [p, d] of mem) if (p.startsWith(prefix) && !p.slice(prefix.length).includes('/')) out.push({ id: p.slice(prefix.length), ...clone(d) }); return out; }
   const cmp = (a, op, b) => { switch (op) { case '==': return a === b; case '!=': return a !== b; case '<': return a < b; case '<=': return a <= b; case '>': return a > b; case '>=': return a >= b; default: return true; } };
   function query(coll, filters, order, limit) {
@@ -332,7 +334,7 @@ window.MB = window.MB || {};
     return paths;
   }
 
-  const api = { init, kind: () => kind, get, list, query, setDoc, deleteDoc, bulk, subscribeDoc, subscribeColl, refresh, eraseProfile, count, getMeta, setMeta: writeMeta,
+  const api = { init, kind: () => kind, get, ids, list, query, setDoc, deleteDoc, bulk, subscribeDoc, subscribeColl, refresh, eraseProfile, count, getMeta, setMeta: writeMeta,
     profiles, currentProfile, setProfile, addProfile, renameProfile, deleteProfile, stamp,
     syncMeta, syncRead, syncUpdate, syncLink, syncUnlink, readDocs, applyRemote, dropBases,
     onerror: null, onlocal: null, onexternal: null };

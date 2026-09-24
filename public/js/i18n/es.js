@@ -15,10 +15,10 @@ MB.i18n.add('es', {
   "t.whatAte": "¿Qué comiste?", "t.needName": "Ponle un nombre", "t.logged": "Registrado: {name}", "t.removed": "Eliminado: {name}",
   "t.saveTemplate": "Guardar comida", "t.templateName": "Nombre", "t.templateSaved": "Comida guardada", "t.noTemplates": "Aún no hay comidas guardadas. Registra una y guárdala.",
   "t.noFoods": "Sin alimentos. Añade algunos en Alimentos.", "t.noRecent": "Nada registrado recientemente.", "t.noMatches": "Sin resultados.",
-  "t.copyYesterday": "Copiar ayer", "t.copied": "Copiadas {n} comidas de ayer", "t.editMeal": "Editar comida", "t.slot": "Comida", "t.mealSaved": "Comida actualizada",
+  "t.copyYesterday": "Copiar ayer", "t.copied": ["Copiada {n} comida de ayer","Copiadas {n} comidas de ayer"], "t.editMeal": "Editar comida", "t.slot": "Comida", "t.mealSaved": "Comida actualizada",
   "t.addTo": "Añadir a {slot}", "t.nothingLogged": "Nada registrado", "t.slotTotal": "{kcal} kcal · {p} g de proteína",
   "t.session": "Entrenamiento", "t.somethingElse": "Otra cosa", "t.kind": "Categoría", "t.minutes": "Minutos", "t.kcalBurned": "kcal quemadas", "t.sets": "Series", "t.addSet": "Añadir serie",
-  "t.noSets": "Sin series.", "t.exercise": "Ejercicio", "t.reps": "reps", "t.details": "Detalles", "t.logSession": "Registrar entrenamiento", "t.setsCount": "{n} series",
+  "t.noSets": "Sin series.", "t.exercise": "Ejercicio", "t.reps": "reps", "t.details": "Detalles", "t.logSession": "Registrar entrenamiento", "t.setsCount": ["{n} serie","{n} series"],
   "t.backup": "Última copia: {when}", "t.backupNever": "Sin copia todavía", "t.backupHint": "{n} días registrados desde tu última copia.", "t.exportNow": "Exportar",
   "w.thisWeek": "Esta semana", "w.weekOf": "Semana del {d}", "w.prev": "Semana anterior", "w.next": "Semana siguiente", "w.upcoming": "Próximo", "w.nothing": "Nada registrado",
   "w.noMeals": "Sin comidas", "w.noTraining": "Sin entrenamiento", "w.habits": "Hábitos {a}/{b}", "w.avgKcal": "Calorías medias", "w.avgProtein": "Proteína media (g)", "w.sessions": "Sesiones",
@@ -97,13 +97,13 @@ MB.i18n.add('es', {
 MB.i18n.add('es', {
   "nav.plan": "Plan", "nav.library": "Biblioteca",
   "t.plan": "Plan de hoy", "t.perSide": "por lado", "t.left": "izq.", "t.right": "der.", "t.addExercise": "Añadir ejercicio", "t.locked": "Se desbloquea en {gate}", "t.unlocked": "Desbloqueado en {gate}",
-  "t.measures": "Medidas", "t.measuresSub": "cinta métrica, mensual", "t.minusOne": "Menos uno", "t.tapToDo": "Toca al completar", "t.alertDefault": "{n} señales hoy. Tómatelo con calma.",
+  "t.measures": "Medidas", "t.measuresSub": "cinta métrica, mensual", "t.minusOne": "Menos uno", "t.tapToDo": "Toca al completar", "t.alertDefault": ["{n} señal hoy. Tómatelo con calma.","{n} señales hoy. Tómatelo con calma."],
   "pl.sub": "Tu semana ideal. Una guía, no un contrato.", "pl.week": "Semana {n} de {of}", "pl.ramp": "Carga", "pl.full": "Pico", "pl.deload": "Descarga", "pl.cycle": "Ciclo {n}",
   "pl.deloadHint": "Semana de descarga: la mitad de series, sin sprints, haz el test de equilibrio.", "pl.wave": "Ciclo de entrenamiento", "pl.gatesSub": "Etapas que desbloquean ejercicios", "pl.waveStarts": "Empieza el {d}",
   "pl.calendar": "Semana", "pl.addBlock": "Añadir a la semana", "pl.editBlock": "Editar elemento del plan", "pl.kind": "Tipo", "pl.title": "Título", "pl.start": "Inicio", "pl.end": "Fin", "pl.needDay": "Elige al menos un día",
   "pl.session": "Entrenamiento", "pl.routine": "Rutina", "pl.meal": "Comida", "pl.sleep": "Sueño", "pl.work": "Trabajo", "pl.rest": "Descanso", "pl.other": "Otro",
   "pl.empty": "Aún no hay nada planificado.", "pl.nothingThatDay": "Nada planificado ese día.", "pl.workouts": "Entrenamientos", "pl.noWorkouts": "Sin entrenamientos. Toca Editar para crear uno a partir de tus sesiones.",
-  "pl.editWorkout": "Editar entrenamiento", "pl.viewWorkout": "Ver entrenamiento", "pl.blocksCount": "{b} bloques · {e} ejercicios", "pl.noPlan": "Sin entrenamiento", "pl.blockLabel": "Bloque", "pl.rest2": "Descanso",
+  "pl.editWorkout": "Editar entrenamiento", "pl.viewWorkout": "Ver entrenamiento", "pl.noPlan": "Sin entrenamiento", "pl.blockLabel": "Bloque", "pl.rest2": "Descanso",
   "l.exercises": "Ejercicios", "l.exSub": "Tu biblioteca de movimientos. Toca para ver pautas, imágenes y vídeo.", "l.addExercise": "Añadir ejercicio", "l.editExercise": "Editar ejercicio", "l.search": "Buscar ejercicios",
   "l.cues": "Pautas", "l.unit": "Se cuenta en", "l.imageUrl": "URL de imagen o GIF", "l.imageHint": "Un enlace directo a imagen se muestra aquí; otro enlace se abre en una pestaña", "l.videoUrl": "URL del vídeo", "l.images": "Imágenes", "l.video": "Vídeo",
   "l.gate": "Se desbloquea con", "l.gateAt": "En la etapa", "l.empty": "Sin ejercicios. Añade uno o carga el perfil de ejemplo.",
@@ -186,7 +186,7 @@ MB.i18n.add('es', {
   "p.weightChange": "Cambio de peso", "p.highlights": "Lo destacado", "p.clearGoal": "Borrar meta",
   "pl.addWeek": "Añadir semana",
   "pl.removeWeek": "Quitar la última semana", "pl.deleteBlock": "¿Quitar esto de tu semana? Los días registrados no cambian.", "pl.editProgressions": "Editar progresiones",
-  "pl.glance": "Entrenamiento a lo largo de la semana", "pl.mealsN": ["comida","comidas"], "pl.workoutsN": ["entrenamiento","entrenamientos"],
+  "pl.mealsN": ["comida","comidas"], "pl.workoutsN": ["entrenamiento","entrenamientos"],
   "pl.noCycle": "Quitar ciclo", "pl.sleepFor": "{t} de sueño", "pl.stageHelp": "Toca la etapa en la que estás. Los ejercicios que se desbloquean ahí dejan de aparecer bloqueados.",
   "pl.stageOf": "Etapa {n} de {of}", "pl.unlocks": "Desbloquea {list}", "pl.until": "hasta las {t}",
   "s.kindsHelp": "Cada entrenamiento tiene una categoría. Su color aparece en Hoy, Plan y Progreso. Toca un color para elegirlo; tócalo otra vez para volver a automático.", "col.blue": "Azul", "col.violet": "Violeta",
@@ -224,7 +224,7 @@ MB.i18n.add('es', {
   "p.hoursCol": "Horas", "p.lastYear": "Últimos 12 meses", "p.latestV": "último {v}",
   "p.load": "Carga {n}", "p.loadVs": "{d} vs las 4 semanas anteriores", "p.loadJump": "un salto grande, ve con calma",
   "p.loadCol": "Carga", "p.minCol": "Min de entrenamiento",
-  "p.nDays": "{n} días", "p.otherDays": "Otros días", "p.planCol": "Plan",
+  "p.nDays": ["{n} día","{n} días"], "p.otherDays": "Otros días", "p.planCol": "Plan",
   "p.records": "Nuevos récords", "p.recordsSet": "Nuevos récords",
   "p.skipped": "Omitido", "p.slips": "Falla más el {day}: {n} de {of} sin hacer", "p.tagsTitle": "Días etiquetados",
   "p.tapRow": "Toca una fila para ver su calendario y sus rachas.", "p.totals": "Totales por categoría", "p.trackers": "Gráficas de seguimiento",
@@ -308,7 +308,7 @@ MB.i18n.add('es', {
   "ev.count": "{n} en total",
   "ev.stageLogged": "{name} · añadido a eventos",
   "p.card.events": "Eventos",
-  "i.rankMoved": "El rango ahora es una progresión; {n} ascensos pasaron a eventos.",
+  "i.rankMoved": ["El rango ahora es una progresión; {n} ascenso pasó a evento.","El rango ahora es una progresión; {n} ascensos pasaron a eventos."],
   "sec.events": "Eventos",
   "p.now": "Ahora",
   "p.leanFat": "Magra / grasa ({u})"
@@ -323,7 +323,7 @@ MB.i18n.add('es', {
   "s.dayStart": "El día empieza a las",
   "s.dayStartHelp": "Lo que registres después de medianoche cuenta para el día anterior hasta esa hora.",
   "s.midnight": "Medianoche",
-  "s.convertedSys": "Convertidos {n} días a {u}",
+  "s.convertedSys": ["Convertido {n} día a {u}","Convertidos {n} días a {u}"],
   "t.repeat": "Igual que la última vez",
   "t.fillAll": "Rellenar con la última vez",
   "t.startRest": "Iniciar descanso",
@@ -339,7 +339,15 @@ MB.i18n.add('es', {
   "p.card.fields": "Campos de entreno",
   "p.fieldsTitle": "Campos de entreno",
   "p.totalV": "total {v}",
-  "p.sessionsN": "{n} sesiones",
+  "p.sessionsN": ["{n} sesión","{n} sesiones"],
   "p.noValues": "Aún no hay registros.",
   "p.effortShort": "Esfuerzo"
+});
+
+/* 2.5: cleanup */
+MB.i18n.add('es', {
+  "c.later": "Más tarde",
+  "t.exInfo": "Cómo se hace",
+  "pl.blocksN": ["{n} bloque","{n} bloques"],
+  "pl.exercisesN": ["{n} ejercicio","{n} ejercicios"]
 });

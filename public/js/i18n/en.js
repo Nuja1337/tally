@@ -15,10 +15,10 @@ MB.i18n.add('en', {
   "t.whatAte": "What did you eat?", "t.needName": "Give it a name", "t.logged": "Logged {name}", "t.removed": "Removed {name}",
   "t.saveTemplate": "Save as meal", "t.templateName": "Name", "t.templateSaved": "Meal saved", "t.noTemplates": "No saved meals yet. Log a meal, then save it.",
   "t.noFoods": "No foods yet. Add some on the Foods page.", "t.noRecent": "Nothing logged recently.", "t.noMatches": "No matches.",
-  "t.copyYesterday": "Copy yesterday", "t.copied": "Copied {n} meals from yesterday", "t.editMeal": "Edit meal", "t.slot": "Meal", "t.mealSaved": "Meal updated",
+  "t.copyYesterday": "Copy yesterday", "t.copied": ["Copied {n} meal from yesterday","Copied {n} meals from yesterday"], "t.editMeal": "Edit meal", "t.slot": "Meal", "t.mealSaved": "Meal updated",
   "t.addTo": "Add to {slot}", "t.nothingLogged": "Nothing logged", "t.slotTotal": "{kcal} kcal · {p} g protein",
   "t.session": "Workout", "t.somethingElse": "Something else", "t.kind": "Category", "t.minutes": "Minutes", "t.kcalBurned": "kcal burned", "t.sets": "Sets", "t.addSet": "Add set",
-  "t.noSets": "No sets logged.", "t.exercise": "Exercise", "t.reps": "reps", "t.details": "Details", "t.logSession": "Log workout", "t.setsCount": "{n} sets",
+  "t.noSets": "No sets logged.", "t.exercise": "Exercise", "t.reps": "reps", "t.details": "Details", "t.logSession": "Log workout", "t.setsCount": ["{n} set","{n} sets"],
   "t.backup": "Last backup: {when}", "t.backupNever": "No backup yet", "t.backupHint": "{n} days logged since your last backup.", "t.exportNow": "Export",
   "w.thisWeek": "This week", "w.weekOf": "Week of {d}", "w.prev": "Previous week", "w.next": "Next week", "w.upcoming": "Upcoming", "w.nothing": "Nothing logged",
   "w.noMeals": "No meals", "w.noTraining": "No training", "w.habits": "Habits {a}/{b}", "w.avgKcal": "Avg calories", "w.avgProtein": "Avg protein (g)", "w.sessions": "Sessions",
@@ -97,13 +97,13 @@ MB.i18n.add('en', {
 MB.i18n.add('en', {
   "nav.plan": "Plan", "nav.library": "Library",
   "t.plan": "Today's plan", "t.perSide": "per side", "t.left": "left", "t.right": "right", "t.addExercise": "Add exercise", "t.locked": "Unlocks at {gate}", "t.unlocked": "Unlocked at {gate}",
-  "t.measures": "Measurements", "t.measuresSub": "tape, monthly", "t.minusOne": "Minus one", "t.tapToDo": "Tap when done", "t.alertDefault": "{n} flags today. Take it easy.",
+  "t.measures": "Measurements", "t.measuresSub": "tape, monthly", "t.minusOne": "Minus one", "t.tapToDo": "Tap when done", "t.alertDefault": ["{n} flag today. Take it easy.","{n} flags today. Take it easy."],
   "pl.sub": "Your ideal week. A guideline, not a contract.", "pl.week": "Week {n} of {of}", "pl.ramp": "Build", "pl.full": "Peak", "pl.deload": "Deload", "pl.cycle": "Cycle {n}",
   "pl.deloadHint": "Deload week: half the sets, no sprints, run the balance screen.", "pl.wave": "Training cycle", "pl.gatesSub": "Stages that unlock exercises", "pl.waveStarts": "Starts {d}",
   "pl.calendar": "Week", "pl.addBlock": "Add to week", "pl.editBlock": "Edit plan item", "pl.kind": "Type", "pl.title": "Title", "pl.start": "Start", "pl.end": "End", "pl.needDay": "Pick at least one day",
   "pl.session": "Workout", "pl.routine": "Routine", "pl.meal": "Meal", "pl.sleep": "Sleep", "pl.work": "Work", "pl.rest": "Rest", "pl.other": "Other",
   "pl.empty": "Nothing planned yet.", "pl.nothingThatDay": "Nothing planned that day.", "pl.workouts": "Workouts", "pl.noWorkouts": "No workouts yet. Tap Edit to build one from your session types.",
-  "pl.editWorkout": "Edit workout", "pl.viewWorkout": "View workout", "pl.blocksCount": "{b} blocks · {e} exercises", "pl.noPlan": "No workout", "pl.blockLabel": "Block", "pl.rest2": "Rest",
+  "pl.editWorkout": "Edit workout", "pl.viewWorkout": "View workout", "pl.noPlan": "No workout", "pl.blockLabel": "Block", "pl.rest2": "Rest",
   "l.exercises": "Exercises", "l.exSub": "Your movement library. Tap for cues, images and video.", "l.addExercise": "Add exercise", "l.editExercise": "Edit exercise", "l.search": "Search exercises",
   "l.cues": "Cues", "l.unit": "Counted in", "l.imageUrl": "Image or GIF URL", "l.imageHint": "Direct image link shows inline; any other link opens in a tab", "l.videoUrl": "Video URL", "l.images": "Images", "l.video": "Video",
   "l.gate": "Unlocks with", "l.gateAt": "At stage", "l.empty": "No exercises yet. Add one, or load the example profile.",
@@ -186,7 +186,7 @@ MB.i18n.add('en', {
   "p.weightChange": "Weight change", "p.highlights": "Highlights", "p.clearGoal": "Clear goal",
   "pl.addWeek": "Add week",
   "pl.removeWeek": "Remove last week", "pl.deleteBlock": "Remove this from your week? Logged days stay as they are.", "pl.editProgressions": "Edit progressions",
-  "pl.glance": "Training across the week", "pl.mealsN": ["meal","meals"], "pl.workoutsN": ["workout","workouts"],
+  "pl.mealsN": ["meal","meals"], "pl.workoutsN": ["workout","workouts"],
   "pl.noCycle": "Remove cycle", "pl.sleepFor": "{t} sleep", "pl.stageHelp": "Tap the stage you are on now. Exercises that unlock there stop showing as locked.",
   "pl.stageOf": "Stage {n} of {of}", "pl.unlocks": "Unlocks {list}", "pl.until": "until {t}",
   "s.kindsHelp": "Each workout has a category. Its color shows on Today, Plan and Progress. Tap a color to pick it, tap it again to go back to automatic.", "col.blue": "Blue", "col.violet": "Violet",
@@ -219,7 +219,7 @@ MB.i18n.add('en', {
   "p.hoursCol": "Hours", "p.lastYear": "Last 12 months", "p.latestV": "latest {v}",
   "p.load": "Load {n}", "p.loadVs": "{d} vs the 4 weeks before", "p.loadJump": "a big jump, so ease in",
   "p.loadCol": "Load", "p.minCol": "Training min",
-  "p.nDays": "{n} days", "p.otherDays": "Other days", "p.planCol": "Plan",
+  "p.nDays": ["{n} day","{n} days"], "p.otherDays": "Other days", "p.planCol": "Plan",
   "p.records": "New records", "p.recordsSet": "New records",
   "p.skipped": "Skipped", "p.slips": "Slips most on {day}: missed {n} of {of}", "p.tagsTitle": "Tagged days",
   "p.tapRow": "Tap a row for its calendar and streaks.", "p.totals": "Totals by category", "p.trackers": "Tracker charts",
@@ -308,7 +308,7 @@ MB.i18n.add('en', {
   "ev.count": "{n} total",
   "ev.stageLogged": "{name} · added to events",
   "p.card.events": "Events",
-  "i.rankMoved": "Rank is a progression now; {n} promotions became events.",
+  "i.rankMoved": ["Rank is a progression now; {n} promotion became an event.","Rank is a progression now; {n} promotions became events."],
   "sec.events": "Events",
   "p.now": "Now",
   "p.leanFat": "Lean / fat ({u})"
@@ -323,7 +323,7 @@ MB.i18n.add('en', {
   "s.dayStart": "Day starts at",
   "s.dayStartHelp": "Logs after midnight count for the day before until then.",
   "s.midnight": "Midnight",
-  "s.convertedSys": "Converted {n} days to {u}",
+  "s.convertedSys": ["Converted {n} day to {u}","Converted {n} days to {u}"],
   "t.repeat": "Same as last time",
   "t.fillAll": "Fill in from last time",
   "t.startRest": "Start rest timer",
@@ -339,7 +339,15 @@ MB.i18n.add('en', {
   "p.card.fields": "Workout fields",
   "p.fieldsTitle": "Workout fields",
   "p.totalV": "total {v}",
-  "p.sessionsN": "{n} sessions",
+  "p.sessionsN": ["{n} session","{n} sessions"],
   "p.noValues": "Nothing logged yet.",
   "p.effortShort": "Effort"
+});
+
+/* 2.5: cleanup */
+MB.i18n.add('en', {
+  "c.later": "Later",
+  "t.exInfo": "How to do it",
+  "pl.blocksN": ["{n} block","{n} blocks"],
+  "pl.exercisesN": ["{n} exercise","{n} exercises"]
 });

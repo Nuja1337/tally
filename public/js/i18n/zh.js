@@ -15,10 +15,10 @@ MB.i18n.add('zh', {
   "t.whatAte": "吃了什么？", "t.needName": "请起个名字", "t.logged": "已记录 {name}", "t.removed": "已移除 {name}",
   "t.saveTemplate": "保存为餐", "t.templateName": "名称", "t.templateSaved": "已保存", "t.noTemplates": "还没有保存的餐。记录一餐后即可保存。",
   "t.noFoods": "还没有食物。到食物页添加。", "t.noRecent": "最近没有记录。", "t.noMatches": "没有匹配项。",
-  "t.copyYesterday": "复制昨天", "t.copied": "已复制昨天的 {n} 餐", "t.editMeal": "编辑饮食", "t.slot": "餐次", "t.mealSaved": "饮食已更新",
+  "t.copyYesterday": "复制昨天", "t.copied": ["已复制昨天的 {n} 餐","已复制昨天的 {n} 餐"], "t.editMeal": "编辑饮食", "t.slot": "餐次", "t.mealSaved": "饮食已更新",
   "t.addTo": "添加到{slot}", "t.nothingLogged": "无记录", "t.slotTotal": "{kcal} kcal · 蛋白质 {p} g",
   "t.session": "训练", "t.somethingElse": "其他", "t.kind": "类别", "t.minutes": "分钟", "t.kcalBurned": "消耗 kcal", "t.sets": "组", "t.addSet": "添加一组",
-  "t.noSets": "没有记录组数。", "t.exercise": "动作", "t.reps": "次", "t.details": "详情", "t.logSession": "记录训练", "t.setsCount": "{n} 组",
+  "t.noSets": "没有记录组数。", "t.exercise": "动作", "t.reps": "次", "t.details": "详情", "t.logSession": "记录训练", "t.setsCount": ["{n} 组","{n} 组"],
   "t.backup": "上次备份：{when}", "t.backupNever": "还没有备份", "t.backupHint": "上次备份后已记录 {n} 天。", "t.exportNow": "导出",
   "w.thisWeek": "本周", "w.weekOf": "{d} 当周", "w.prev": "上一周", "w.next": "下一周", "w.upcoming": "未到", "w.nothing": "无记录",
   "w.noMeals": "无饮食", "w.noTraining": "无训练", "w.habits": "习惯 {a}/{b}", "w.avgKcal": "平均热量", "w.avgProtein": "平均蛋白质 (g)", "w.sessions": "训练次数",
@@ -97,13 +97,13 @@ MB.i18n.add('zh', {
 MB.i18n.add('zh', {
   "nav.plan": "计划", "nav.library": "资料库",
   "t.plan": "今日安排", "t.perSide": "每侧", "t.left": "左", "t.right": "右", "t.addExercise": "添加动作", "t.locked": "{gate}时解锁", "t.unlocked": "已于{gate}解锁",
-  "t.measures": "围度", "t.measuresSub": "软尺，每月", "t.minusOne": "减一", "t.tapToDo": "完成后点击", "t.alertDefault": "今天有 {n} 个警示信号，放轻松。",
+  "t.measures": "围度", "t.measuresSub": "软尺，每月", "t.minusOne": "减一", "t.tapToDo": "完成后点击", "t.alertDefault": ["今天有 {n} 个警示信号，放轻松。","今天有 {n} 个警示信号，放轻松。"],
   "pl.sub": "理想的一周。是指引，不是合同。", "pl.week": "第 {n} 周，共 {of} 周", "pl.ramp": "积累", "pl.full": "巅峰", "pl.deload": "减量", "pl.cycle": "第 {n} 轮",
   "pl.deloadHint": "减量周：组数减半，不做冲刺，做一次平衡检查。", "pl.wave": "训练周期", "pl.gatesSub": "解锁动作的阶段", "pl.waveStarts": "{d} 开始",
   "pl.calendar": "本周", "pl.addBlock": "加入一周", "pl.editBlock": "编辑计划项", "pl.kind": "类型", "pl.title": "标题", "pl.start": "开始", "pl.end": "结束", "pl.needDay": "至少选择一天",
   "pl.session": "训练", "pl.routine": "例程", "pl.meal": "用餐", "pl.sleep": "睡眠", "pl.work": "工作", "pl.rest": "休息", "pl.other": "其他",
   "pl.empty": "还没有计划。", "pl.nothingThatDay": "这天没有安排。", "pl.workouts": "训练内容", "pl.noWorkouts": "还没有训练内容。点击编辑，从训练项目开始创建。",
-  "pl.editWorkout": "编辑训练内容", "pl.viewWorkout": "查看训练内容", "pl.blocksCount": "{b} 个区块 · {e} 个动作", "pl.noPlan": "无训练内容", "pl.blockLabel": "区块", "pl.rest2": "组间休息",
+  "pl.editWorkout": "编辑训练内容", "pl.viewWorkout": "查看训练内容", "pl.noPlan": "无训练内容", "pl.blockLabel": "区块", "pl.rest2": "组间休息",
   "l.exercises": "动作", "l.exSub": "你的动作库。点击查看要点、图片和视频。", "l.addExercise": "添加动作", "l.editExercise": "编辑动作", "l.search": "搜索动作",
   "l.cues": "要点", "l.unit": "计数单位", "l.imageUrl": "图片或 GIF 链接", "l.imageHint": "图片直链会直接显示；其他链接在新标签页打开", "l.videoUrl": "视频链接", "l.images": "图片", "l.video": "视频",
   "l.gate": "解锁条件", "l.gateAt": "阶段", "l.empty": "还没有动作。添加一个，或加载示例档案。",
@@ -186,7 +186,7 @@ MB.i18n.add('zh', {
   "p.weightChange": "体重变化", "p.highlights": "亮点", "p.clearGoal": "清除目标",
   "pl.addWeek": "添加一周",
   "pl.removeWeek": "删除最后一周", "pl.deleteBlock": "从一周计划中移除？已记录的日子不受影响。", "pl.editProgressions": "编辑进阶",
-  "pl.glance": "一周的训练", "pl.mealsN": ["餐","餐"], "pl.workoutsN": ["次训练","次训练"],
+  "pl.mealsN": ["餐","餐"], "pl.workoutsN": ["次训练","次训练"],
   "pl.noCycle": "删除周期", "pl.sleepFor": "睡眠 {t}", "pl.stageHelp": "点按你当前所在的阶段。在该阶段解锁的动作将不再显示为锁定。",
   "pl.stageOf": "第 {n}/{of} 阶段", "pl.unlocks": "解锁：{list}", "pl.until": "到 {t}",
   "s.kindsHelp": "每个训练都有一个类别，其颜色会显示在今日、计划和进度中。点按颜色选择，再点一次恢复自动。", "col.blue": "蓝", "col.violet": "紫",
@@ -224,7 +224,7 @@ MB.i18n.add('zh', {
   "p.hoursCol": "小时", "p.lastYear": "最近 12 个月", "p.latestV": "最新 {v}",
   "p.load": "负荷 {n}", "p.loadVs": "较前 4 周 {d}", "p.loadJump": "增幅较大，注意循序渐进",
   "p.loadCol": "负荷", "p.minCol": "训练分钟",
-  "p.nDays": "{n} 天", "p.otherDays": "其他日子", "p.planCol": "计划",
+  "p.nDays": ["{n} 天","{n} 天"], "p.otherDays": "其他日子", "p.planCol": "计划",
   "p.records": "新纪录", "p.recordsSet": "新纪录",
   "p.skipped": "已跳过", "p.slips": "最常错过的是{day}：{of} 次中错过 {n} 次", "p.tagsTitle": "带标签的日子",
   "p.tapRow": "点按一行查看其日历和连续记录。", "p.totals": "按类别合计", "p.trackers": "追踪项图表",
@@ -308,7 +308,7 @@ MB.i18n.add('zh', {
   "ev.count": "共 {n} 个",
   "ev.stageLogged": "{name} · 已加入事件",
   "p.card.events": "事件",
-  "i.rankMoved": "等级现在是一个进阶;{n} 次晋升已变为事件。",
+  "i.rankMoved": ["等级现在是一个进阶;{n} 次晋升已变为事件。","等级现在是一个进阶;{n} 次晋升已变为事件。"],
   "sec.events": "事件",
   "p.now": "现在",
   "p.leanFat": "瘦体重 / 脂肪({u})"
@@ -323,7 +323,7 @@ MB.i18n.add('zh', {
   "s.dayStart": "一天开始于",
   "s.dayStartHelp": "午夜后到此时间前的记录都算前一天。",
   "s.midnight": "午夜",
-  "s.convertedSys": "已将 {n} 天换算为{u}",
+  "s.convertedSys": ["已将 {n} 天换算为{u}","已将 {n} 天换算为{u}"],
   "t.repeat": "同上次",
   "t.fillAll": "按上次填写",
   "t.startRest": "开始休息计时",
@@ -339,7 +339,15 @@ MB.i18n.add('zh', {
   "p.card.fields": "训练字段",
   "p.fieldsTitle": "训练字段",
   "p.totalV": "合计 {v}",
-  "p.sessionsN": "{n} 次",
+  "p.sessionsN": ["{n} 次","{n} 次"],
   "p.noValues": "暂无记录。",
   "p.effortShort": "强度"
+});
+
+/* 2.5: cleanup */
+MB.i18n.add('zh', {
+  "c.later": "稍后",
+  "t.exInfo": "动作说明",
+  "pl.blocksN": ["{n} 个区块","{n} 个区块"],
+  "pl.exercisesN": ["{n} 个动作","{n} 个动作"]
 });

@@ -23,7 +23,8 @@ window.MB = window.MB || {};
     let s = (dict[lang] && dict[lang][key]);
     if (s == null) s = dict.en && dict.en[key];
     if (s == null) return key;
-    if (Array.isArray(s)) return s;
+    /* [singular, plural]: with a count {n} the right one is picked and filled in; without, the pair comes back (see unit) */
+    if (Array.isArray(s)) { if (!vars || vars.n == null) return s; s = s[Math.abs(+vars.n) === 1 ? 0 : 1]; }
     if (vars) s = s.replace(/\{(\w+)\}/g, (m, k) => vars[k] == null ? '' : vars[k]);
     return s;
   }

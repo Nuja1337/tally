@@ -15,10 +15,10 @@ MB.i18n.add('ko', {
   "t.whatAte": "무엇을 먹었나요?", "t.needName": "이름을 입력하세요", "t.logged": "{name} 기록됨", "t.removed": "{name} 제거됨",
   "t.saveTemplate": "식사로 저장", "t.templateName": "이름", "t.templateSaved": "식사를 저장했습니다", "t.noTemplates": "저장한 식사가 없습니다. 식사를 기록한 뒤 저장하세요.",
   "t.noFoods": "음식이 없습니다. 음식 페이지에서 추가하세요.", "t.noRecent": "최근 기록이 없습니다.", "t.noMatches": "일치하는 항목이 없습니다.",
-  "t.copyYesterday": "어제 복사", "t.copied": "어제 식사 {n}개를 복사했습니다", "t.editMeal": "식사 편집", "t.slot": "식사", "t.mealSaved": "식사가 수정되었습니다",
+  "t.copyYesterday": "어제 복사", "t.copied": ["어제 식사 {n}개를 복사했습니다","어제 식사 {n}개를 복사했습니다"], "t.editMeal": "식사 편집", "t.slot": "식사", "t.mealSaved": "식사가 수정되었습니다",
   "t.addTo": "{slot}에 추가", "t.nothingLogged": "기록 없음", "t.slotTotal": "{kcal} kcal · 단백질 {p} g",
   "t.session": "워크아웃", "t.somethingElse": "기타", "t.kind": "카테고리", "t.minutes": "분", "t.kcalBurned": "소모 kcal", "t.sets": "세트", "t.addSet": "세트 추가",
-  "t.noSets": "기록된 세트가 없습니다.", "t.exercise": "운동", "t.reps": "회", "t.details": "상세", "t.logSession": "워크아웃 기록", "t.setsCount": "{n}세트",
+  "t.noSets": "기록된 세트가 없습니다.", "t.exercise": "운동", "t.reps": "회", "t.details": "상세", "t.logSession": "워크아웃 기록", "t.setsCount": ["{n}세트","{n}세트"],
   "t.backup": "마지막 백업: {when}", "t.backupNever": "아직 백업 없음", "t.backupHint": "마지막 백업 이후 {n}일이 기록되었습니다.", "t.exportNow": "내보내기",
   "w.thisWeek": "이번 주", "w.weekOf": "{d} 주", "w.prev": "지난주", "w.next": "다음 주", "w.upcoming": "예정", "w.nothing": "기록 없음",
   "w.noMeals": "식사 없음", "w.noTraining": "운동 없음", "w.habits": "습관 {a}/{b}", "w.avgKcal": "평균 칼로리", "w.avgProtein": "평균 단백질 (g)", "w.sessions": "세션",
@@ -97,13 +97,13 @@ MB.i18n.add('ko', {
 MB.i18n.add('ko', {
   "nav.plan": "계획", "nav.library": "라이브러리",
   "t.plan": "오늘 계획", "t.perSide": "한쪽씩", "t.left": "왼쪽", "t.right": "오른쪽", "t.addExercise": "운동 추가", "t.locked": "{gate}에서 해제", "t.unlocked": "{gate}에서 해제됨",
-  "t.measures": "신체 치수", "t.measuresSub": "줄자, 매월", "t.minusOne": "하나 빼기", "t.tapToDo": "완료하면 탭", "t.alertDefault": "오늘 경고 신호 {n}개. 무리하지 마세요.",
+  "t.measures": "신체 치수", "t.measuresSub": "줄자, 매월", "t.minusOne": "하나 빼기", "t.tapToDo": "완료하면 탭", "t.alertDefault": ["오늘 경고 신호 {n}개. 무리하지 마세요.","오늘 경고 신호 {n}개. 무리하지 마세요."],
   "pl.sub": "이상적인 한 주. 계약이 아니라 가이드입니다.", "pl.week": "{of}주 중 {n}주차", "pl.ramp": "빌드", "pl.full": "피크", "pl.deload": "회복", "pl.cycle": "사이클 {n}",
   "pl.deloadHint": "회복 주: 세트 절반, 스프린트 없음, 균형 점검 실시.", "pl.wave": "훈련 사이클", "pl.gatesSub": "운동을 해제하는 단계", "pl.waveStarts": "{d} 시작",
   "pl.calendar": "주간", "pl.addBlock": "주에 추가", "pl.editBlock": "계획 항목 편집", "pl.kind": "유형", "pl.title": "제목", "pl.start": "시작", "pl.end": "종료", "pl.needDay": "요일을 하나 이상 선택하세요",
   "pl.session": "워크아웃", "pl.routine": "루틴", "pl.meal": "식사", "pl.sleep": "수면", "pl.work": "업무", "pl.rest": "휴식", "pl.other": "기타",
   "pl.empty": "아직 계획이 없습니다.", "pl.nothingThatDay": "그날은 계획이 없습니다.", "pl.workouts": "워크아웃", "pl.noWorkouts": "워크아웃이 없습니다. 편집을 눌러 세션으로 만들어 보세요.",
-  "pl.editWorkout": "워크아웃 편집", "pl.viewWorkout": "워크아웃 보기", "pl.blocksCount": "블록 {b}개 · 운동 {e}개", "pl.noPlan": "워크아웃 없음", "pl.blockLabel": "블록", "pl.rest2": "휴식",
+  "pl.editWorkout": "워크아웃 편집", "pl.viewWorkout": "워크아웃 보기", "pl.noPlan": "워크아웃 없음", "pl.blockLabel": "블록", "pl.rest2": "휴식",
   "l.exercises": "운동", "l.exSub": "동작 라이브러리. 탭하면 요령, 이미지, 영상을 볼 수 있습니다.", "l.addExercise": "운동 추가", "l.editExercise": "운동 편집", "l.search": "운동 검색",
   "l.cues": "요령", "l.unit": "단위", "l.imageUrl": "이미지 또는 GIF URL", "l.imageHint": "이미지 직접 링크는 여기에 표시되고, 그 외 링크는 새 탭에서 열립니다", "l.videoUrl": "영상 URL", "l.images": "이미지", "l.video": "영상",
   "l.gate": "해제 조건", "l.gateAt": "단계", "l.empty": "운동이 없습니다. 추가하거나 예시 프로필을 불러오세요.",
@@ -186,7 +186,7 @@ MB.i18n.add('ko', {
   "p.weightChange": "체중 변화", "p.highlights": "하이라이트", "p.clearGoal": "목표 지우기",
   "pl.addWeek": "주 추가",
   "pl.removeWeek": "마지막 주 삭제", "pl.deleteBlock": "주간 계획에서 뺄까요? 기록된 날은 그대로입니다.", "pl.editProgressions": "프로그레션 편집",
-  "pl.glance": "한 주의 운동", "pl.mealsN": ["끼","끼"], "pl.workoutsN": ["회","회"],
+  "pl.mealsN": ["끼","끼"], "pl.workoutsN": ["회","회"],
   "pl.noCycle": "사이클 삭제", "pl.sleepFor": "수면 {t}", "pl.stageHelp": "지금 단계를 탭하세요. 그 단계에서 풀리는 운동은 더 이상 잠김으로 표시되지 않습니다.",
   "pl.stageOf": "{of}단계 중 {n}단계", "pl.unlocks": "해제: {list}", "pl.until": "{t}까지",
   "s.kindsHelp": "각 운동에는 카테고리가 있고, 그 색이 오늘·계획·진행에 표시됩니다. 색을 탭해 고르고, 다시 탭하면 자동으로 돌아갑니다.", "col.blue": "파랑", "col.violet": "보라",
@@ -224,7 +224,7 @@ MB.i18n.add('ko', {
   "p.hoursCol": "시간", "p.lastYear": "최근 12개월", "p.latestV": "최근 {v}",
   "p.load": "부하 {n}", "p.loadVs": "이전 4주 대비 {d}", "p.loadJump": "크게 늘었으니 천천히 올리세요",
   "p.loadCol": "부하", "p.minCol": "운동(분)",
-  "p.nDays": "{n}일", "p.otherDays": "그 외의 날", "p.planCol": "계획",
+  "p.nDays": ["{n}일","{n}일"], "p.otherDays": "그 외의 날", "p.planCol": "계획",
   "p.records": "새 최고 기록", "p.recordsSet": "새 최고 기록",
   "p.skipped": "건너뜀", "p.slips": "가장 자주 놓치는 요일: {day} ({of}번 중 {n}번 놓침)", "p.tagsTitle": "태그한 날",
   "p.tapRow": "행을 탭하면 달력과 연속 기록을 볼 수 있습니다.", "p.totals": "카테고리별 합계", "p.trackers": "트래커 그래프",
@@ -308,7 +308,7 @@ MB.i18n.add('ko', {
   "ev.count": "총 {n}개",
   "ev.stageLogged": "{name} · 이벤트에 추가됨",
   "p.card.events": "이벤트",
-  "i.rankMoved": "등급은 이제 프로그레션입니다. 승급 {n}건이 이벤트가 되었습니다.",
+  "i.rankMoved": ["등급은 이제 프로그레션입니다. 승급 {n}건이 이벤트가 되었습니다.","등급은 이제 프로그레션입니다. 승급 {n}건이 이벤트가 되었습니다."],
   "sec.events": "이벤트",
   "p.now": "현재",
   "p.leanFat": "제지방 / 지방({u})"
@@ -323,7 +323,7 @@ MB.i18n.add('ko', {
   "s.dayStart": "하루 시작 시각",
   "s.dayStartHelp": "자정 이후 기록도 이 시각 전까지는 전날로 계산됩니다.",
   "s.midnight": "자정",
-  "s.convertedSys": "{n}일을 {u}(으)로 변환했습니다",
+  "s.convertedSys": ["{n}일을 {u}(으)로 변환했습니다","{n}일을 {u}(으)로 변환했습니다"],
   "t.repeat": "지난번과 같게",
   "t.fillAll": "지난번 기록으로 채우기",
   "t.startRest": "휴식 타이머 시작",
@@ -339,7 +339,15 @@ MB.i18n.add('ko', {
   "p.card.fields": "운동 항목",
   "p.fieldsTitle": "운동 항목",
   "p.totalV": "합계 {v}",
-  "p.sessionsN": "{n}회",
+  "p.sessionsN": ["{n}회","{n}회"],
   "p.noValues": "아직 기록이 없습니다.",
   "p.effortShort": "강도"
+});
+
+/* 2.5: cleanup */
+MB.i18n.add('ko', {
+  "c.later": "나중에",
+  "t.exInfo": "하는 방법",
+  "pl.blocksN": ["블록 {n}개","블록 {n}개"],
+  "pl.exercisesN": ["운동 {n}개","운동 {n}개"]
 });

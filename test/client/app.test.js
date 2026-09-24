@@ -15,7 +15,7 @@ describe('boot', () => {
     const tab = await openTab();
     expect(tab.document.title).toBe('Tally');
     expect(tab.text('.brand-name')).toBe('Tally');
-    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.4.0' });
+    expect(tab.MB.APP).toEqual({ id: 'tally', name: 'Tally', version: '2.5.0' });
     expect(tab.window.location.hash).toBe('#start');
     expect(await dbNames(tab.device.idb)).toEqual(['tally']);
     expect(tab.errors).toEqual([]);
@@ -79,7 +79,7 @@ describe('pages', () => {
     const tab = await openTab();
     await loadExample(tab);
     for (const lang of LANGS) {
-      const sel = tab.$('select.lang'); sel.value = lang; sel.dispatchEvent(new tab.window.Event('change'));
+      await tab.go('#settings'); const sel = tab.$('#main select.lang'); sel.value = lang; sel.dispatchEvent(new tab.window.Event('change'));
       for (const r of ROUTES) {
         await tab.go('#' + r);
         expect(tab.$('#main .page'), `${lang} #${r}`).not.toBeNull();

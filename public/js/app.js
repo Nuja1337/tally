@@ -63,7 +63,7 @@
     moveRank(raw);
   }
   function loadDay(date) { const d = store.get('days/' + date); S.day = d ? SC.normalizeDay(d, date) : SC.emptyDay(date); }
-  function saveDay() { S.day.date = S.date; S.day.updatedAt = store.stamp(); store.setDoc('days/' + S.date, S.day); flashSaved(); }
+  function saveDay() { S.day.date = S.date; S.day.updatedAt = store.stamp(); if (S.date < startDate()) startMemo = null; store.setDoc('days/' + S.date, S.day); flashSaved(); }
 
   /* Events: one-off things on a date (events/<id>). A day's events can add a tag to it and take it off the plan. */
   let evByDate = null;
@@ -88,12 +88,17 @@
 
   /* Setup history: a past day is judged by the setup it had (targets, trackers, routines, planned training). history/<date>
      holds that setup from its date on; the newest entry always matches the current settings, so today uses them directly. */
-  let onCache = new Map(), onFor = null;
-  function loadHistory() { S.history = store.list('history').map(x => SC.normalizeHistory(x, x.date || x.id)).filter(Boolean).sort((a, b) => a.date < b.date ? -1 : 1); onCache = new Map(); }
+  let onCache = new Map(), onFor = null, startMemo = null;
+  function loadHistory() { S.history = store.list('history').map(x => SC.normalizeHistory(x, x.date || x.id)).filter(Boolean).sort((a, b) => a.date < b.date ? -1 : 1); onCache = new Map(); startMemo = null; }
+  /* The profile's first day: its first setup or its first logged day, whichever is earlier. */
+  const startDate = () => { if (startMemo == null) startMemo = [S.history.length ? S.history[0].date : '', ...store.ids('days')].filter(Boolean).sort()[0] || ''; return startMemo; };
   function setupOn(date) {
     const hs = S.history; if (!hs.length || date >= hs[hs.length - 1].date) return S.settings;
-    let snap = hs[0]; for (const x of hs) { if (x.date <= date) snap = x; else break; }
     if (onFor !== S.settings) { onCache = new Map(); onFor = S.settings; }
+    /* before the first day nothing was expected (no trackers, checklists or planned training), so a new profile does not
+       open on a week of misses; the targets are the first setup's, for a day logged after the fact */
+    if (date < startDate()) { let m = onCache.get('before'); if (!m) { m = SC.settingsOn(S.settings, { ...hs[0], trackers: [], routines: [], calendar: [] }); onCache.set('before', m); } return m; }
+    let snap = hs[0]; for (const x of hs) { if (x.date <= date) snap = x; else break; }
     let m = onCache.get(snap); if (!m) { m = SC.settingsOn(S.settings, snap); onCache.set(snap, m); }
     return m;
   }
@@ -336,11 +341,13 @@
       const current = isToday && a != null && a <= now && now < end, ended = past || (isToday && a != null && end <= now);
       const done = blockDone(b, d), missed = done === false && ended, late = missed && !past;
       const title = SC.blockTitle(b, st) || t('pl.' + b.kind), dur = SC.duration(b);
-      const tag = current ? h('span', { class: 'tl-tag now' }, t('t.now')) : i === next ? h('span', { class: 'tl-tag' }, t('t.inTime', { t: fmtDur(a - now) })) : null;
+      /* a workout that ended today without a log: a nudge to log it, not a mark against it (the day is not over) */
+      const logIt = late && b.kind === 'session';
+      const tag = current ? h('span', { class: 'tl-tag now' }, t('t.now')) : i === next ? h('span', { class: 'tl-tag' }, t('t.inTime', { t: fmtDur(a - now) })) : logIt ? h('span', { class: 'tl-tag log' }, t('t.log')) : null;
       return h('button', { class: ['tl-row', current ? 'now' : '', ended ? 'past' : '', done ? 'done' : '', missed ? (late ? 'late' : 'miss') : ''].filter(Boolean).join(' '), style: { '--kc': blockColor(b) }, onclick: () => blockTap(b) },
-        h('span', { class: 'tl-time' }, b.start ? fmtTime(b.start) : '·'), h('span', { class: 'tl-dot' }),
+        h('span', { class: 'tl-time' }, b.start ? fmtTime(b.start) : ''), h('span', { class: 'tl-dot' }),
         h('span', { class: 'tl-title' }, title, dur ? h('small', null, ' ' + fmtDur(dur)) : null), tag,
-        done != null ? h('span', { class: 'tl-check', 'aria-label': done ? t('c.done') : missed ? (late ? t('t.notLogged') : t('t.missed')) : '' }, done ? '✓' : missed ? '✕' : '') : null);
+        done != null ? h('span', { class: 'tl-check', 'aria-label': done ? t('c.done') : missed ? (late ? t('t.notLogged') : t('t.missed')) : '' }, done ? '✓' : missed && !late ? '✕' : '') : null);
     }), ...(long ? [h('button', { class: 'linkbtn tl-more', type: 'button', onclick: () => { setPref('planAll', whole ? '0' : '1'); drawTimeline(); } }, whole ? t('t.showLess') : t('t.wholeDay', { n: blocks.length }))] : []));
   }
   function blockTap(b) {
@@ -416,8 +423,9 @@
     return h('div', { class: 'list' }, items.map(it => {
       const cb = h('input', { type: 'checkbox', checked: !!map[it.id] });
       const ex = exFor(it);
-      const name = ex ? h('button', { class: 'linkish', onclick: e => { e.preventDefault(); exerciseCard(ex); } }, it.name) : it.name;
-      const row = h('label', { class: 'row' + (map[it.id] ? ' done' : '') }, cb, ex ? (thumb(ex.image, 'thumb sm') || null) : null, h('span', { class: 'row-name' }, name), it.target ? h('span', { class: 'row-target' }, it.target) : null);
+      /* a tap anywhere on the row checks it; the exercise's how-to is behind its own button */
+      const info = ex ? h('button', { class: 'infobtn', type: 'button', 'aria-label': t('t.exInfo'), title: t('t.exInfo'), onclick: e => { e.preventDefault(); e.stopPropagation(); exerciseCard(ex); } }, 'i') : null;
+      const row = h('label', { class: 'row' + (map[it.id] ? ' done' : '') }, cb, ex ? (thumb(ex.image, 'thumb sm') || null) : null, h('span', { class: 'row-name' }, it.name), it.target ? h('span', { class: 'row-target' }, it.target) : null, info);
       cb.addEventListener('change', () => { if (cb.checked) map[it.id] = true; else delete map[it.id]; row.classList.toggle('done', cb.checked); saveDay(); updateCounts(); });
       return row;
     }));
@@ -586,17 +594,22 @@
       x ? h('p', { class: 'muted small' }, t('tk.deleteHelp')) : null));
   }
 
+  /* a reminder to export, unless the profile syncs (the cloud keeps a copy) or it was put off in the last two weeks */
   function backupNudge() {
+    if (MB.sync.status().linked || pref('backupLater', '') > today()) return null;
     const meta = store.getMeta('backup'); const days = allDays();
     const since = meta && meta.exportedAt ? days.filter(d => (d.updatedAt || d.date) > meta.exportedAt).length : days.length;
     if (since < 7) return null;
-    return h('div', { class: 'nudge' }, h('span', null, t('t.backupHint', { n: since })), h('button', { class: 'linkbtn', onclick: exportSheet }, t('t.exportNow')));
+    const el = h('div', { class: 'nudge' }, h('span', null, t('t.backupHint', { n: since })),
+      h('span', { class: 'nudge-acts' }, h('button', { class: 'linkbtn quiet', type: 'button', onclick: () => { setPref('backupLater', addDays(today(), 14)); el.remove(); } }, t('c.later')),
+        h('button', { class: 'linkbtn', type: 'button', onclick: exportSheet }, t('t.exportNow'))));
+    return el;
   }
   function mealsCard() {
     const st = S.settings, prev = store.get('days/' + addDays(S.date, -1));
     const canCopy = !S.day.meals.length && prev && Array.isArray(prev.meals) && prev.meals.length;
     return card('meals', t('t.meals'), h('div', { class: 'head-r' }, canCopy ? h('button', { class: 'btn small', onclick: copyYesterday }, t('t.copyYesterday')) : null, editBtn(slotsSheet)),
-      st.mealSlots.length ? h('div', null, st.mealSlots.map(slotBlock)) : emptyAdd(t('t.noSlots'), t('t.addSlots'), slotsSheet),
+      st.mealSlots.length ? h('div', null, st.mealSlots.map(w => slotBlock(w, w.id === leadSlot()))) : emptyAdd(t('t.noSlots'), t('t.addSlots'), slotsSheet),
       { summary: () => { const x = totals(S.day), n = st.mealSlots.filter(w => S.day.meals.some(m => m.slot === w.id)).length; return `${fmt(x.kcal)} kcal · ${fmt(x.p)} g · ${n}/${st.mealSlots.length}`; } });
   }
   const trainingCard = () => card('training', t('t.training'), h('button', { class: 'btn small', onclick: addSessionSheet }, t('t.addSession')), trainingList(), {
@@ -701,13 +714,24 @@
 
   /* meals */
   const nutLine = n => S.settings.nutrients.filter(x => n && n[x.id]).map(x => `${fmt1(n[x.id])} ${x.unit} ${x.name}`).join(' · ');
-  function slotBlock(w) {
-    const meals = S.day.meals.filter(m => m.slot === w.id), block = S.settings.calendar.find(b => b.kind === 'meal' && b.slotId === w.id && b.days.includes(dow(S.date)));
+  const slotStart = w => { const b = S.settings.calendar.find(x => x.kind === 'meal' && x.slotId === w.id && x.days.includes(dow(S.date))); return b && b.start ? b.start : null; };
+  /* Of the things still to log, the one whose button stands out: today, the one whose time has come (or the next one);
+     another day, the first. start(x) is its HH:MM or null. */
+  function leadOf(open, start) {
+    if (!open.length) return null;
+    if (S.date !== today()) return open[0];
+    const now = nowMin(), timed = open.map(x => ({ x, a: SC.hm(start(x)) })).filter(y => y.a != null);
+    const due = timed.filter(y => y.a <= now + 60).sort((a, b) => b.a - a.a)[0] || timed.sort((a, b) => a.a - b.a)[0];
+    return due ? due.x : open[0];
+  }
+  const leadSlot = () => { const w = leadOf(S.settings.mealSlots.filter(x => !S.day.meals.some(m => m.slot === x.id)), slotStart); return w ? w.id : null; };
+  function slotBlock(w, lead) {
+    const meals = S.day.meals.filter(m => m.slot === w.id), start = slotStart(w);
     const sub = { kcal: 0, p: 0, c: 0, f: 0, n: {} };
     meals.forEach(m => { sub.kcal += num(m.kcal); sub.p += num(m.p); sub.c += num(m.c); sub.f += num(m.f); for (const k of Object.keys(m.n || {})) sub.n[k] = (sub.n[k] || 0) + num(m.n[k]); });
     return h('div', { class: 'slot' },
-      h('div', { class: 'slot-head' }, h('h3', null, w.name, block && block.start ? h('small', { class: 'muted' }, ' ' + fmtTime(block.start)) : null), h('span', { class: 'muted' }, meals.length ? t('t.slotTotal', { kcal: fmt(sub.kcal), p: fmt(sub.p) }) : t('t.nothingLogged')),
-        h('button', { class: 'btn small primary', onclick: () => addMealSheet(w) }, t('c.add'))),
+      h('div', { class: 'slot-head' }, h('h3', null, w.name, start ? h('small', { class: 'muted' }, ' ' + fmtTime(start)) : null), h('span', { class: 'muted' }, meals.length ? t('t.slotTotal', { kcal: fmt(sub.kcal), p: fmt(sub.p) }) : t('t.nothingLogged')),
+        h('button', { class: 'btn small' + (lead ? ' primary' : ''), onclick: () => addMealSheet(w) }, t('c.add'))),
       meals.length ? h('div', { class: 'list' }, meals.map(m => h('button', { class: 'meal', onclick: () => editMeal(m) },
         h('span', { class: 'meal-name' }, m.name), h('span', { class: 'meal-macros' }, `${fmt(m.kcal)} · ${fmt(m.p)}P ${fmt(m.c)}C ${fmt(m.f)}F`)))) : null,
       meals.length ? h('div', { class: 'actions end' }, h('button', { class: 'btn ghost small', onclick: () => saveAsTemplate(w, sub) }, t('t.saveTemplate'))) : null);
@@ -802,21 +826,20 @@
     const st = setupOn(S.date), d = S.day, isToday = S.date === today(), past = S.date < today(), now = nowMin();
     const planned = plannedOn(S.date, st);
     const loggedTypes = new Set(d.sessions.map(s => s.typeId));
-    const rows = [];
-    planned.filter(p => !loggedTypes.has(p.type.id)).forEach(p => {
+    const rows = [], todo = planned.filter(p => !loggedTypes.has(p.type.id)), lead = leadOf(todo, p => p.block.start);
+    todo.forEach(p => {
       const a = SC.hm(p.block.start), late = !past && isToday && a != null && a + (SC.duration(p.block) || 0) <= now;
       rows.push(h('div', { class: 'sess', style: { '--kc': kindColor(p.type.kind) } },
-        h('div', { class: 'sess-main' }, h('div', { class: 'sess-name' }, p.type.name, p.block.start ? h('small', { class: 'muted' }, ' ' + fmtTime(p.block.start)) : null,
-          past ? h('span', { class: 'tag st-miss' }, t('t.missed')) : late ? h('span', { class: 'tag st-half' }, t('t.notLogged')) : null),
-          h('div', { class: 'muted small' }, t('t.planned', { min: p.minutes, kcal: fmt(p.kcal) }))),
-        h('div', { class: 'sess-actions' }, h('button', { class: 'btn small primary', onclick: () => sessionSheet(newSession(p.type, p.minutes, p.kcal), true) }, t('t.log')),
+        h('div', { class: 'sess-main' }, h('div', { class: 'sess-name' }, p.type.name),
+          h('div', { class: 'muted small' }, past ? h('span', { class: 'tag first st-miss' }, t('t.missed')) : late ? h('span', { class: 'tag first st-half' }, t('t.notLogged')) : null,
+            [p.block.start ? fmtTime(p.block.start) : null, t('t.planned', { min: p.minutes, kcal: fmt(p.kcal) })].filter(Boolean).join(' · '))),
+        h('div', { class: 'sess-actions' }, h('button', { class: 'btn small' + (p === lead ? ' primary' : ''), onclick: () => sessionSheet(newSession(p.type, p.minutes, p.kcal), true) }, t('t.log')),
           h('button', { class: 'btn small', onclick: () => markDone(p.type, p.minutes, p.kcal) }, t('t.markDone')))));
     });
     d.sessions.forEach(s => rows.push(h('div', { class: 'sess done', style: { '--kc': kindColor(s.kind) } },
       h('div', { class: 'sess-main' }, h('div', { class: 'sess-name' }, s.name),
         h('div', { class: 'muted small' }, [kindName(s.kind), `${num(s.minutes)} ${t('c.min')}`, `${fmt(s.kcal)} kcal`, s.effort ? t('t.effortN', { n: s.effort }) : null, s.sets && s.sets.length ? t('t.setsCount', { n: s.sets.length }) : null, fieldLine(s), s.notes || null].filter(Boolean).join(' · '))),
-      h('div', { class: 'sess-actions' }, h('button', { class: 'btn small', onclick: () => sessionSheet(s, false) }, t('t.details')),
-        h('button', { class: 'btn ghost icon', 'aria-label': t('c.remove'), onclick: () => removeSession(s.id) }, '×')))));
+      h('div', { class: 'sess-actions' }, h('button', { class: 'btn small', onclick: () => sessionSheet(s, false) }, t('t.details'))))));
     const off = eventsOn(S.date).filter(e => e.offPlan);
     if (off.length && SC.plannedFor(st, dow(S.date)).length) rows.unshift(h('p', { class: 'muted small offplan' }, t('ev.offPlanLine', { name: off.map(e => e.title).join(', ') })));
     if (!rows.length) rows.push(h('p', { class: 'empty' }, t('t.nothingScheduled')));
@@ -871,7 +894,7 @@
       const gap = () => { if (!g.perSide || r.reps == null || r.reps2 == null || !Math.max(r.reps, r.reps2)) return ''; const p = Math.round(Math.abs(r.reps - r.reps2) / Math.max(r.reps, r.reps2) * 100); return p + '%'; };
       const gapEl = h('span', { class: 'gap' }, gap());
       const upd = () => { gapEl.textContent = gap(); gapEl.classList.toggle('bad', parseInt(gapEl.textContent, 10) > 10); };
-      return h('div', { class: 'setrow' }, h('span', { class: 'setno' }, i + 1),
+      return h('div', { class: 'setrow' + (g.perSide ? ' sides' : '') }, h('span', { class: 'setno' }, i + 1),
         h('input', { type: 'number', placeholder: unit(), inputmode: 'decimal', 'aria-label': unit(), value: r.wt == null ? '' : r.wt, oninput: e => r.wt = e.target.value === '' ? null : num(e.target.value) }),
         h('input', { type: 'number', placeholder: g.perSide ? t('t.left') : repWord(g), inputmode: 'numeric', value: r.reps == null ? '' : r.reps, oninput: e => { r.reps = e.target.value === '' ? null : num(e.target.value); upd(); } }),
         g.perSide ? h('input', { type: 'number', placeholder: t('t.right'), inputmode: 'numeric', value: r.reps2 == null ? '' : r.reps2, oninput: e => { r.reps2 = e.target.value === '' ? null : num(e.target.value); upd(); } }) : null,
@@ -906,7 +929,7 @@
     const open = () => openSheet(d.name, h('div', null, h('div', { class: 'grid2' }, numField(t('t.minutes'), d, 'minutes'), numField(t('t.kcalBurned'), d, 'kcal')),
       h('div', { class: 'field' }, h('span', null, t('t.effort'), ' ', helpTip(t('t.effortHelp'))), effortRow),
       fieldInputs,
-      h('div', { class: 'subhead' }, t('t.sets'), lastOf.size ? h('button', { class: 'linkbtn fillall', type: 'button', onclick: () => { groups.filter(blank).forEach(repeat); draw(); } }, t('t.fillAll')) : null), box,
+      groups.length ? h('div', { class: 'subhead' }, t('t.sets'), lastOf.size ? h('button', { class: 'linkbtn fillall', type: 'button', onclick: () => { groups.filter(blank).forEach(repeat); draw(); } }, t('t.fillAll')) : null) : null, box,
       h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: addFree }, t('t.addExercise'))),
       h('label', { class: 'field' }, h('span', null, t('t.notes')), h('textarea', { value: d.notes || '', oninput: e => d.notes = e.target.value })),
       h('div', { class: 'actions' }, h('button', { class: 'btn primary', onclick: () => {
@@ -916,7 +939,8 @@
         const out = { ...d, minutes: num(d.minutes), kcal: num(d.kcal), notes: d.notes || '', fields: fv };
         if (i >= 0) S.day.sessions[i] = out; else S.day.sessions.push(out);
         saveDay(); closeSheet(); render();
-      } }, t('c.save')))), { wide: true });
+      } }, t('c.save')),
+        !isNew && S.day.sessions.some(x => x.id === d.id) ? h('button', { class: 'btn ghost danger', onclick: () => { closeSheet(); removeSession(d.id); } }, t('c.remove')) : null)), { wide: true });
     open();
   }
   /* rest between sets: "60 s", "90", "2 min" or "1:30" in seconds */
@@ -976,16 +1000,17 @@
   }
 
   /* ---------- Plan: the ideal week ---------- */
-  /* The week you aim for: where the training cycle and progressions stand, how training spreads over the week, the
-     calendar itself, and the workouts. Everything opens in a sheet with Edit and Delete; there is no separate edit mode. */
+  /* The week you aim for: what is coming up, where the training cycle and progressions stand, and the calendar with
+     the week's training total. Everything opens in a sheet with Edit and Delete; there is no separate edit mode. */
   function viewPlan() {
     const st = S.settings, wrap = h('div', { class: 'page plan' });
     wrap.append(h('div', { class: 'dayhead' }, h('div', { class: 'daytitle' }, h('h1', null, t('nav.plan')), h('div', { class: 'sub' }, t('pl.sub'))),
       h('button', { class: 'btn primary small', onclick: () => blockForm(null) }, t('pl.addBlock'))));
     wrap.append(upcomingCard());
     if (st.wave.pattern.length || st.gates.length) wrap.append(cycleCard());
-    if (st.calendar.some(b => b.kind === 'session' && b.typeId)) wrap.append(weekGlance());
-    const cal = h('div', { class: 'calwrap' }); wrap.append(card('plan', t('pl.calendar'), null, cal));
+    const cal = h('div', { class: 'calwrap' }), train = DAYS.flatMap(d => SC.plannedFor(st, d).map(p => ({ kind: p.type.kind, minutes: p.minutes })));
+    const total = train.length ? `${train.length} ${I.unit('pl.workoutsN', train.length)} · ${fmt1(sum(train, s => s.minutes) / 60)} h` : '';
+    wrap.append(card('plan', t('pl.calendar'), total ? h('small', { class: 'count' }, total) : null, h('div', null, cal, train.length ? kindLegend(train) : null), { summary: () => total }));
     drawCalendar(cal);
     return wrap;
   }
@@ -1024,13 +1049,6 @@
     if (ev) { const { id, ...doc } = ev; store.setDoc('events/' + id, { ...doc, updatedAt: store.stamp() }); loadEvents(); }
     closeSheet(); render();
     undoToast(ev ? t('ev.stageLogged', { name: ev.title }) : t('c.saved'), () => { const b = latest(), y = b.gates.find(z => z.id === g.id); if (y) y.current = before; saveSettingsNow(b); if (ev) { store.deleteDoc('events/' + ev.id); loadEvents(); } render(); toast(t('c.undone')); });
-  }
-  /* planned training per weekday, stacked by category, with the weekly total */
-  function weekGlance() {
-    const st = S.settings, per = DAYS.map(d => SC.plannedFor(st, d).map(p => ({ kind: p.type.kind, minutes: p.minutes, name: p.type.name })));
-    const all = per.flat(), total = sum(all, s => s.minutes);
-    return card('glance', t('pl.glance'), h('small', { class: 'count' }, `${all.length} ${I.unit('pl.workoutsN', all.length)} · ${fmt1(total / 60)} h`), h('div', null,
-      svg(stacked(DAYS.map((d, i) => ({ label: dayName(d, 'narrow'), parts: kindParts(per[i]) })), { height: 110, label: t('pl.glance') })), kindLegend(all)));
   }
   /* each block runs from its start for its length; one that passes midnight continues at the top of the next day */
   const PASSIVE = ['sleep', 'work', 'rest'];
@@ -1093,7 +1111,7 @@
       const bs = SC.blocksFor(st, S.planDay), train = SC.plannedFor(st, S.planDay), meals = bs.filter(b => b.kind === 'meal').length, sleep = bs.filter(b => b.kind === 'sleep').reduce((a, b) => a + (SC.duration(b) || 0), 0);
       const sumLine = [train.length ? `${train.length} ${I.unit('pl.workoutsN', train.length)} · ${fmtDur(sum(train, p => p.minutes))}` : null, meals ? `${meals} ${I.unit('pl.mealsN', meals)}` : null, sleep ? t('pl.sleepFor', { t: fmtDur(sleep) }) : null].filter(Boolean).join(' · ');
       cal.replaceChildren(...[seg, sumLine ? h('p', { class: 'muted small daysum' }, sumLine) : null].filter(Boolean), h('div', { class: 'timeline' }, bs.length ? bs.map(b => { const dur = SC.duration(b); return h('button', { class: 'tl-row', style: { '--kc': blockColor(b) }, onclick: () => blockSheet(b) },
-        h('span', { class: 'tl-time' }, b.start ? fmtTime(b.start) : '·'), h('span', { class: 'tl-dot' }), h('span', { class: 'tl-title' }, SC.blockTitle(b, st) || t('pl.' + b.kind), dur ? h('small', null, ' ' + fmtDur(dur)) : null)); })
+        h('span', { class: 'tl-time' }, b.start ? fmtTime(b.start) : ''), h('span', { class: 'tl-dot' }), h('span', { class: 'tl-title' }, SC.blockTitle(b, st) || t('pl.' + b.kind), dur ? h('small', null, ' ' + fmtDur(dur)) : null)); })
         : h('p', { class: 'empty' }, t('pl.nothingThatDay'))));
     }
   }
@@ -1143,7 +1161,7 @@
   }
   function workoutPick() {
     const st = S.settings;
-    openSheet(t('pl.editWorkout'), h('div', { class: 'list' }, st.sessionTypes.map(x => h('button', { class: 'row pick', onclick: () => workoutForm(x) }, h('span', { class: 'row-name' }, x.name), h('span', { class: 'muted small' }, x.plan.length ? t('pl.blocksCount', { b: x.plan.length, e: x.plan.reduce((a, b) => a + b.items.length, 0) }) : t('pl.noPlan'))))));
+    openSheet(t('pl.editWorkout'), h('div', { class: 'list' }, st.sessionTypes.map(x => h('button', { class: 'row pick', onclick: () => workoutForm(x) }, h('span', { class: 'row-name' }, x.name), h('span', { class: 'muted small' }, x.plan.length ? blocksText(x.plan.length, x.plan.reduce((a, b) => a + b.items.length, 0)) : t('pl.noPlan'))))));
   }
   /* blocks and their exercises, each draggable into order; edits the given plan array in place */
   function planEditor(plan) {
@@ -1192,7 +1210,8 @@
     return wrap;
   }
   const pickRow = (name, sub, onclick) => h('button', { class: 'row pick', onclick }, h('span', { class: 'row-name' }, h('div', null, name), sub ? h('div', { class: 'muted small' }, sub) : null), h('span', { class: 'chev', 'aria-hidden': 'true' }, '›'));
-  const planCount = x => { const e = x.plan.reduce((a, b) => a + b.items.length, 0); return e ? t('pl.blocksCount', { b: x.plan.length, e }) : null; };
+  const blocksText = (b, e) => t('pl.blocksN', { n: b }) + ' · ' + t('pl.exercisesN', { n: e });
+  const planCount = x => { const e = x.plan.reduce((a, b) => a + b.items.length, 0); return e ? blocksText(x.plan.length, e) : null; };
   /* a list you can drag into order; each row opens its item. key: the settings list; the new order saves at once */
   function sortedList(key, items, sub, open) {
     const list = h('div', { class: 'list sortlist' }, items.map(x => h('div', { class: 'row pick sortrow', 'data-sort': '' }, dragHandle(),
@@ -1204,11 +1223,11 @@
     box.append(section(null, null, st.sessionTypes.length
       ? sortedList('sessionTypes', st.sessionTypes, x => [kindName(x.kind), x.minutes ? `${num(x.minutes)} ${t('c.min')}` : null, planCount(x)].filter(Boolean).join(' · '), workoutForm)
       : h('p', { class: 'empty' }, t('l.noWorkouts'))));
-    const editBtn = fn => h('button', { class: 'btn small', onclick: fn }, t('c.edit'));
-    box.append(section(t('s.kinds'), editBtn(kindsSheet), st.sessionKinds.length ? h('div', { class: 'chips' }, st.sessionKinds.map(k => h('span', { class: 'chip small static kchip', style: { '--kc': kindColor(k.id) }, title: k.fields.map(f => f.name).join(', ') }, h('i'), k.name, k.fields.length ? h('small', { class: 'count' }, ` · ${k.fields.length}`) : null))) : h('p', { class: 'empty' }, t('l.none'))));
-    const wave = SC.waveWeek(st.wave, today());
-    box.append(section(t('pl.wave'), editBtn(waveSheet), h('p', { class: 'muted small' }, st.wave.pattern.length ? st.wave.pattern.map(p => t('pl.' + p)).join(' · ') + (wave ? ' · ' + waveLabel(wave) : '') : t('l.none'))));
-    box.append(section(t('s.gates'), editBtn(gatesSheet), st.gates.length ? h('div', { class: 'chips' }, st.gates.map(g => h('span', { class: 'chip small static' }, `${g.name} · ${g.stages[g.current - 1] || g.current}`))) : h('p', { class: 'empty' }, t('l.none'))));
+    /* what every workout hangs on: categories (with their colors and fields), the training cycle, progressions */
+    box.append(section(null, null, h('div', { class: 'list setup' },
+      pickRow(t('s.kinds'), st.sessionKinds.length ? st.sessionKinds.map(k => h('span', { class: 'kin', style: { '--kc': kindColor(k.id) } }, h('i', { class: 'kdot' }), k.name)) : t('l.none'), kindsSheet),
+      pickRow(t('pl.wave'), st.wave.pattern.length ? st.wave.pattern.map(p => t('pl.' + p)).join(' · ') : t('l.none'), waveSheet),
+      pickRow(t('s.gates'), st.gates.length ? st.gates.map(g => g.name).join(', ') : t('l.none'), gatesSheet))));
     return box;
   }
   /* save a setup change, then offer to undo it: the fields it changed go back to how they were */
@@ -1532,7 +1551,7 @@
     const st = S.settings, wrap = h('div', { class: 'page progress' }), u = unit();
     const goalText = st.goal.weight ? t('p.toward', { w: st.goal.weight, u }) + (st.goal.bodyFat ? ' ' + t('p.atBf', { bf: st.goal.bodyFat }) : '') : t('p.noGoal');
     wrap.append(h('div', { class: 'dayhead phead' }, h('div', { class: 'daytitle' }, h('h1', null, t('p.title')),
-      h('div', { class: 'sub goal-line', title: st.goal.note || null }, goalText + (st.goal.note ? ' · ' + st.goal.note : ''))),
+      h('div', { class: 'sub goal-line' }, goalText)),
       editBtn(goalSheet, st.goal.weight ? t('p.editGoal') : t('p.setGoalBtn'))));
     const tab = S.pTab, per = periodOf(tab, S.pDate), through = per.end < today() ? per.end : today(), isNow = per.start <= today() && today() <= per.end;
     const label = tab === 'week' ? (isNow ? t('w.thisWeek') : t('w.weekOf', { d: fmtShort(per.start) })) : tab === 'year' ? (isNow ? t('p.thisYear') : per.start.slice(0, 4)) : (isNow ? t('p.thisMonth') : monthLabel(per.start));
@@ -1653,7 +1672,7 @@
     return pcard('training', t('p.trainingTitle'), null, h('div', null,
       cur.planned ? h('p', { class: 'muted small' }, t('p.planLine', { n: cur.plannedDone, of: cur.planned, h: fmt1(cur.minutes / 60) })) : null,
       cur.done.length || cur.planned ? h('div', { class: 'tm' }, h('div', { class: 'tm-row tm-head' }, h('span', null, t('p.weekCol')), h('span'), h('span', null, t('p.hoursCol')), h('span', null, t('p.planCol')), h('span', null, t('p.loadCol'))), rowsEl) : h('p', { class: 'empty' }, t('p.noTraining')),
-      kindLegend(cur.done), worst ? h('p', { class: 'small st-miss missline' }, t('p.mostMissed', { name: worst[0], n: worst[1] })) : null,
+      kindLegend(cur.done), worst ? h('p', { class: 'small muted missline' }, t('p.mostMissed', { name: worst[0], n: worst[1] })) : null,
       recordsList(recordsIn(per.start, ctx.through))));
   }
   /* year: hours by month and category, running totals, promotions and records */
@@ -1774,7 +1793,8 @@
       h('div', { class: 'actions' }, h('button', { class: 'btn small', onclick: () => trackerForm(x, x.group) }, t('c.edit')))), { wide: true });
   }
   /* What workouts log beyond time: each category's number, rating and duration fields, and effort, session by session.
-     Numbers with a unit (distance) show their total. */
+     Numbers in a unit that adds up (distance, time, energy, counts) show their total; heart rate, pace and the like their average. */
+  const ADDS = /^(mi|miles?|km|m|meters?|metres?|yd|yards?|ft|feet|min|mins|h|hrs?|hours?|s|sec|secs|seconds?|kcal|cal|kj|laps?|rounds?|reps?|steps?|floors?|sets?|throws?|shots?|strikes?|takedowns?|subs?|submissions?)$/i;
   function fieldsCard(dates, byDate) {
     const sess = dates.map(d => byDate[d]).filter(Boolean).flatMap(d => d.sessions.filter(x => x.done !== false).map(x => ({ ...x, date: d.date }))), tiles = [];
     for (const k of S.settings.sessionKinds) {
@@ -1783,7 +1803,7 @@
         const pts = ks.map(x => ({ date: x.date, v: def.fd ? x.fields && x.fields[def.key] : x.effort })).filter(p => p.v != null && p.v !== '' && Number.isFinite(+p.v)).map(p => ({ date: p.date, v: num(p.v) }));
         if (!pts.length) continue;
         const show = v => def.fd ? fieldText(def.fd, def.fd.type === 'rating' ? Math.round(v * 10) / 10 : Math.round(v * 10) / 10) : fmt1(v) + '/10';
-        const total = def.fd && def.fd.type === 'number' && def.fd.unit ? sum(pts, p => p.v) : null;
+        const total = def.fd && def.fd.type === 'number' && ADDS.test(String(def.fd.unit || '').trim()) ? sum(pts, p => p.v) : null;
         tiles.push(h('button', { class: 'spk', type: 'button', style: { '--kc': kindColor(k.id) }, onclick: () => fieldSheet(k, def, pts, show) },
           h('span', { class: 'spk-name' }, h('i', { class: 'kdot' }), `${k.name} · ${def.name}`), h('b', null, show(pts[pts.length - 1].v)),
           h('small', null, total != null ? t('p.totalV', { v: show(total) }) : t('p.avgV', { v: show(avgOf(pts.map(p => p.v))) })), pts.length > 1 ? h('span', { class: 'spk-line', html: U.spark(thin(pts), { label: def.name }) }) : null));
@@ -1802,7 +1822,7 @@
     if (!used.length) return null;
     const line = (label, ds, color) => {
       const fed = ds.filter(d => d.meals.length), adh = ds.map(d => dayAdherence(d, rows)).filter(x => x != null), mins = sum(ds.flatMap(d => d.sessions.filter(s => s.done !== false)), s => num(s.minutes));
-      return h('div', { class: 'tg-row' }, h('span', { class: 'tg-name' }, color ? h('i', { style: { '--kc': color } }) : null, label, h('small', null, ' ' + t('p.nDays', { n: ds.length }))),
+      return h('div', { class: 'tg-row' }, h('span', { class: 'tg-name' }, color ? h('i', { style: { '--kc': color } }) : null, h('span', null, label, h('small', null, t('p.nDays', { n: ds.length })))),
         h('span', null, fed.length ? fmt(avgOf(fed.map(d => totals(d).kcal))) : '–'), h('span', null, fed.length ? fmt(avgOf(fed.map(d => totals(d).p))) + ' g' : '–'),
         h('span', null, ds.length ? fmt(mins / ds.length) + ' ' + t('c.min') : '–'), h('span', null, pct(adh.length ? avgOf(adh) : null)));
     };
@@ -1849,11 +1869,12 @@
     const comp = (wt, pct) => wt != null && pct != null ? `${fmt1(wt * (1 - pct / 100))} / ${fmt1(wt * pct / 100)}` : '';
     const row = (label, date, pct, wt, cls) => h('tr', { class: cls || '' }, h('td', null, label), h('td', { class: 'muted small' }, date ? fmtShort(date) : ''),
       h('td', { class: 'n' }, pct != null ? fmt1(pct) + '%' : ''), h('td', { class: 'n' }, wt != null ? fmt1(wt) : ''), h('td', { class: 'n muted' }, comp(wt, pct)));
-    return pcard('body', t('s.goal'), editBtn(goalSheet), h('table', { class: 'plain goaltable' },
+    return pcard('body', t('s.goal'), editBtn(goalSheet), h('div', null, h('table', { class: 'plain goaltable' },
       h('thead', null, h('tr', null, h('th'), h('th'), h('th', { class: 'n' }, '%'), h('th', { class: 'n' }, u), h('th', { class: 'n' }, t('p.leanFat', { u })))),
       h('tbody', null, (bf != null || w != null) ? row(t('p.now'), null, bf, w, 'now') : null,
         g.milestones.map(m => { const hit = bf != null && m.bodyFat != null && num(bf) <= m.bodyFat; return row((hit ? '✓ ' : '') + (m.label || '—'), m.date, m.bodyFat, m.weight, hit ? 'hit' : ''); }),
-        g.weight != null || g.bodyFat != null ? row(t('s.goal'), null, g.bodyFat, g.weight, 'target') : null)));
+        g.weight != null || g.bodyFat != null ? row(t('s.goal'), null, g.bodyFat, g.weight, 'target') : null)),
+      g.note ? h('p', { class: 'muted small goalnote' }, g.note) : null));
   }
   /* the events in a stretch; with many, the big ones first and the rest behind a tap */
   function eventsCard(a, b) {
@@ -2051,11 +2072,11 @@
     wrap.append(section(t('s.profile'), null, profileBlock()));
     wrap.append(section(t('s.app'), null, appBlock()));
     wrap.append(syncCard());
-    wrap.append(section(t('s.data'), h('small', { class: 'storedin' }, storedInText()), h('div', { class: 'actions' },
+    wrap.append(section(t('s.data'), null, h('div', null, h('p', { class: 'muted small storedin' }, storedInText()), h('div', { class: 'actions' },
       h('button', { class: 'btn primary', onclick: exportSheet }, t('s.export')),
       h('button', { class: 'btn', onclick: () => openSheet(t('i.title'), importPanel(() => { closeSheet(); render(); }), { wide: true }) }, t('s.import')),
       h('a', { class: 'btn', href: '#start' }, t('nav.start')),
-      h('button', { class: 'btn danger', onclick: () => confirmSheet(t('s.erase'), t('s.eraseConfirm') + cloudNote(), t('s.eraseBtn'), async () => { await store.eraseProfile(); hydrate(); location.hash = '#start'; render(); updateSyncUI(); toast(t('s.erased')); }, t('c.cancel')) }, t('s.erase')))));
+      h('button', { class: 'btn danger', onclick: () => confirmSheet(t('s.erase'), t('s.eraseConfirm') + cloudNote(), t('s.eraseBtn'), async () => { await store.eraseProfile(); hydrate(); location.hash = '#start'; render(); updateSyncUI(); toast(t('s.erased')); }, t('c.cancel')) }, t('s.erase'))))));
     return wrap;
   }
   /* this profile's name, units and day start, then the other profiles on this device */
@@ -2120,7 +2141,7 @@
   }
   /* language, theme, status colors and folding: this device only */
   function appBlock() {
-    const langSel = h('select', { onchange: e => { I.set(e.target.value); rerenderAll(); } }, Object.entries(I.LANGS).map(([c, n]) => h('option', { value: c, selected: c === I.lang }, n)));
+    const langSel = h('select', { class: 'lang', onchange: e => { I.set(e.target.value); rerenderAll(); } }, Object.entries(I.LANGS).map(([c, n]) => h('option', { value: c, selected: c === I.lang }, n)));
     const themeSeg = segmented([{ value: 'auto', label: t('s.followDevice') }, { value: 'light', label: t('s.light') }, { value: 'dark', label: t('s.dark') }], themePref(), applyTheme);
     const palSeg = segmented([{ value: 'std', label: t('s.palStd') }, { value: 'cb', label: t('s.palCb') }], pref('palette', 'std'), v => { applyPalette(v); flashSaved(); });
     const swatch = h('span', { class: 'lg-bar', 'aria-hidden': 'true' }, SC.GRADES.map(g => h('i', { class: 'g-' + g })));
@@ -2179,7 +2200,7 @@
     const st = MB.sync.status(), body = h('div'), card = section(t('sy.title'), t('sy.sub'), body, 'synccard');
     card.dataset.linked = String(st.linked);
     if (!st.linked) {
-      body.append(h('p', { class: 'muted' }, t('sy.intro')), h('div', { class: 'actions' },
+      body.append(h('p', { class: 'muted small' }, t('sy.intro')), h('div', { class: 'actions' },
         h('button', { class: 'btn primary', onclick: createVaultSheet }, t('sy.create')),
         h('button', { class: 'btn', onclick: linkSheet }, t('sy.link'))));
       return card;
@@ -2443,15 +2464,13 @@
   };
   const NAV = ['today', 'plan', 'progress', 'library', 'settings'], ROUTES = [...NAV, 'start'], ALIAS = { week: 'progress' };
   function shell() {
-    const langSel = h('select', { class: 'lang', 'aria-label': t('s.language'), onchange: e => { I.set(e.target.value); rerenderAll(); } }, Object.entries(I.LANGS).map(([c, n]) => h('option', { value: c, selected: c === I.lang }, n)));
     const top = h('header', { class: 'topbar' },
       h('div', { class: 'brand' }, h('span', { class: 'brand-name' }, MB.APP.name),
         h('button', { class: 'syncdot hidden', type: 'button', onclick: syncDotTap }, h('i', { 'aria-hidden': 'true' }), h('span', { class: 'syncdot-n' })),
         h('span', { class: 'status', 'data-state': '' }, '')),
       h('div', { class: 'topbar-actions' },
         profileButton(),
-        h('button', { class: 'btn ghost icon theme-btn', 'aria-label': t('s.theme'), onclick: toggleTheme, html: effectiveTheme() === 'dark' ? ICONS.sun : ICONS.moon }),
-        langSel));
+        h('button', { class: 'btn ghost icon theme-btn', 'aria-label': t('s.theme'), onclick: toggleTheme, html: effectiveTheme() === 'dark' ? ICONS.sun : ICONS.moon })));
     const nav = h('nav', { class: 'nav', 'aria-label': 'Main' }, NAV.map(r => h('a', { href: '#' + r, 'data-route': r, html: ICONS[r] + '<span>' + t('nav.' + r) + '</span>' })));
     return h('div', { class: 'app' }, top, nav, h('main', { id: 'main', class: 'main' }));
   }
@@ -2472,7 +2491,7 @@
   function render() {
     const main = $('#main'); if (!main) return;
     const y = window.scrollY;
-    S.refs = { cards: [] };
+    S.refs = { cards: [] }; startMemo = null;
     try { main.replaceChildren(VIEWS[S.route]()); }
     catch (e) { console.error(e); main.replaceChildren(h('p', { class: 'empty pad' }, 'Something went wrong drawing this page.')); }
     document.querySelectorAll('.nav a').forEach(a => a.classList.toggle('active', a.dataset.route === S.route));
