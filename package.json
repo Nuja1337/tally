@@ -1,6 +1,6 @@
 {
   "name": "tally",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "private": true,
   "description": "Dev tooling for Tally (tests, local server, deploy). The app itself never needs npm install.",
   "type": "module",

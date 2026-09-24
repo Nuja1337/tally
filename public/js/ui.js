@@ -58,10 +58,12 @@ window.MB = window.MB || {};
   /* thumbnail that hides itself when the URL is not an image or fails to load */
   function thumb(url, cls) { if (!url || !isImageUrl(url)) return null; const im = h('img', { class: cls || 'thumb', src: url, alt: '', loading: 'lazy', referrerpolicy: 'no-referrer' }); im.addEventListener('error', () => im.remove()); return im; }
 
-  /* sheet and toast */
-  let sheetEl = null;
+  /* sheet and toast. A sheet opened with { stack: true } sits on the open one, which comes back as it was when the top one
+     closes (an exercise looked up in the middle of logging a workout). Any other sheet replaces the whole stack. */
+  let sheetEl = null; const under = [];
   function openSheet(title, body, opts) {
-    closeSheet();
+    if (opts && opts.stack && sheetEl) { sheetEl.classList.add('hidden'); under.push(sheetEl); sheetEl = null; }
+    else { while (under.length) under.pop().remove(); closeSheet(); }
     const ov = h('div', { class: 'overlay', onclick: e => { if (e.target === ov) closeSheet(); } },
       h('div', { class: 'sheet' + (opts && opts.wide ? ' wide' : ''), role: 'dialog', 'aria-label': title },
         h('div', { class: 'sheet-head' }, h('h3', null, title), h('button', { class: 'btn ghost icon', 'aria-label': MB.i18n ? MB.i18n.t('c.close') : 'Close', onclick: closeSheet }, '\u00d7')),
@@ -72,7 +74,14 @@ window.MB = window.MB || {};
   }
   /* onSheetClosed handlers run after a sheet really closes, not when one sheet replaces another */
   const closedHandlers = [];
-  function closeSheet() { if (sheetEl) { sheetEl.remove(); sheetEl = null; setTimeout(() => { if (!sheetEl) closedHandlers.forEach(fn => fn()); }, 0); } }
+  function closeSheet() {
+    if (!sheetEl) return;
+    sheetEl.remove(); sheetEl = null;
+    if (under.length) { sheetEl = under.pop(); sheetEl.classList.remove('hidden'); return; }
+    setTimeout(() => { if (!sheetEl) closedHandlers.forEach(fn => fn()); }, 0);
+  }
+  /* close every sheet, stacked ones too */
+  function closeAllSheets() { while (under.length) under.pop().remove(); closeSheet(); }
   const sheetOpen = () => !!sheetEl;
   const onSheetClosed = fn => { closedHandlers.push(fn); };
   let toastTimer = null;
@@ -283,5 +292,5 @@ window.MB = window.MB || {};
   }
 
   MB.ui = { dragHandle, sortable, moveItem, $, uid, clone, deepEq, fmt, fmt1, num, byName, slug, h, svg, today, setDayStart, dayStartMin, spark, isDate, parseD, addDays, diffDays, DOW, DAYS, dow, dayName, fmtLong, fmtShort, fmtDay, fmtMonth, weekStart, fmtTime, isImageUrl, thumb,
-    openSheet, closeSheet, sheetOpen, onSheetClosed, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, stacked, trend, heat };
+    openSheet, closeSheet, closeAllSheets, sheetOpen, onSheetClosed, toast, confirmSheet, section, statCard, numField, textField, selectField, segmented, helpTip, listEditor, ring, bars, stacked, trend, heat };
 })();

@@ -39,8 +39,11 @@ describe('Library', () => {
     typeIn(tab, field(tab, t('c.name')), 'Upper A');
     tab.button(t('pl.addGroup'), '.sheet').click();
     tab.$$('.sheet .routine').at(-1).querySelector('button.btn.ghost.small').click(); /* add an exercise to the new block */
-    const sel = tab.$$('.sheet .routine').at(-1).querySelector('.editor-row.wrap select');
-    sel.value = 'plank'; sel.dispatchEvent(new tab.window.Event('change'));
+    tab.$$('.sheet .routine').at(-1).querySelector('.editor-row.wrap .expick').click(); /* the picker opens over the workout */
+    typeIn(tab, tab.$('.sheet:not(.hidden) input[type=search], .overlay:not(.hidden) input[type=search]'), 'plank');
+    tab.$$('.overlay:not(.hidden) .xpick .row').find(r => r.querySelector('.row-name div').textContent === 'Plank').click();
+    expect(tab.$$('.overlay')).toHaveLength(1); /* back on the workout, draft intact */
+    expect(tab.$$('.sheet .routine').at(-1).querySelector('.expick').textContent).toBe('Plank');
     tab.button(t('c.save'), '.sheet').click();
     await waitFor(() => !tab.$('.sheet'), { what: 'sheet closed' });
     const upper = settings(tab).sessionTypes.find(x => x.id === 'upper');

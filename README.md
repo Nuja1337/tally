@@ -1,14 +1,16 @@
 # Tally
 
-A local-first training and nutrition log: meals and nutrients, trackers for anything (checks, counts, numbers, ratings, durations, times, notes, bodyweight), routines, workouts with per-side logging, effort and custom fields, an ideal-week calendar, one-off events (tournaments, trips, appointments), an exercise library with history and records, progressions and day tags. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
+A local-first training and nutrition log: meals and nutrients, trackers for anything (checks, counts, numbers, ratings, durations, times, notes, bodyweight), routines, workouts with per-side logging, effort and custom fields, an ideal-week calendar, one-off events (tournaments, trips, appointments), a built-in library of about 400 exercises (each with a muscle map, how to do it, cues, mistakes and variations) plus your own, progressions and day tags that show what goes with them. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
 
 - Works offline once opened, installs to the home screen like an app
-- Five pages: Today, Plan (what is coming up, the training cycle and the ideal week with its training total), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, exercises, foods and saved meals), Settings (profile, language, theme, status colors, folding, sync, data). Targets, nutrients, tracker sections, meals of the day and tags are edited on Today; the goal and its checkpoints on Progress.
+- Five pages: Today, Plan (what is coming up, the training cycle and the ideal week with its training total), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, the exercise library and your own exercises, foods and saved meals; each exercise has its own page), Settings (profile, language, theme, status colors, folding, sync, data). Targets, nutrients, tracker sections, meals of the day and tags are edited on Today; the goal and its checkpoints on Progress.
 - Five-step status colors from missed to met (with a color-blind option); past days keep the colors their setup gave them
 - Cards fold, finished ones by themselves; everything you create drags into order; deletes can be undone
 - US or metric units (switching converts what you logged); a day can start after midnight
 - Workouts: repeat last time with a tap, a rest timer, warm-up blocks that stay out of the log; category fields charted on Progress
 - Quick add on Today: a meal, a workout, an event, a note or your weight
+- Exercise pages: a front and back muscle map, how to do it step by step, cues, common mistakes, safety, a starting dose, easier and harder versions and swaps, then your notes, records and history and where it is in your plan. Add one to a workout or routine from its page. Something the library lacks is yours in seconds, on its own or based on a library entry.
+- Day tags: a new one from Today, and a page per tag with its days over the year and what differs on those days and the day after (sleep, heart rate, food, training, any tracker), against days without it
 - Calm by default: one highlighted action per card, a workout that ended without a log gets a Log tag instead of a mark, and a new profile starts clean (days before it are not counted)
 - Starter packs: General, BJJ athlete, Runner, Fat loss
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
@@ -64,6 +66,7 @@ npx wrangler dev                                   # http://localhost:8787
 ```sh
 npm test                           # API tests in the Workers runtime; app tests in jsdom against the real Worker
 node scripts/check-i18n.mjs        # every dictionary has the English keys and placeholders
+node scripts/check-exlib.mjs       # every library exercise is complete and its links resolve
 ```
 
 The app tests boot the real `public/` scripts as separate devices and tabs (own IndexedDB each) and sync them through the Worker: linking, conflicts, offline edits, deletes, reloads, failures, locks between tabs, and a run with sync off that must make no requests at all.
@@ -201,6 +204,7 @@ Notes:
 - `progress.hide` lists Progress cards the profile hides: `nutrition`, `weight`, `training`, `habits` (consistency), `trackers`, `tags`, `events`, `body` (the goal).
 - `sessionKinds[].color` and `tags[].color` are one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.
 - `routines[].days` limits a routine to those weekdays; empty or missing means every day. `alertAt` turns a routine into a check-in: when that many items are ticked, Today shows `alertText`.
+- **The exercise library** is built in (`public/js/exlib.js`, English, not part of your data). A profile exercise stands on a library entry by `base` (a library id), else by the same `id`, else by its name or an alias; `base: "none"` keeps it on its own. Its page shows the library's how-to under your name, notes (`cues`), unit and per side. One of your own can carry `pm` and `sm` (primary and secondary muscles: `neck`, `traps`, `shoulders`, `rear-delts`, `rotator-cuff`, `chest`, `upper-back`, `lats`, `biceps`, `triceps`, `forearms`, `abs`, `obliques`, `lower-back`, `hip-flexors`, `glutes`, `abductors`, `adductors`, `quads`, `hamstrings`, `calves`, `shins`), `steps` (strings) and `eq` (gear). Plan items, routine items and sets can point at a library id without any copy in `exercises`.
 - `exercises[].image` can be a direct image or GIF link (shown inline) or any page (opened in a tab). `video` is a link. `perSide` logs left and right reps and flags a gap over 10%. `gate` hides nothing but marks the exercise locked until that gate reaches the stage `at`.
 - `sessionTypes[].plan` is a list of blocks (supersets); `items` reference exercises by `exerciseId` or by `name`. Logging a session of that type pre-fills the sets and shows what you did last time, with a tap to repeat it; an item's `rest` (`60 s`, `2 min`, `1:30`) starts a rest timer. A block with `log: false` (a warm-up, a cool-down) stays in the workout but out of the log. A set's `reps` holds seconds or meters for exercises whose `unit` is `sec` or `m`.
 - A logged meal can say where it came from: `foodId` and `qty` (servings) when added from a food, `tplId` when added from a saved meal.
@@ -235,7 +239,7 @@ An unknown key is `401`. `updatedAt` is milliseconds; more than 2 minutes in the
 
 ## Languages
 
-The interface follows the browser language when we have it, otherwise English; the dropdown in the top bar overrides it. Only the interface is translated: your own habit, food and routine names stay as you typed them, and the starter packs load in the selected language. Dictionaries live in `public/js/i18n/`; copy `en.js`, translate the values, add the file to `public/index.html` and `public/sw.js`, and run `node scripts/check-i18n.mjs`.
+The interface follows the browser language when we have it, otherwise English; Settings › App › Language overrides it. Only the interface is translated: your own habit, food and routine names stay as you typed them, and the starter packs load in the selected language. Dictionaries live in `public/js/i18n/`; copy `en.js`, translate the values, add the file to `public/index.html` and `public/sw.js`, and run `node scripts/check-i18n.mjs`.
 
 ## Layout
 
@@ -246,6 +250,8 @@ public/                      the app, served as static files
   js/ui.js                   DOM helpers, dates, sheets, charts (rings, bars, trend, heat)
   js/i18n.js                 language detection and t()
   js/i18n/<lang>.js          dictionaries
+  js/exlib.js                the built-in exercise library (one entry per line)
+  js/exercises.js            library lookup, how profile exercises stand on it, the muscle map
   js/schema.js               data format v5: defaults, normalization, v4 upgrade, the five-step scale, tracker grades,
                              setup history, import planning, export, starter packs
   js/store.js                IndexedDB store: profiles, outbox, pulled changes, tabs, migration from earlier names
@@ -258,6 +264,7 @@ worker/index.js              API: vaults, sync, export, share fallback
 migrations/                  D1 schema
 wrangler.jsonc               Worker, assets and D1 config
 scripts/check-i18n.mjs       dictionary parity check
+scripts/check-exlib.mjs      exercise library check (fields, vocabularies, links)
 test/worker/                 API tests (Workers runtime)
 test/client/                 app tests (jsdom, fake IndexedDB, real Worker)
 ```

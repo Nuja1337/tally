@@ -2,13 +2,19 @@
 window.MB = window.MB || {};
 (() => {
   'use strict';
-  MB.APP = { id: 'tally', name: 'Tally', version: '2.5.0' };
+  MB.APP = { id: 'tally', name: 'Tally', version: '2.6.0' };
   const { uid, clone, num, slug, isDate } = MB.ui;
   const VERSION = 5;
   const DAYS = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
   const KINDS = ['session', 'routine', 'meal', 'sleep', 'work', 'rest', 'other'];
   const WAVE = ['ramp', 'full', 'deload'];
   const UNITS = ['reps', 'sec', 'm'];
+  /* muscles on the map and gear, shared with the exercise library (exercises.js) */
+  const MUSCLES = ['neck', 'traps', 'shoulders', 'rear-delts', 'rotator-cuff', 'chest', 'upper-back', 'lats', 'biceps', 'triceps', 'forearms', 'abs', 'obliques', 'lower-back',
+    'hip-flexors', 'glutes', 'abductors', 'adductors', 'quads', 'hamstrings', 'calves', 'shins'];
+  const EQUIPMENT = ['none', 'barbell', 'dumbbell', 'kettlebell', 'cable', 'machine', 'band', 'bench', 'rack', 'bar', 'rings', 'suspension', 'box', 'plate', 'medball', 'slamball', 'sled',
+    'rower', 'bike', 'skierg', 'rope', 'battlerope', 'bag', 'landmine', 'ezbar', 'trapbar', 'roller', 'dowel', 'wall', 'partner', 'mat', 'sandbag', 'abwheel', 'sliders', 'towel', 'ball',
+    'step', 'harness', 'strap', 'other'];
   const CAT_KEYS = ['proteins', 'dairy', 'grains', 'fruit', 'veg', 'fats', 'drinks', 'supp'];
   /* v4 tape measurements; v5 keeps them as number trackers with these ids */
   const MEASURES = ['waist', 'chest', 'arm', 'thigh', 'calf', 'neck', 'bodyFat'];
@@ -90,6 +96,7 @@ window.MB = window.MB || {};
     return out;
   };
   const strList = v => Array.isArray(v) ? [...new Set(v.map(String).filter(Boolean))] : [];
+  const muscles = v => strList(v).filter(m => MUSCLES.includes(m)).slice(0, 6);
   const tr = (key, fallback) => { const s = MB.i18n ? MB.i18n.t(key) : key; return s === key ? fallback : s; };
 
   /* ---------- trackers ---------- */
@@ -170,11 +177,15 @@ window.MB = window.MB || {};
       return normalizeEvent({ id, date: x.date, title: (r.system ? r.system + ': ' : '') + stage, big: true });
     }).filter(Boolean);
   }
-  /* exercises are referenced by id, or by name when a file was written by hand */
+  /* exercises are referenced by id, or by name when a file was written by hand; the profile's own first, then the
+     built-in library (an entry there needs no copy in the profile) */
   function resolveExercise(ref, exercises) {
     if (!ref) return null;
     const id = String(ref); const byId = exercises.find(e => e.id === id); if (byId) return byId;
-    const lc = id.trim().toLowerCase(); return exercises.find(e => e.name.toLowerCase() === lc) || exercises.find(e => e.id === slug(id)) || null;
+    const lc = id.trim().toLowerCase(), own = exercises.find(e => e.name.toLowerCase() === lc) || exercises.find(e => e.id === slug(id));
+    if (own) return own;
+    const L = MB.exercises, lib = L && (L.get(id) || L.match(id));
+    return lib ? { id: lib.id, name: lib.name, perSide: !!lib.side, unit: lib.unit } : null;
   }
   function normalizeSettings(d) {
     d = isObj(d) ? d : {};
@@ -203,7 +214,9 @@ window.MB = window.MB || {};
     else normalizeTrackers(s, Array.isArray(d.groups) ? d.groups : [], d.trackers);
     if (Array.isArray(d.tags)) s.tags = ensureIds(named(d.tags)).map(x => ({ id: x.id, name: x.name, color: KIND_COLORS.includes(x.color) ? x.color : '', skip: !!x.skip }));
     if (Array.isArray(d.exercises)) s.exercises = ensureIds(named(d.exercises)).map(e => ({ id: e.id, name: e.name, category: String(e.category || ''), image: String(e.image || ''), video: String(e.video || ''), cues: String(e.cues || e.note || ''),
-      perSide: !!e.perSide, unit: UNITS.includes(e.unit) ? e.unit : 'reps', gate: isObj(e.gate) && e.gate.id ? { id: String(e.gate.id), at: Math.max(1, Math.round(num(e.gate.at) || 1)) } : null }));
+      perSide: !!e.perSide, unit: UNITS.includes(e.unit) ? e.unit : 'reps', gate: isObj(e.gate) && e.gate.id ? { id: String(e.gate.id), at: Math.max(1, Math.round(num(e.gate.at) || 1)) } : null,
+      base: typeof e.base === 'string' && /^[a-z0-9][a-z0-9-]*$/.test(e.base) ? e.base : '', pm: muscles(e.pm), sm: muscles(e.sm).filter(m => !muscles(e.pm).includes(m)),
+      steps: strList(e.steps).map(x => x.trim()).filter(Boolean).slice(0, 12), eq: strList(e.eq).filter(q => EQUIPMENT.includes(q)) }));
     if (Array.isArray(d.gates)) s.gates = ensureIds(named(d.gates)).map(g => { const stages = Array.isArray(g.stages) ? g.stages.map(String).filter(Boolean) : []; return { id: g.id, name: g.name, stages, current: Math.min(Math.max(1, Math.round(num(g.current) || 1)), Math.max(1, stages.length)) }; });
     if (Array.isArray(d.routines)) s.routines = ensureIds(named(d.routines)).map(r => ({ id: r.id, name: r.name,
       items: ensureIds(named(r.items)).map(it => { const ex = resolveExercise(it.exerciseId || it.exercise, s.exercises); return { id: it.id, name: it.name, target: it.target == null ? '' : String(it.target), exerciseId: ex ? ex.id : '' }; }),
@@ -767,7 +780,9 @@ window.MB = window.MB || {};
         trackers: [{ id: 'water', name: 'Water', type: 'count', target: 8, unit: 'glasses', group: 'habits' }, { name: 'Stretch', type: 'check', freq: 'days', days: ['mon', 'wed', 'fri'], group: 'habits' },
           { id: 'sleep', name: 'Sleep', type: 'duration', target: 480, aim: 'min', group: 'recovery' }, { name: 'Soreness', type: 'rating', target: 2, aim: 'max', group: 'recovery' },
           { name: 'Bedtime', type: 'time', target: '23:00', aim: 'max', group: 'recovery' }, { name: 'Weight', type: 'weight', group: 'recovery' }, { id: 'm_waist', name: 'Waist', type: 'number', unit: 'cm', freq: 'weekly', perWeek: 1, group: 'recovery' }],
-        exercises: [{ id: 'push-up', name: 'Push-up', image: 'https://example.com/push-up.gif', video: 'https://youtube.com/...', cues: 'Elbows 45°', perSide: false, gate: { id: 'wrist', at: 3 } }],
+        exercises: [{ id: 'push-up', name: 'Push-up', cues: 'Elbows 45°', perSide: false, gate: { id: 'wrist', at: 3 } },
+          { name: 'Banded shoulder ER, slow', base: 'band-external-rotation', unit: 'reps', perSide: true, cues: 'Light band, 3 s down' },
+          { name: 'Wall neck bridge', pm: ['neck'], sm: ['traps'], steps: ['Stand facing a wall, forehead on a folded towel.', 'Lean in and hold, chin tucked.'], eq: ['wall', 'towel'], unit: 'sec', video: 'https://youtube.com/...' }],
         routines: [{ id: 'morning', name: 'Morning mobility', days: ['mon', 'wed', 'fri'], items: [{ name: 'Cat-cow', target: '10' }] }],
         sessionKinds: [{ id: 'bjj', name: 'BJJ', color: 'blue', fields: [{ id: 'rounds', name: 'Rounds', type: 'number' }, { name: 'Focus', type: 'text' }] }, 'Strength'],
         sessionTypes: [{ id: 'upper', name: 'Upper body', kind: 'strength', minutes: 45, kcal: 300, plan: [{ label: 'Warm-up', log: false, items: [{ exerciseId: 'cat-cow', sets: 1, reps: '10' }] }, { label: 'A', items: [{ exerciseId: 'push-up', sets: 4, reps: '8-12', rir: '1', rest: '60 s' }] }] }],
@@ -792,7 +807,7 @@ window.MB = window.MB || {};
   ];
   const REMOVE_SAMPLE = { foods: ['banana'], days: ['2026-09-01'], events: ['fall-open'], settings: { trackers: ['water'], exercises: ['plank'], routineItems: { morning: ['cat-cow'] } } };
 
-  MB.schema = { VERSION, DAYS, KINDS, PROGRESS_CARDS, SYSTEMS, UNIT_PAIRS, defaultSystem, convertUnit, merge3, mergeable, mergeDoc, AIMS, DEFAULT_AIM, KIND_COLORS, kindColors, WAVE, UNITS, MEASURES, MEASURE_IDS, CAT_KEYS, DEFAULT_SETTINGS,
+  MB.schema = { VERSION, DAYS, KINDS, PROGRESS_CARDS, MUSCLES, EQUIPMENT, SYSTEMS, UNIT_PAIRS, defaultSystem, convertUnit, merge3, mergeable, mergeDoc, AIMS, DEFAULT_AIM, KIND_COLORS, kindColors, WAVE, UNITS, MEASURES, MEASURE_IDS, CAT_KEYS, DEFAULT_SETTINGS,
     TRACKER_TYPES, FREQS, FIELD_TYPES, GRADES, GRADE_VALUE, gradeOf, rateGrade, targetStatus, trackerValue, hasValue, expectedOn, judged, trackerGrade, trackerDone, routineRatio,
     snapshot, normalizeHistory, settingsOn, normalizeSettings, upgradeSettings, isV4Settings, unarchiveUsed, normalizeTracker, normalizeEvent, eventOn, rankToProgression, rankEvents, emptyDay, normalizeDay, normalizeFood, normalizeTemplate,
     isLegacy, migrateLegacy, planImport, exportProfile, convertWeight, TARGETS, DOCS, REMOVE_SAMPLE, PACKS, starterProfile, FOODS, isObj, isTime, blockTitle, hm, duration, blocksFor, plannedFor, waveWeek, gateOpen, resolveExercise, demoImage, demoVideo };
