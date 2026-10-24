@@ -1,5 +1,5 @@
 MB.i18n.add('ja', {
-  "app.tagline": "続ける。記録する。積み重ねる。",
+  "app.tagline": "トレーニングと食事の記録。",
   "nav.today": "今日", "nav.week": "週", "nav.progress": "進捗", "nav.foods": "食品", "nav.settings": "設定", "nav.start": "はじめに",
   "c.save": "保存", "c.cancel": "キャンセル", "c.close": "閉じる", "c.add": "追加", "c.remove": "削除", "c.delete": "削除", "c.edit": "編集", "c.done": "完了", "c.undo": "元に戻す",
   "c.apply": "適用", "c.preview": "プレビュー", "c.copy": "コピー", "c.copied": "コピーしました", "c.share": "共有", "c.download": "ダウンロード", "c.optional": "任意", "c.name": "名前",
@@ -38,7 +38,7 @@ MB.i18n.add('ja', {
   "s.goalNote": "メモ", "s.slots": "1日の食事", "s.slotName": "名前", "s.addSlot": "食事を追加", "s.habits": "毎日の習慣", "s.habit": "習慣", "s.target": "回数", "s.habitUnit": "単位",
   "s.habitsSub": "水や歩数などは回数を設定", "s.addHabit": "習慣を追加", "s.routines": "ルーティン", "s.routinesSub": "毎日のチェックリスト: ウォームアップ、リハビリ、可動域",
   "s.routineName": "ルーティン名", "s.exercise": "種目", "s.setsReps": "セット × 回", "s.addExercise": "種目を追加", "s.addRoutine": "ルーティンを追加", "s.days": "曜日",
-  "s.kinds": "カテゴリー", "s.kind": "カテゴリー", "s.addKind": "カテゴリーを追加", "s.types": "ワークアウト", "s.typesSub": "実際に行う内容と消費カロリーの目安", "s.addType": "セッションを追加",
+  "s.kinds": "カテゴリー", "s.kind": "カテゴリー", "s.addKind": "カテゴリーを追加", "s.types": "ワークアウト", "s.typesSub": "行う内容と消費カロリーの目安", "s.addType": "セッションを追加",
   "s.schedule": "週間スケジュール", "s.addTypesFirst": "先にセッションを追加してください",
 
 
@@ -98,7 +98,7 @@ MB.i18n.add('ja', {
   "nav.plan": "プラン", "nav.library": "ライブラリ",
   "t.plan": "今日の予定", "t.perSide": "片側ずつ", "t.left": "左", "t.right": "右", "t.addExercise": "種目を追加", "t.locked": "{gate}で解放", "t.unlocked": "{gate}で解放済み",
   "t.measures": "サイズ計測", "t.measuresSub": "メジャー、月1回", "t.minusOne": "1つ減らす", "t.tapToDo": "完了したらタップ", "t.alertDefault": ["今日は{n}件の注意サイン。無理をしないでください。","今日は{n}件の注意サイン。無理をしないでください。"],
-  "pl.sub": "理想の1週間。目安であって、契約ではありません。", "pl.week": "{of}週中 第{n}週", "pl.ramp": "ビルド", "pl.full": "ピーク", "pl.deload": "回復", "pl.cycle": "サイクル {n}",
+  "pl.sub": "理想の1週間の大まかな目安です。", "pl.week": "{of}週中 第{n}週", "pl.ramp": "ビルド", "pl.full": "ピーク", "pl.deload": "回復", "pl.cycle": "サイクル {n}",
   "pl.deloadHint": "回復週: セット数半分、スプリントなし、バランスチェックを実施。", "pl.wave": "トレーニングサイクル", "pl.gatesSub": "種目を解放する段階", "pl.waveStarts": "{d}開始",
   "pl.calendar": "週間", "pl.addBlock": "週に追加", "pl.editBlock": "予定を編集", "pl.kind": "種類", "pl.title": "タイトル", "pl.start": "開始", "pl.end": "終了", "pl.needDay": "曜日を1つ以上選んでください",
   "pl.session": "ワークアウト", "pl.routine": "ルーティン", "pl.meal": "食事", "pl.sleep": "睡眠", "pl.work": "仕事", "pl.rest": "休息", "pl.other": "その他",
@@ -112,7 +112,7 @@ MB.i18n.add('ja', {
   "p.bodyComp": "体組成", "p.bodyCompSub": "最新の計測値と初回からの変化", "p.milestones": "マイルストーン",
   "p.bandBelow": "7日平均 {avg} {u} は目標範囲 {lo}–{hi} を下回っています。少し多めに食べましょう。", "p.bandAbove": "7日平均 {avg} {u} は目標範囲 {lo}–{hi} を上回っています。少し控えめに。", "p.bandInside": "7日平均 {avg} {u}、目標範囲 {lo}–{hi} 内です。",
   "s.bandLo": "体重範囲 下限 ({u})", "s.bandHi": "体重範囲 上限 ({u})", "s.milestone": "マイルストーン", "s.milestonesSub": "途中の体脂肪率目標", "s.addMilestone": "マイルストーンを追加",
-  "s.alertAt": "この数チェックしたら警告", "s.alertText": "警告文", "s.typesSub2": "実際に行う内容と消費カロリーの目安。ワークアウトはプランのページで作成します。",
+  "s.alertAt": "この数チェックしたら警告", "s.alertText": "警告文", "s.typesSub2": "行う内容と消費カロリーの目安。ワークアウトはプランのページで作成します。",
   "s.gates": "プログレッション", "s.gatesSub": "リハビリの段階のような段階的な計画です。段階に応じて種目が解放されます。", "s.stages": "段階（カンマ区切り）", "s.addGate": "プログレッションを追加",
   "s.wave": "トレーニングサイクル", "s.waveSub": "開始日から繰り返す週の並びです（例：ビルド、ビルド、ピーク、ディロード）。週をタップして変更します。", "s.waveStart": "開始日", "s.wavePattern": "週",
   "st.sleepBlock": "睡眠", "st.work": "仕事", "st.rest": "休養日",
@@ -122,7 +122,7 @@ MB.i18n.add('ja', {
 
 /* sync */
 MB.i18n.add('ja', {
-  "sy.title": "同期", "sy.sub": "このプロフィールをすべてのデバイスで", "sy.intro": "任意です。データはどちらの場合もこのデバイスに残ります。クラウド保管庫を使うと、このプロフィールが他のデバイスと同期され、オフライン中の変更はオンラインに戻ったときにアップロードされます。",
+  "sy.title": "同期", "sy.sub": "このプロフィールをすべてのデバイスで", "sy.intro": "同期は任意です。データはどちらの場合もこのデバイスに残ります。クラウド保管庫を使うと、このプロフィールが他のデバイスと同期され、オフライン中の変更はオンラインに戻ったときにアップロードされます。",
   "sy.create": "クラウド保管庫を作成", "sy.link": "このデバイスをリンク", "sy.createHelp": "このサーバーの招待コードを入力してください。他のデバイスをリンクするための同期キーが発行されます。",
   "sy.invite": "招待コード", "sy.needInvite": "招待コードを入力してください。", "sy.createBtn": "保管庫を作成",
   "sy.working": "処理中…", "sy.keyTitle": "同期キー", "sy.keyWarn": "パスワードマネージャーに保存してください。他のデバイスをリンクする唯一の方法で、このキーを持つ人は誰でもこのプロフィールを閲覧・変更できます。",
@@ -226,7 +226,7 @@ MB.i18n.add('ja', {
   "p.loadCol": "負荷", "p.minCol": "トレーニング（分）",
   "p.nDays": ["{n}日","{n}日"], "p.planCol": "予定",
   "p.records": "自己ベスト更新", "p.recordsSet": "自己ベスト更新",
-  "p.skipped": "スキップ", "p.slips": "最も抜けやすいのは{day}：{of}回中{n}回未達成", "p.tagsTitle": "タグ付きの日",
+  "p.skipped": "スキップ", "p.slips": "最も抜けやすい曜日：{day}（{of}回中{n}回）", "p.tagsTitle": "タグ付きの日",
   "p.tapRow": "行をタップするとカレンダーと連続記録を表示します。", "p.totals": "カテゴリー別の合計", "p.trackers": "トラッカーのグラフ",
   "p.upcoming": "これから", "p.values": "記録値",
   "p.weekCol": "週", "p.yearCol": "年", "p.daysOf": "{of}日中{n}日",
@@ -247,7 +247,7 @@ MB.i18n.add('ja', {
   "pk.travel": "旅行", "pk.competition": "試合", "pk.race": "レース",
   "pk.social": "外食", "pk.belt": "柔術の帯", "pk.belts": "白帯, 青帯, 紫帯, 茶帯, 黒帯",
   "pl.addGroup": "ブロックを追加", "s.palette": "状態の色",
-  "s.palStd": "標準", "s.palCb": "色覚に配慮", "s.paletteHelp": "未達成から達成まで。色覚に配慮した配色はオレンジから青です。",
+  "s.palStd": "標準", "s.palCb": "色覚に配慮", "s.paletteHelp": "色は未達成から達成へと変わります。色覚に配慮した配色はオレンジから青です。",
   "s.autoFold": "完了したカードを折りたたむ", "s.autoFoldHelp": "トラッカー、ルーティン、トレーニングのカードは、すべて完了すると折りたたまれます。この端末のみ。", "t.doneOf": "{of}件中{n}件完了",
   "t.effort": "きつさ（1–10）", "t.effortHelp": "どれくらいきつかったか。きつさ × 分数がセッションの負荷で、進捗で週ごとに比べます。", "t.effortN": "きつさ {n}",
   "t.lastTime": "前回（{d}）：{sets}", "t.logDetails": "記録する", "t.nextBlock": "次：{name} · {t}",
@@ -256,7 +256,7 @@ MB.i18n.add('ja', {
   "tk.deleteSection": "セクションを削除", "tk.freq": "頻度", "tk.freq.daily": "毎日",
   "tk.freq.days": "特定の曜日", "tk.freq.weekly": "週の回数", "tk.freq.any": "いつでも",
   "tk.freqHelp.daily": "毎日行う前提です。できなかった日も数えます。", "tk.freqHelp.days": "選んだ曜日に行う前提です。", "tk.freqHelp.weekly": "曜日を問わず、週に決めた回数。",
-  "tk.freqHelp.any": "好きなときに記録。未達成には数えず、進捗でグラフにします。", "tk.last": "前回：{v}", "tk.lastOn": "前回 {v} · {d}",
+  "tk.freqHelp.any": "好きなときに記録できます。未達成には数えず、進捗でグラフにします。", "tk.last": "前回：{v}", "tk.lastOn": "前回 {v} · {d}",
   "tk.new": "新しいトラッカー", "tk.none": "トラッカーはまだありません。", "tk.perWeek": "週の回数",
   "tk.perWeekN": "週{n}回", "tk.restore": "復元", "tk.restored": "{name}を復元しました",
   "tk.section": "セクション", "tk.sectionName": "セクション", "tk.sections": "セクション",

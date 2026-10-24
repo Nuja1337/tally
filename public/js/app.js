@@ -2580,7 +2580,7 @@
     wrap.append(section(t('i.title'), null, panel));
     const ref = h('div', { class: 'docs' });
     ref.append(h('p', null, t('g.formatIntro')));
-    ref.append(h('h3', null, t('g.modes')), h('ul', null, h('li', null, h('b', null, t('i.merge')), ' — ', t('i.helpMerge')), h('li', null, h('b', null, t('i.replace')), ' — ', t('i.helpReplace')), h('li', null, h('b', null, t('i.remove')), ' — ', t('i.helpRemove'))),
+    ref.append(h('h3', null, t('g.modes')), h('ul', null, h('li', null, h('b', null, t('i.merge')), ': ', t('i.helpMerge')), h('li', null, h('b', null, t('i.replace')), ': ', t('i.helpReplace')), h('li', null, h('b', null, t('i.remove')), ': ', t('i.helpRemove'))),
       h('pre', { class: 'code' }, JSON.stringify(SC.REMOVE_SAMPLE, null, 2)));
     for (const d of SC.DOCS) ref.append(h('h3', null, d.key), h('p', { class: 'muted small' }, d.fields.map(f => h('code', null, f))), h('pre', { class: 'code' }, JSON.stringify({ [d.key]: d.sample }, null, 2)));
     ref.append(h('p', { class: 'muted small' }, t('g.readme')));

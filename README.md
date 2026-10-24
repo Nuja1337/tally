@@ -3,20 +3,20 @@
 A local-first training and nutrition log: meals and nutrients, trackers for anything (checks, counts, numbers, ratings, durations, times, notes, bodyweight), routines, workouts with per-side logging, effort and custom fields, an ideal-week calendar, one-off events (tournaments, trips, appointments), a built-in library of about 400 exercises (each with a muscle map, how to do it, cues, mistakes and variations) plus your own, progressions and day tags that show what goes with them. Your data lives in your browser and the app works fully offline. Optional sync keeps a profile the same on your phone and your laptop.
 
 - Works offline once opened, installs to the home screen like an app
-- Five pages: Today, Plan (what is coming up, the training cycle and the ideal week with its training total), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, the exercise library and your own exercises, foods and saved meals; each exercise has its own page), Settings (profile, language, theme, status colors, folding, sync, data). Targets, nutrients, tracker sections, meals of the day and tags are edited on Today; the goal and its checkpoints on Progress.
-- Five-step status colors from missed to met (with a color-blind option); past days keep the colors their setup gave them
-- Cards fold, finished ones by themselves; everything you create drags into order; deletes can be undone
-- US or metric units (switching converts what you logged); a day can start after midnight
-- Workouts: repeat last time with a tap, a rest timer, warm-up blocks that stay out of the log; category fields charted on Progress
+- Five pages: Today, Plan (what is coming up, the training cycle and the ideal week with its training total), Progress (a week, a month, a year, or the data as a table), Library (workouts, routines, the exercise library and your own exercises, foods and saved meals, with a page for each exercise), Settings (profile, language, theme, status colors, folding, sync, data). You edit targets, nutrients, tracker sections, meals of the day and tags on Today, and the goal and its checkpoints on Progress.
+- Five-step status colors from missed to met (with a color-blind option), and past days keep the colors their setup gave them
+- Cards fold, and finished ones fold by themselves. Everything you create can be dragged into order, and deletes can be undone
+- US or metric units (switching converts what you logged), and a day can start after midnight
+- Workouts: repeat last time with a tap, a rest timer, warm-up blocks that stay out of the log, and category fields charted on Progress
 - Quick add on Today: a meal, a workout, an event, a note or your weight
-- Exercise pages: a front and back muscle map, how to do it step by step, cues, common mistakes, safety, a starting dose, easier and harder versions and swaps, then your notes, records and history and where it is in your plan. Add one to a workout or routine from its page. Something the library lacks is yours in seconds, on its own or based on a library entry.
-- Day tags: a new one from Today, and a page per tag with its days over the year and what differs on those days and the day after (sleep, heart rate, food, training, any tracker), against days without it
+- Exercise pages: a front and back muscle map, how to do it step by step, cues, common mistakes, safety, a starting dose, easier and harder versions and swaps, then your notes, records and history and where it is in your plan. Add one to a workout or routine from its page. If the library lacks an exercise, you can quickly add your own, on its own or based on a library entry.
+- Day tags: add one from Today. Each tag has a page with its days over the year and how those days and the days after them compare with days without the tag (sleep, heart rate, food, training, any tracker)
 - Calm by default: one highlighted action per card, a workout that ended without a log gets a Log tag instead of a mark, and a new profile starts clean (days before it are not counted)
 - Starter packs: General, BJJ athlete, Runner, Fat loss
 - English, Spanish, French, Portuguese, German, Japanese, Korean, Chinese
 - Light and dark themes
 - Several profiles on one device
-- Optional cloud sync per profile: your own vault, no account, no email
+- Optional cloud sync per profile, with your own vault and no account or email
 - Export and import as plain JSON
 
 ## How it is hosted
@@ -25,15 +25,15 @@ One Cloudflare Worker on the free plan, at `https://tally.<subdomain>.workers.de
 
 - `public/` is served as static assets straight from Cloudflare. These requests are free, unlimited, and never run Worker code.
 - `worker/index.js` answers only `/api/*` (sync) and `POST /share` (the share-target fallback before the service worker is active).
-- Synced data lives in a D1 database (`migrations/`). IndexedDB in the browser stays the source of truth; every chart and summary is computed on the device.
+- Synced data lives in a D1 database (`migrations/`). IndexedDB in the browser stays the source of truth, and every chart and summary is computed on the device.
 
 The app is plain HTML, CSS and JavaScript with no build step, no framework and no client dependencies. `package.json` only holds dev tools (wrangler, vitest, @cloudflare/vitest-plugin, jsdom, fake-indexeddb).
 
 ## Sync
 
-Sync is optional and per profile. Settings › Sync › **Create cloud vault** asks for the server's invite code and returns a sync key (`tly-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX`). On another device, Settings › Sync › **Link this device** with that key. The key is the only credential: the server keeps just its SHA-256 hash, and anyone with the key can read and change the profile, so keep it in a password manager. The invite code only stops strangers from creating vaults on your free quota.
+Sync is optional and per profile. Settings › Sync › **Create cloud vault** asks for the server's invite code and returns a sync key (`tly-XXXX-XXXX-XXXX-XXXX-XXXX-XXXX-XX`). On another device, Settings › Sync › **Link this device** with that key. The key is the only credential. The server keeps only its SHA-256 hash, and anyone with the key can read and change the profile, so keep it in a password manager. The invite code only stops strangers from creating vaults on your free quota.
 
-Every edit is saved to IndexedDB first and queued in an outbox. The app uploads the queue a few seconds after edits, on start, when back online or in the foreground, and on Sync now, and pulls other devices' changes in the same request. Each document (the settings, each food, template, event and day) syncs on its own; deletes travel as tombstones. The server refuses a copy from a device that has not seen that document's latest version; the device merges and sends again. A day or the settings edited on two devices are merged entry by entry against the last synced copy (the device keeps it while an edit waits to upload): meals, sessions and other listed things by id, values and checks by key, tags as a set. What one side changed wins over what the other left alone, something removed on one side and untouched on the other stays removed, and a value changed on both takes the newer copy's. Any other document keeps the newer copy. Offline nothing is lost; the outbox waits. Linking a device that already has data merges both sides the same way. Open tabs share data live; only the active profile syncs. Unlinking or erasing a profile never deletes the cloud copy; Settings › Sync › **Delete cloud copy** does.
+Every edit is saved to IndexedDB first and queued in an outbox. The app uploads the queue a few seconds after edits, on start, when back online or in the foreground, and on Sync now, and pulls other devices' changes in the same request. Each document (the settings, each food, template, event and day) syncs on its own, and deletes travel as tombstones. The server refuses a copy from a device that has not seen that document's latest version, and the device merges and sends again. A day or the settings edited on two devices are merged entry by entry against the last synced copy, which the device keeps while an edit waits to upload. Meals, sessions and other listed things merge by id, values and checks by key, and tags as a set. What one side changed wins over what the other left alone, something removed on one side and untouched on the other stays removed, and a value changed on both takes the newer copy's. Any other document keeps the newer copy. Nothing is lost offline, because the outbox waits. Linking a device that already has data merges both sides the same way. Open tabs share data live, and only the active profile syncs. Unlinking or erasing a profile never deletes the cloud copy. Settings › Sync › **Delete cloud copy** does that.
 
 The dot next to the name shows the state: green synced, amber waiting to upload (with a count), gray offline, red error (tap for the message).
 
@@ -41,7 +41,7 @@ On iPhone the home-screen app has its own storage, separate from Safari, so link
 
 ## Set up
 
-Needs Node.js (current LTS) and a free Cloudflare account. No card.
+You need Node.js (current LTS) and a free Cloudflare account, with no card on file.
 
 ```sh
 npm install                                        # dev tools only; the app never needs it
@@ -74,7 +74,7 @@ The app tests boot the real `public/` scripts as separate devices and tabs (own 
 ## Update
 
 1. Edit. Every user-facing string goes through `t()` and exists in all 8 dictionaries.
-2. If anything under `public/` changed, bump `VERSION` in `public/sw.js` (keep `ASSETS` matching the files; a test checks it). Open copies then show "New version ready".
+2. If anything under `public/` changed, bump `VERSION` in `public/sw.js` and keep `ASSETS` matching the files (a test checks it). Open copies then show "New version ready".
 3. `npm test` and `node scripts/check-i18n.mjs`.
 4. `npx wrangler deploy`. A new file in `migrations/` needs `npx wrangler d1 migrations apply tally --remote` first.
 
@@ -86,13 +86,13 @@ Per account, Workers Free and D1 Free, reset daily at 00:00 UTC:
 
 | Limit | Free plan | Tally |
 |---|---|---|
-| Worker requests | 100,000 / day | only sync calls count; static files are free |
-| CPU per request | 10 ms | one SHA-256; stored JSON is passed through, not re-parsed |
+| Worker requests | 100,000 / day | only sync calls count, and static files are free |
+| CPU per request | 10 ms | one SHA-256, and stored JSON is passed through without re-parsing |
 | D1 queries per request | 50 | at most 42 (40 changes, key check, pull) |
 | D1 rows | 5 M read and 100 k written / day, 5 GB | one row per document |
 | Workers per account | 100 | 1 |
 
-The API also caps each request at 40 changes, 1 MB, and 512 KB per document, and pages pulls at 200 rows or about 2 MB. With no card on file nothing can be billed; past a limit the app keeps working locally and sync retries later.
+The API also caps each request at 40 changes, 1 MB, and 512 KB per document, and pages pulls at 200 rows or about 2 MB. With no card on file nothing can be billed. Past a limit, the app keeps working locally and sync retries later.
 
 ## Install
 
@@ -104,15 +104,15 @@ Installed copies keep working offline and get updates on the next open.
 
 ## Your data
 
-Everything lives in the browser's IndexedDB (localStorage if that is blocked). Progress › Data exports a month, or every day, as CSV. Clearing site data deletes it; a synced profile can be restored by linking again, but export now and then either way. Today shows a reminder after seven unexported days. Settings › Sync › **Download cloud backup** saves the cloud copy as a normal export.
+Everything lives in the browser's IndexedDB (localStorage if that is blocked). Progress › Data exports a month, or every day, as CSV. Clearing site data deletes it. A synced profile can be restored by linking again, but export now and then either way. Today shows a reminder after seven unexported days. Settings › Sync › **Download cloud backup** saves the cloud copy as a normal export.
 
 **Export** (Settings › Export): everything, setup only (settings, foods, templates), or days and events since a date. Download, share, or copy the JSON.
 
-**Import** (Get started, or Settings › Import): drop a file, choose one, paste from the clipboard, or paste text. Preview shows what will change before you apply. On Android you can also share a `.json` file straight into the installed app; on desktop the installed app opens `.json` files.
+**Import** (Get started, or Settings › Import): drop a file, choose one, paste from the clipboard, or paste text. Preview shows what will change before you apply. On Android you can also share a `.json` file straight into the installed app. On desktop, the installed app opens `.json` files.
 
 Modes:
 
-- **Merge**: adds and updates. Nothing is deleted. Rows and settings carry `updatedAt`; older copies do not overwrite newer ones.
+- **Merge**: adds and updates. Nothing is deleted. Rows and settings carry `updatedAt`, so older copies do not overwrite newer ones.
 - **Replace**: each section in the file replaces yours. Sections not in the file are untouched. Replaced rows count as edited now, so on a synced profile a restored backup wins on every device.
 - **Remove**: deletes the listed ids or dates.
 
@@ -120,7 +120,7 @@ Import into the current profile or into a new one.
 
 ## Profile format (v5)
 
-One JSON object with optional sections. Paste just the part you are changing.
+One JSON object with optional sections. Paste only the part you are changing.
 
 ```json
 {
@@ -187,32 +187,32 @@ One JSON object with optional sections. Paste just the part you are changing.
 
 Notes:
 
-- Ids are optional; they are derived from names (`Water` → `water`). Keep them stable if you edit files by hand.
-- **Trackers** replace v4 habits and tape measurements. `type` is `check`, `count`, `number`, `rating` (1–5), `duration` (minutes), `time` (`HH:MM`), `text` or `weight` (one at most; its value is `day.weight`, in the profile unit). `target` and `aim` (`min` at least, `near` about, `max` at most; for times `max` means by, `min` at or after, `near` within 15 minutes) are optional.
-- `freq` says when a tracker is expected: `daily`, `days` (the weekdays in `days`), `weekly` (`perWeek` times a week) or `any` (whenever; never counted as missed). Defaults: `any` for number, text and weight, `daily` for the rest. `archived` trackers leave Today and keep their history. `group` is the section (a card on Today); sections and trackers show in list order.
+- Ids are optional and are derived from names (`Water` becomes `water`). Keep them stable if you edit files by hand.
+- **Trackers** replace v4 habits and tape measurements. `type` is `check`, `count`, `number`, `rating` (1–5), `duration` (minutes), `time` (`HH:MM`), `text` or `weight` (one at most, whose value is `day.weight` in the profile unit). `target` and `aim` are optional. `aim` is `min` (at least), `near` (about) or `max` (at most). For times, `max` means by, `min` means at or after, and `near` means within 15 minutes.
+- `freq` says when a tracker is expected: `daily`, `days` (the weekdays in `days`), `weekly` (`perWeek` times a week) or `any` (whenever, and never counted as missed). Defaults: `any` for number, text and weight, `daily` for the rest. `archived` trackers leave Today and keep their history. `group` is the section (a card on Today). Sections and trackers show in list order.
 - `day.values` holds each tracker's value by id. Body fat for the goal is the tracker with id `bodyFat`.
-- **goal**: target `weight` and `bodyFat`, a `band` to stay in, a `note`, and `milestones` (checkpoints with `label`, `date`, `weight`, `bodyFat`). Progress works out lean and fat mass from weight and body fat; older files' `lean` and `fat` are ignored.
-- **events** are one-off things on a date: a tournament, a trip, an appointment, an injury, a test, a promotion. `end` (inclusive) makes one span days, `time` is `HH:MM`, `result` and `note` are free text. `tag` is a tag id: the event's days count as tagged (a `skip` tag leaves them out of averages). `big` makes it stand out on calendars with a countdown on Today. `offPlan` means planned training on those days is not expected. Moving a progression up adds an event.
-- **Status colors** have five steps: met (green), close (light green), halfway (yellow), started (orange), missed (red). A day that is still going stays neutral while it is short; going over counts at once. Rates over weeks and months: 95% met, 75% close, 50% halfway, 25% started.
-- **units.system** is `us` (lb, in, mi, fl oz, °F) or `metric` (kg, cm, km, ml, °C); bodyweight and set loads follow it. A number tracker or category field whose `unit` is one of these converts with it when you switch in Settings (values, targets and past targets). Files with only `units.weight` read `kg` as metric and `lb` as US; files with neither take the device's region.
+- **goal**: target `weight` and `bodyFat`, a `band` to stay in, a `note`, and `milestones` (checkpoints with `label`, `date`, `weight`, `bodyFat`). Progress works out lean and fat mass from weight and body fat. Older files' `lean` and `fat` are ignored.
+- **events** are one-off things on a date: a tournament, a trip, an appointment, an injury, a test, a promotion. `end` (inclusive) makes one span days, `time` is `HH:MM`, `result` and `note` are free text. `tag` is a tag id, and the event's days count as tagged (a `skip` tag leaves them out of averages). `big` makes it stand out on calendars with a countdown on Today. `offPlan` means planned training on those days is not expected. Moving a progression up adds an event.
+- **Status colors** have five steps: met (green), close (light green), halfway (yellow), started (orange), missed (red). A day that is still going stays neutral while it is short. Going over counts at once. Rates over weeks and months: 95% met, 75% close, 50% halfway, 25% started.
+- **units.system** is `us` (lb, in, mi, fl oz, °F) or `metric` (kg, cm, km, ml, °C), and bodyweight and set loads follow it. A number tracker or category field whose `unit` is one of these converts with it when you switch in Settings (values, targets and past targets). Files with only `units.weight` read `kg` as metric and `lb` as US. Files with neither take the device's region.
 - **dayStart** (`HH:MM`, up to `06:00`): until then, logging counts for the day before, so a meal at 00:30 lands on the evening it belongs to.
-- `targets.aim` works the same for calories and macros. Missing aims default to `near` for calories, carbs and fat and `min` for protein. `nutrients` adds more (fiber, sodium…); foods, saved meals and logged meals carry them in `n`.
+- `targets.aim` works the same for calories and macros. Missing aims default to `near` for calories, carbs and fat and `min` for protein. `nutrients` adds more (fiber, sodium…). Foods, saved meals and logged meals carry them in `n`.
 - `sessionKinds[].fields` are what a session of that category logs: `number` (with `unit`), `text`, `rating` or `duration`. Sessions keep them in `fields`, plus `effort` (1–10). Effort × minutes is the session load.
-- `tags` mark days; `skip: true` leaves those days out of averages and rates. `day.tags` lists tag ids; an event's tag counts on its days too.
-- **history** keeps the setup each stretch of days is judged by: an entry holds what judging needs (targets, nutrient targets, trackers' targets and frequencies, routines, planned sessions) from its `date` on. The app writes one whenever setup changes, so changing a target today leaves last month's colors alone. Days before the first entry use the first one, except days before the profile's first day (its first entry or its first logged day, whichever is earlier): nothing was expected then, so they are not counted as missed.
+- `tags` mark days, and `skip: true` leaves those days out of averages and rates. `day.tags` lists tag ids. An event's tag counts on its days too.
+- **history** keeps the setup each stretch of days is judged by. An entry holds what judging needs (targets, nutrient targets, trackers' targets and frequencies, routines, planned sessions) from its `date` on. The app writes one whenever setup changes, so changing a target today leaves last month's colors alone. Days before the first entry use the first one. The exception is days before the profile's first day (its first entry or its first logged day, whichever is earlier), which are not counted as missed because nothing was expected then.
 - Names in the app: `mealSlots` are "Meals of the day", `templates` are "Saved meals", `groups` are "Sections", `sessionKinds` are "Categories", `sessionTypes` are "Workouts", `gates` are "Progressions", `wave` is the "Training cycle" (`ramp` shows as Build, `full` as Peak), `calendar` blocks are plan items.
 - `progress.hide` lists Progress cards the profile hides: `nutrition`, `weight`, `training`, `habits` (consistency), `trackers`, `tags`, `events`, `body` (the goal).
 - `sessionKinds[].color` and `tags[].color` are one of `blue`, `violet`, `teal`, `orange`, `pink`, `gold`, `slate`, `olive`. Kinds without one take the next unused color.
-- `routines[].days` limits a routine to those weekdays; empty or missing means every day. `alertAt` turns a routine into a check-in: when that many items are ticked, Today shows `alertText`.
-- **The exercise library** is built in (`public/js/exlib.js`, English, not part of your data). A profile exercise stands on a library entry by `base` (a library id), else by the same `id`, else by its name or an alias; `base: "none"` keeps it on its own. Its page shows the library's how-to under your name, notes (`cues`), unit and per side. One of your own can carry `pm` and `sm` (primary and secondary muscles: `neck`, `traps`, `shoulders`, `rear-delts`, `rotator-cuff`, `chest`, `upper-back`, `lats`, `biceps`, `triceps`, `forearms`, `abs`, `obliques`, `lower-back`, `hip-flexors`, `glutes`, `abductors`, `adductors`, `quads`, `hamstrings`, `calves`, `shins`), `steps` (strings) and `eq` (gear). Plan items, routine items and sets can point at a library id without any copy in `exercises`.
+- `routines[].days` limits a routine to those weekdays. Empty or missing means every day. `alertAt` turns a routine into a check-in. When that many items are ticked, Today shows `alertText`.
+- **The exercise library** is built in (`public/js/exlib.js`, English, not part of your data). A profile exercise links to a library entry by `base` (a library id), otherwise by the same `id`, otherwise by its name or an alias. `base: "none"` keeps it on its own. Its page shows the library's how-to under your name, notes (`cues`), unit and per side. One of your own can carry `pm` and `sm` (primary and secondary muscles: `neck`, `traps`, `shoulders`, `rear-delts`, `rotator-cuff`, `chest`, `upper-back`, `lats`, `biceps`, `triceps`, `forearms`, `abs`, `obliques`, `lower-back`, `hip-flexors`, `glutes`, `abductors`, `adductors`, `quads`, `hamstrings`, `calves`, `shins`), `steps` (strings) and `eq` (gear). Plan items, routine items and sets can point at a library id without any copy in `exercises`.
 - `exercises[].image` can be a direct image or GIF link (shown inline) or any page (opened in a tab). `video` is a link. `perSide` logs left and right reps and flags a gap over 10%. `gate` hides nothing but marks the exercise locked until that gate reaches the stage `at`.
-- `sessionTypes[].plan` is a list of blocks (supersets); `items` reference exercises by `exerciseId` or by `name`. Logging a session of that type pre-fills the sets and shows what you did last time, with a tap to repeat it; an item's `rest` (`60 s`, `2 min`, `1:30`) starts a rest timer. A block with `log: false` (a warm-up, a cool-down) stays in the workout but out of the log. A set's `reps` holds seconds or meters for exercises whose `unit` is `sec` or `m`.
+- `sessionTypes[].plan` is a list of blocks (supersets), and `items` reference exercises by `exerciseId` or by `name`. Logging a session of that type pre-fills the sets and shows what you did last time, with a tap to repeat it. An item's `rest` (`60 s`, `2 min`, `1:30`) starts a rest timer. A block with `log: false` (a warm-up, a cool-down) stays in the workout but out of the log. A set's `reps` holds seconds or meters for exercises whose `unit` is `sec` or `m`.
 - A logged meal can say where it came from: `foodId` and `qty` (servings) when added from a food, `tplId` when added from a saved meal.
-- `calendar` blocks build the ideal week: `kind` is `session`, `routine`, `meal`, `sleep`, `work`, `rest` or `other`, with `typeId`, `routineId` or `slotId` for the linked thing. Times are `HH:MM`, optional; a block that ends before it starts runs overnight. A session block with times scales the type's calories to the block length. The old `schedule` object is still accepted and becomes untimed session blocks.
-- `wave.pattern` repeats from `wave.start`; values are `ramp`, `full` or `deload`. `gates[].current` is 1-based. A progression is any ladder: rehab phases, a belt, a grade.
+- `calendar` blocks build the ideal week: `kind` is `session`, `routine`, `meal`, `sleep`, `work`, `rest` or `other`, with `typeId`, `routineId` or `slotId` for the linked thing. Times are `HH:MM` and optional. A block that ends before it starts runs overnight. A session block with times scales the type's calories to the block length. The old `schedule` object is still accepted and becomes untimed session blocks.
+- `wave.pattern` repeats from `wave.start`, and its values are `ramp`, `full` or `deload`. `gates[].current` is 1-based. A progression is any ladder: rehab phases, a belt, a grade.
 - `p`, `c`, `f` also accept `protein`, `carbs`, `fat`. `slot` also accepts `window`.
-- A bare list is accepted too (`[{ "name": "Oat milk", ... }]`); the import panel asks which section it belongs to.
-- **Older files import unchanged.** v4 `settings.habits` become `check` or `count` trackers in a Habits section; the bodyweight becomes the `weight` tracker and the seven tape measurements (`day.measures`: `waist`, `chest`, `arm`, `thigh`, `calf`, `neck`, `bodyFat`) become number trackers `m_waist` … `m_neck` and `bodyFat` in a Body section; ones never logged start archived. `day.habits` and `day.measures` are read into `day.values`. A `settings.rank` (levels, sub-levels, promotions) becomes a progression with a stage per level and sub-level, and each promotion in its `history` becomes a big event; rank phases are dropped. Exports from Mettle 2.x, Matbook 1.x and the original artifact import too, and local data from those versions migrates on first open.
+- A bare list is accepted too (`[{ "name": "Oat milk", ... }]`), and the import panel asks which section it belongs to.
+- **Older files import unchanged.** v4 `settings.habits` become `check` or `count` trackers in a Habits section. The bodyweight becomes the `weight` tracker and the seven tape measurements (`day.measures`: `waist`, `chest`, `arm`, `thigh`, `calf`, `neck`, `bodyFat`) become number trackers `m_waist` … `m_neck` and `bodyFat` in a Body section. Ones never logged start archived. `day.habits` and `day.measures` are read into `day.values`. A `settings.rank` (levels, sub-levels, promotions) becomes a progression with a stage per level and sub-level, and each promotion in its `history` becomes a big event. Rank phases are dropped. Exports from Mettle 2.x, Matbook 1.x and the original artifact import too, and local data from those versions migrates on first open.
 
 Remove example:
 
@@ -222,7 +222,7 @@ Remove example:
 
 `public/examples/starter-profile.json` is the General starter pack in English: four meal slots, Habits and Body sections, a morning routine, twelve exercises, four workouts (two with plans), a timed week, two tags and 72 whole foods with reference values. Get started also offers BJJ athlete, Runner and Fat loss packs.
 
-Sync adds nothing to this format: the outbox and cursor are kept per device and never appear in exports. The cloud backup is a normal v5 export.
+Sync adds nothing to this format. The outbox and cursor are kept per device and never appear in exports. The cloud backup is a normal v5 export.
 
 ## API
 
@@ -235,11 +235,11 @@ Same origin as the app, JSON in and out, errors as `{ "error": "..." }`.
 | `GET /api/export` | Bearer | | `200` a v5 export |
 | `DELETE /api/vault` | Bearer | | `204`, the vault and all its documents are gone |
 
-An unknown key is `401`. `updatedAt` is milliseconds; more than 2 minutes in the future is clamped to server time. A write is applied when its `updatedAt` is newer and, unless it is a delete, the row has not changed since the request's `cursor`; otherwise its path is listed in `rejected` and the newer row comes back in `changes` to be merged. A sync without `x-tally-format: 5` and `x-tally-sync: 2` (an app that has not reloaded since an update) gets `426`, so old copies of the app cannot overwrite newer documents; the app asks you to reload.
+An unknown key is `401`. `updatedAt` is in milliseconds, and a value more than 2 minutes in the future is clamped to server time. A write is applied when its `updatedAt` is newer and, unless it is a delete, the row has not changed since the request's `cursor`. Otherwise its path is listed in `rejected` and the newer row comes back in `changes` to be merged. A sync without `x-tally-format: 5` and `x-tally-sync: 2` (an app that has not reloaded since an update) gets `426`, so old copies of the app cannot overwrite newer documents. The app then asks you to reload.
 
 ## Languages
 
-The interface follows the browser language when we have it, otherwise English; Settings › App › Language overrides it. Only the interface is translated: your own habit, food and routine names stay as you typed them, and the starter packs load in the selected language. Dictionaries live in `public/js/i18n/`; copy `en.js`, translate the values, add the file to `public/index.html` and `public/sw.js`, and run `node scripts/check-i18n.mjs`.
+The interface follows the browser language when we have it, otherwise English. Settings › App › Language overrides it. Only the interface is translated. Your own habit, food and routine names stay as you typed them, and the starter packs load in the selected language. Dictionaries live in `public/js/i18n/`. To add one, copy `en.js`, translate the values, add the file to `public/index.html` and `public/sw.js`, and run `node scripts/check-i18n.mjs`.
 
 ## Layout
 
@@ -251,7 +251,7 @@ public/                      the app, served as static files
   js/i18n.js                 language detection and t()
   js/i18n/<lang>.js          dictionaries
   js/exlib.js                the built-in exercise library (one entry per line)
-  js/exercises.js            library lookup, how profile exercises stand on it, the muscle map
+  js/exercises.js            library lookup, linking profile exercises to it, the muscle map
   js/schema.js               data format v5: defaults, normalization, v4 upgrade, the five-step scale, tracker grades,
                              setup history, import planning, export, starter packs
   js/store.js                IndexedDB store: profiles, outbox, pulled changes, tabs, migration from earlier names

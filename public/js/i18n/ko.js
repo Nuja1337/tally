@@ -1,5 +1,5 @@
 MB.i18n.add('ko', {
-  "app.tagline": "나타나고, 기록하고, 계속하기.",
+  "app.tagline": "운동과 식사를 기록하는 앱.",
   "nav.today": "오늘", "nav.week": "주간", "nav.progress": "진행", "nav.foods": "음식", "nav.settings": "설정", "nav.start": "시작하기",
   "c.save": "저장", "c.cancel": "취소", "c.close": "닫기", "c.add": "추가", "c.remove": "제거", "c.delete": "삭제", "c.edit": "편집", "c.done": "완료", "c.undo": "실행 취소",
   "c.apply": "적용", "c.preview": "미리보기", "c.copy": "복사", "c.copied": "복사됨", "c.share": "공유", "c.download": "다운로드", "c.optional": "선택", "c.name": "이름",
@@ -38,7 +38,7 @@ MB.i18n.add('ko', {
   "s.goalNote": "메모", "s.slots": "하루 식사", "s.slotName": "이름", "s.addSlot": "식사 추가", "s.habits": "매일 습관", "s.habit": "습관", "s.target": "횟수", "s.habitUnit": "단위",
   "s.habitsSub": "물이나 걸음 수 같은 항목은 횟수를 설정", "s.addHabit": "습관 추가", "s.routines": "루틴", "s.routinesSub": "매일 체크리스트: 워밍업, 재활, 가동성",
   "s.routineName": "루틴 이름", "s.exercise": "운동", "s.setsReps": "세트 × 회", "s.addExercise": "운동 추가", "s.addRoutine": "루틴 추가", "s.days": "요일",
-  "s.kinds": "카테고리", "s.kind": "카테고리", "s.addKind": "카테고리 추가", "s.types": "워크아웃", "s.typesSub": "실제로 하는 운동과 예상 소모 칼로리", "s.addType": "세션 추가",
+  "s.kinds": "카테고리", "s.kind": "카테고리", "s.addKind": "카테고리 추가", "s.types": "워크아웃", "s.typesSub": "하는 운동과 예상 소모 칼로리", "s.addType": "세션 추가",
   "s.schedule": "주간 일정", "s.addTypesFirst": "먼저 세션을 추가하세요",
 
 
@@ -98,7 +98,7 @@ MB.i18n.add('ko', {
   "nav.plan": "계획", "nav.library": "라이브러리",
   "t.plan": "오늘 계획", "t.perSide": "한쪽씩", "t.left": "왼쪽", "t.right": "오른쪽", "t.addExercise": "운동 추가", "t.locked": "{gate}에서 해제", "t.unlocked": "{gate}에서 해제됨",
   "t.measures": "신체 치수", "t.measuresSub": "줄자, 매월", "t.minusOne": "하나 빼기", "t.tapToDo": "완료하면 탭", "t.alertDefault": ["오늘 경고 신호 {n}개. 무리하지 마세요.","오늘 경고 신호 {n}개. 무리하지 마세요."],
-  "pl.sub": "이상적인 한 주. 계약이 아니라 가이드입니다.", "pl.week": "{of}주 중 {n}주차", "pl.ramp": "빌드", "pl.full": "피크", "pl.deload": "회복", "pl.cycle": "사이클 {n}",
+  "pl.sub": "이상적인 한 주를 대략 정리한 가이드입니다.", "pl.week": "{of}주 중 {n}주차", "pl.ramp": "빌드", "pl.full": "피크", "pl.deload": "회복", "pl.cycle": "사이클 {n}",
   "pl.deloadHint": "회복 주: 세트 절반, 스프린트 없음, 균형 점검 실시.", "pl.wave": "훈련 사이클", "pl.gatesSub": "운동을 해제하는 단계", "pl.waveStarts": "{d} 시작",
   "pl.calendar": "주간", "pl.addBlock": "주에 추가", "pl.editBlock": "계획 항목 편집", "pl.kind": "유형", "pl.title": "제목", "pl.start": "시작", "pl.end": "종료", "pl.needDay": "요일을 하나 이상 선택하세요",
   "pl.session": "워크아웃", "pl.routine": "루틴", "pl.meal": "식사", "pl.sleep": "수면", "pl.work": "업무", "pl.rest": "휴식", "pl.other": "기타",
@@ -112,7 +112,7 @@ MB.i18n.add('ko', {
   "p.bodyComp": "신체 조성", "p.bodyCompSub": "최근 치수와 첫 측정 이후 변화", "p.milestones": "마일스톤",
   "p.bandBelow": "7일 평균 {avg} {u}이(가) 목표 범위 {lo}–{hi}보다 낮습니다. 조금 더 드세요.", "p.bandAbove": "7일 평균 {avg} {u}이(가) 목표 범위 {lo}–{hi}보다 높습니다. 조금 줄이세요.", "p.bandInside": "7일 평균 {avg} {u}, 목표 범위 {lo}–{hi} 안에 있습니다.",
   "s.bandLo": "체중 범위 하한 ({u})", "s.bandHi": "체중 범위 상한 ({u})", "s.milestone": "마일스톤", "s.milestonesSub": "중간 체지방 목표", "s.addMilestone": "마일스톤 추가",
-  "s.alertAt": "이만큼 체크하면 경고", "s.alertText": "경고 문구", "s.typesSub2": "실제로 하는 운동과 예상 소모 칼로리. 워크아웃은 계획 페이지에서 만듭니다.",
+  "s.alertAt": "이만큼 체크하면 경고", "s.alertText": "경고 문구", "s.typesSub2": "하는 운동과 예상 소모 칼로리. 워크아웃은 계획 페이지에서 만듭니다.",
   "s.gates": "프로그레션", "s.gatesSub": "재활 단계처럼 단계로 나뉜 계획입니다. 특정 단계에서 운동이 해제됩니다.", "s.stages": "단계 (쉼표로 구분)", "s.addGate": "프로그레션 추가",
   "s.wave": "훈련 사이클", "s.waveSub": "시작일부터 반복되는 주입니다. 예: 빌드, 빌드, 피크, 디로드. 주를 탭해 바꾸세요.", "s.waveStart": "시작일", "s.wavePattern": "주",
   "st.sleepBlock": "수면", "st.work": "업무", "st.rest": "휴식일",
@@ -122,7 +122,7 @@ MB.i18n.add('ko', {
 
 /* sync */
 MB.i18n.add('ko', {
-  "sy.title": "동기화", "sy.sub": "모든 기기에서 이 프로필을", "sy.intro": "선택 사항입니다. 데이터는 어느 경우든 이 기기에 남습니다. 클라우드 보관함을 사용하면 이 프로필이 다른 기기와 동기화되고, 오프라인에서 바꾼 내용은 다시 온라인이 되면 업로드됩니다.",
+  "sy.title": "동기화", "sy.sub": "모든 기기에서 이 프로필을", "sy.intro": "동기화는 선택 사항입니다. 데이터는 어느 경우든 이 기기에 남습니다. 클라우드 보관함을 사용하면 이 프로필이 다른 기기와 동기화되고, 오프라인에서 바꾼 내용은 다시 온라인이 되면 업로드됩니다.",
   "sy.create": "클라우드 보관함 만들기", "sy.link": "이 기기 연결", "sy.createHelp": "이 서버의 초대 코드를 입력하세요. 다른 기기를 연결할 동기화 키를 받게 됩니다.",
   "sy.invite": "초대 코드", "sy.needInvite": "초대 코드를 입력하세요.", "sy.createBtn": "보관함 만들기",
   "sy.working": "처리 중…", "sy.keyTitle": "동기화 키", "sy.keyWarn": "비밀번호 관리자에 저장하세요. 다른 기기를 연결하는 유일한 방법이며, 이 키가 있는 사람은 누구나 이 프로필을 읽고 바꿀 수 있습니다.",
@@ -247,7 +247,7 @@ MB.i18n.add('ko', {
   "pk.travel": "여행", "pk.competition": "시합", "pk.race": "대회",
   "pk.social": "외식", "pk.belt": "주짓수 벨트", "pk.belts": "화이트, 블루, 퍼플, 브라운, 블랙",
   "pl.addGroup": "블록 추가", "s.palette": "상태 색상",
-  "s.palStd": "기본", "s.palCb": "색각 이상 배려", "s.paletteHelp": "놓침부터 달성까지. 색각 이상 배려 색은 주황에서 파랑까지입니다.",
+  "s.palStd": "기본", "s.palCb": "색각 이상 배려", "s.paletteHelp": "색은 놓침부터 달성까지 이어집니다. 색각 이상 배려 색은 주황에서 파랑까지입니다.",
   "s.autoFold": "완료한 카드 접기", "s.autoFoldHelp": "트래커, 루틴, 운동 카드는 안의 항목을 모두 마치면 접힙니다. 이 기기에만 적용됩니다.", "t.doneOf": "{of}개 중 {n}개 완료",
   "t.effort": "체감 강도 (1–10)", "t.effortHelp": "얼마나 힘들었는지. 체감 강도 × 분이 세션 부하이며, 진행 화면에서 주마다 비교합니다.", "t.effortN": "체감 강도 {n}",
   "t.lastTime": "지난번 ({d}): {sets}", "t.logDetails": "기록하기", "t.nextBlock": "다음: {name} · {t}",
